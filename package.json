@@ -1,0 +1,17 @@
+{
+  "name": "interview-summary-tool",
+  "version": "1.0.0",
+  "private": true,
+  "devDependencies": {
+    "autoprefixer": "^10.4.21",
+    "concurrently": "^8.0.0",
+    "postcss": "^8.5.3",
+    "tailwindcss": "^4.1.3"
+  },
+  "scripts": {
+    "dev": "concurrently \"npm run dev --prefix frontend\" \"python3 backend/app.py\""
+  },
+  "dependencies": {
+    "remark-gfm": "^4.0.1"
+  }
+}
