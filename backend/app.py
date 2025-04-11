@@ -2,12 +2,12 @@ from flask import Flask, request, jsonify, Response, stream_with_context
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
 import os
-from summarizer.interview_summarizer import InterviewSummarizer, gpt4o_client, whisper_client
+from llm.session import Session
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS so Next.js frontend can talk to Flask
 
-summarizer = InterviewSummarizer(gpt4o_client, whisper_client)
+session = Session()
 
 @app.route('/summarize', methods=['POST'])
 def summarize():
@@ -25,13 +25,30 @@ def summarize():
 
     def generate():
         try:
-            for chunk in summarizer.summarize(transcript_path, recording_path):
+            for chunk in session.summarize(transcript_path, recording_path):
                 yield chunk
         finally:
             os.remove(transcript_path)
             os.remove(recording_path)
 
-    return Response(stream_with_context(generate()), content_type='text/plain')
+    return Response(stream_with_context(generate()), content_type='text/markdown')
+
+@app.route('/chat', methods=['POST'])
+def chat():
+    prompt = request.json.get('message')
+    if not prompt:
+        return jsonify({'error': 'Missing prompt'}), 400
+    
+    session.chat.add_message("user", prompt)
+    
+    def generate():
+        try:
+            for chunk in session.prompt_chat(prompt):
+                yield chunk
+        finally:
+            pass
+
+    return Response(stream_with_context(generate()), content_type='text/markdown')
 
 if __name__ == '__main__':
     app.run(debug=True, host="0.0.0.0", port=8000)
