@@ -1,4 +1,4 @@
-from .session import Session
+from ..llm.session import Session
 from typing import List
 
 class User:
