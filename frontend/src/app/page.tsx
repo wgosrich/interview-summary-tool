@@ -1,6 +1,5 @@
 "use client";
 import { useState } from "react";
-import ReactMarkdown from "react-markdown";
 import MarkdownPreview from "@uiw/react-markdown-preview";
 
 export default function Home() {
@@ -192,7 +191,7 @@ export default function Home() {
 
           {summary && (
             <div className="mt-2">
-              <div className="prose prose-headings:font-bold prose-headings:mt-4 prose-headings:mb-2 dark:prose-invert max-w-none bg-slate-100 dark:bg-slate-700 px-6 py-4 rounded-lg text-sm">
+              <div className="prose prose-headings:font-bold prose-headings:mt-4 prose-headings:mb-2 dark:prose-invert max-w-none bg-slate-100 dark:bg-slate-700 p-4 rounded-lg text-sm">
                 <div className="bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100 rounded-lg px-6 py-4">
                   <MarkdownPreview
                     source={summary}
@@ -233,7 +232,10 @@ export default function Home() {
                         {isUser ? (
                           messageText
                         ) : (
-                        <MarkdownPreview source={messageText} style={{ backgroundColor: "transparent" }} />
+                          <MarkdownPreview
+                            source={messageText}
+                            style={{ backgroundColor: "transparent" }}
+                          />
                         )}
                       </div>
                     </div>
