@@ -9,7 +9,6 @@ load_dotenv()
 
 # ------------ INTERVIEW SUMMARIZER ------------ #
 
-
 class InterviewSummarizer:
     def __init__(self, gpt_client, whisper_client):
         self.gpt_client = gpt_client
@@ -182,28 +181,3 @@ class InterviewSummarizer:
             delta = getattr(chunk.choices[0].delta, "content", "") or ""
             summary += delta
             yield delta
-
-
-# --------------------- TESTING --------------------- #
-
-# if __name__ == "__main__":
-#     base_path = "test_set/files/"
-#     num_examples = 6
-#     summarizer = InterviewSummarizer(gpt4o_client, whisper_client)
-
-#     summaries = []
-
-#     for i in range(num_examples):
-#         print(f"Processing interview {i}...")
-#         transcript = os.path.join(base_path, f"transcript_{i}.docx")
-#         recording = os.path.join(base_path, f"recording_{i}.mp4")
-
-#         summary = summarizer.summarize(
-#             transcript_path=transcript, recording_path=recording, debug=False
-#         )
-#         summaries.append(summary)
-
-#     # Save summaries to files
-#     for i, summary in enumerate(summaries):
-#         with open(f"test_set/results/summary_{i}.txt", "w") as f:
-#             f.write(summary)

@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import MarkdownPreview from "@uiw/react-markdown-preview";
+import BurnesLogo from "@/images/burnes_logo";
 
 export default function Home() {
   const [transcriptFile, setTranscriptFile] = useState<File | null>(null);
@@ -11,6 +12,7 @@ export default function Home() {
   const [chatInput, setChatInput] = useState("");
   const [chatMessages, setChatMessages] = useState<string[]>([]);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [showPanel, setShowPanel] = useState(false);
 
   const handleSubmit = async () => {
     if (!transcriptFile || !recordingFile) {
@@ -121,7 +123,45 @@ export default function Home() {
         </svg>
         Summary generated successfully!
       </div>
-      <div className="max-w-screen-xl mx-auto flex flex-col lg:flex-row gap-10">
+      <div
+        className={`fixed top-0 left-0 h-full w-48 bg-white dark:bg-slate-800 shadow-lg p-6 z-40 transform transition-transform duration-300 ${
+          showPanel ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        <button
+          onClick={() => setShowPanel(!showPanel)}
+          className="absolute top-4 right-[-20px] bg-blue-600 text-white w-10 h-10 rounded-full shadow-lg hover:bg-blue-700 flex items-center justify-center"
+          title={showPanel ? "Hide Panel" : "Show Panel"}
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+            className="h-5 w-5"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d={showPanel ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"}
+            />
+          </svg>
+        </button>
+        <div className="flex items-start justify-start mb-4 w-full">
+          <BurnesLogo />
+        </div>
+        <ul className="space-y-2 text-slate-800 dark:text-slate-100">
+          <li>🔍 Review Uploads</li>
+          <li>📄 Summary Insights</li>
+          <li>💬 Assistant History</li>
+        </ul>
+      </div>
+      <div
+        className={`max-w-screen-xl mx-auto flex flex-col lg:flex-row gap-10 transition-all duration-500 ease-in-out ${
+          showPanel ? "ml-48" : ""
+        }`}
+      >
         <div className="lg:w-1/2 bg-slate-50 dark:bg-slate-700 p-8 shadow rounded-lg">
           <h1 className="text-2xl font-semibold mb-6 text-center text-slate-800 dark:text-slate-100">
             Interview Summarizer
