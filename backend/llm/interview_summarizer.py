@@ -147,10 +147,11 @@ class InterviewSummarizer:
 
         Your task is to generate a comprehensive, detailed, and structured third-person narrative summary of the transcript below, following these guidelines:
 
-        - The summary should begin with a **title** that includes the interviewee's name (e.g., "Summary of Interview with [Interviewee's Name]").
+        - The summary should begin with a **title** that includes the interviewee's name (e.g., "Interview with [Interviewee's Name]"). This should be in heading level 2 format.
         - Use a **standard format** for each summary, starting with the title, followed by a brief introductory sentence, and then the detailed narrative.
         - The narrative should be organized into **sections** that capture different themes or topics discussed during the interview.
-        - Each section should be clearly labeled with a **heading** that summarizes the main topic of that section.
+        - Each section should be clearly labeled with a **heading** that summarizes the main topic of that section. This should be in heading level 3 format.
+        - Separate sections with an extra newline for clarity.
         - The summary should capture **everything that transpired according to the interviewee**, providing a full account of their perspective and experiences.
         - Do **not** mention the investigator or interviewer.
         - Do **not** use first-person language.

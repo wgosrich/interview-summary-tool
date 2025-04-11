@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
+import MarkdownPreview from "@uiw/react-markdown-preview";
 
 export default function Home() {
   const [transcriptFile, setTranscriptFile] = useState<File | null>(null);
@@ -11,6 +11,7 @@ export default function Home() {
   const [showChat, setShowChat] = useState(false);
   const [chatInput, setChatInput] = useState("");
   const [chatMessages, setChatMessages] = useState<string[]>([]);
+  const [showSuccess, setShowSuccess] = useState(false);
 
   const handleSubmit = async () => {
     if (!transcriptFile || !recordingFile) {
@@ -47,6 +48,8 @@ export default function Home() {
       }
 
       setShowChat(true);
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 5000);
     } catch (error) {
       console.error("Streaming error:", error);
       alert("Error while streaming summary.");
@@ -86,10 +89,7 @@ export default function Home() {
         done = readerDone;
         const chunk = decoder.decode(value, { stream: true });
         assistantMessage += chunk;
-        setChatMessages((prev) => [
-          ...prev.slice(0, -1),
-          assistantMessage,
-        ]);
+        setChatMessages((prev) => [...prev.slice(0, -1), assistantMessage]);
       }
     } catch (error) {
       console.error("Chat streaming error:", error);
@@ -99,6 +99,29 @@ export default function Home() {
 
   return (
     <div className="min-h-screen font-sans bg-slate-100 dark:bg-slate-600 py-10 px-6 sm:px-8 lg:px-16">
+      <div
+        className={`fixed top-0 left-1/2 transform -translate-x-1/2 transition-transform duration-500 ease-in-out z-50 ${
+          showSuccess
+            ? "translate-y-6 opacity-100"
+            : "-translate-y-full opacity-0"
+        } bg-green-100 text-green-800 px-5 py-3 rounded-lg shadow-lg text-sm font-semibold flex items-center gap-1`}
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={4}
+          className="h-5 w-5 text-green-800"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M5 13l4 4L19 7"
+          />
+        </svg>
+        Summary generated successfully!
+      </div>
       <div className="max-w-screen-xl mx-auto flex flex-col lg:flex-row gap-10">
         <div className="lg:w-1/2 bg-slate-50 dark:bg-slate-700 p-8 shadow rounded-lg">
           <h1 className="text-2xl font-semibold mb-6 text-center text-slate-800 dark:text-slate-100">
@@ -107,7 +130,7 @@ export default function Home() {
 
           <div className="flex justify-center gap-6 flex-wrap">
             <div className="flex-1 min-w-[220px]">
-              <label className="block text-sm font-semibold text-slate-800 dark:text-slate-100 mb-1">
+              <label className="block text-md font-semibold text-slate-800 dark:text-slate-100 mb-1">
                 Transcript (.docx)
               </label>
               <div className="flex items-center gap-3">
@@ -116,7 +139,9 @@ export default function Home() {
                   accept=".docx"
                   id="transcriptUpload"
                   className="hidden"
-                  onChange={(e) => setTranscriptFile(e.target.files?.[0] || null)}
+                  onChange={(e) =>
+                    setTranscriptFile(e.target.files?.[0] || null)
+                  }
                 />
                 <label
                   htmlFor="transcriptUpload"
@@ -124,14 +149,14 @@ export default function Home() {
                 >
                   Choose File
                 </label>
-                <span className="text-slate-800 dark:text-slate-100 text-sm font-medium">
+                <span className="text-slate-800 dark:text-slate-100 text-sm font-light">
                   {transcriptFile ? transcriptFile.name : "No file chosen"}
                 </span>
               </div>
             </div>
 
             <div className="flex-1 min-w-[220px]">
-              <label className="block text-sm font-semibold text-slate-800 dark:text-slate-100 mb-1">
+              <label className="block text-md font-semibold text-slate-800 dark:text-slate-100 mb-1">
                 Recording (.mp4)
               </label>
               <div className="flex items-center gap-3">
@@ -140,7 +165,9 @@ export default function Home() {
                   accept=".mp4"
                   id="recordingUpload"
                   className="hidden"
-                  onChange={(e) => setRecordingFile(e.target.files?.[0] || null)}
+                  onChange={(e) =>
+                    setRecordingFile(e.target.files?.[0] || null)
+                  }
                 />
                 <label
                   htmlFor="recordingUpload"
@@ -148,7 +175,7 @@ export default function Home() {
                 >
                   Choose File
                 </label>
-                <span className="text-slate-800 dark:text-slate-100 text-sm font-medium">
+                <span className="text-slate-800 dark:text-slate-100 text-sm font-light">
                   {recordingFile ? recordingFile.name : "No file chosen"}
                 </span>
               </div>
@@ -164,12 +191,14 @@ export default function Home() {
           </button>
 
           {summary && (
-            <div className="mt-8">
-              <h2 className="text-xl font-semibold mb-4 text-slate-800 dark:text-slate-100">Summary</h2>
-              <div className="prose prose-headings:font-semibold prose-headings:mt-4 prose-headings:mb-2 dark:prose-invert max-w-none bg-slate-100 dark:bg-slate-700 px-6 py-4 rounded-lg text-sm">
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                  {summary}
-                </ReactMarkdown>
+            <div className="mt-2">
+              <div className="prose prose-headings:font-bold prose-headings:mt-4 prose-headings:mb-2 dark:prose-invert max-w-none bg-slate-100 dark:bg-slate-700 px-6 py-4 rounded-lg text-sm">
+                <div className="bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100 rounded-lg px-6 py-4">
+                  <MarkdownPreview
+                    source={summary}
+                    style={{ backgroundColor: "transparent" }}
+                  />
+                </div>
               </div>
             </div>
           )}
@@ -177,25 +206,34 @@ export default function Home() {
 
         {showChat && (
           <div className="lg:w-1/2 bg-white dark:bg-slate-800 p-6 rounded-lg shadow h-full flex flex-col">
-            <h2 className="text-xl font-semibold mb-4 text-slate-800 dark:text-slate-100 text-center">Chat with Assistant</h2>
+            <h2 className="text-xl font-semibold mb-4 text-slate-800 dark:text-slate-100 text-center">
+              Chat with Assistant
+            </h2>
             {chatMessages.length > 0 && (
               <div className="flex-1 overflow-y-auto space-y-2 mb-4 bg-slate-100 dark:bg-slate-700 p-4 rounded-lg">
                 {chatMessages.map((msg, idx) => {
                   const isUser = msg.startsWith("You:");
-                  const messageText = msg.replace(/^You:\s*/, "").replace(/^Assistant:\s*/, "");
+                  const messageText = msg
+                    .replace(/^You:\s*/, "")
+                    .replace(/^Assistant:\s*/, "");
                   return (
-                    <div key={idx} className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
-                      <div className={`inline-block px-4 py-2 rounded-lg text-sm max-w-[90%] ${
-                        isUser
-                          ? "bg-blue-600 text-white rounded-lg"
-                          : "bg-gray-200 dark:bg-slate-600 text-gray-900 dark:text-white rounded-lg"
-                      }`}>
+                    <div
+                      key={idx}
+                      className={`flex ${
+                        isUser ? "justify-end" : "justify-start"
+                      }`}
+                    >
+                      <div
+                        className={`inline-block px-4 py-2 rounded-lg text-sm max-w-[90%] ${
+                          isUser
+                            ? "bg-blue-600 text-white rounded-lg"
+                            : "bg-gray-200 dark:bg-slate-600 text-gray-900 dark:text-white rounded-lg"
+                        }`}
+                      >
                         {isUser ? (
                           messageText
                         ) : (
-                          <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                            {messageText}
-                          </ReactMarkdown>
+                        <MarkdownPreview source={messageText} style={{ backgroundColor: "transparent" }} />
                         )}
                       </div>
                     </div>
@@ -219,7 +257,7 @@ export default function Home() {
               />
               <button
                 onClick={handleChatSubmit}
-                className="bg-blue-600 text-white p-2 rounded-lg hover:bg-blue-700 font-bold flex items-center justify-center antialiased"
+                className="bg-blue-600 text-white py-2 px-3 rounded-lg hover:bg-blue-700 font-bold flex items-center justify-center antialiased"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -229,7 +267,11 @@ export default function Home() {
                   strokeWidth={3}
                   className="h-5 w-5"
                 >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M5 10l7-7m0 0l7 7m-7-7v18"
+                  />
                 </svg>
               </button>
             </div>

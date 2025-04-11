@@ -7,7 +7,7 @@ from llm.session import Session
 app = Flask(__name__)
 CORS(app)  # Enable CORS so Next.js frontend can talk to Flask
 
-session = Session()
+session = Session(0)
 
 @app.route('/summarize', methods=['POST'])
 def summarize():

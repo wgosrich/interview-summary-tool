@@ -4,7 +4,9 @@ from .chat import Chat
 
 class Session:
     
-    def __init__(self):
+    def __init__(self, id):
+        self.id = id
+        
         self.gpt_client = gpt4o_client
         self.whisper_client = whisper_client
         self.chat = Chat(self.gpt_client)
