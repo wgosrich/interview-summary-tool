@@ -135,7 +135,6 @@ export default function Home() {
 
       // save session after chat
       handleSaveSession();
-      
     } catch (error) {
       console.error("Chat streaming error:", error);
       alert("Error while streaming chat response.");
@@ -144,20 +143,26 @@ export default function Home() {
 
   const loadSession = async (sessionId: number) => {
     try {
-      const response = await fetch(`http://localhost:8000/load_session/${sessionId}`);
-    if (response.ok) {
+      const response = await fetch(
+        `http://localhost:8000/load_session/${sessionId}`
+      );
+      if (response.ok) {
         const data = await response.json();
         setCurrentSessionId(data.session_id);
         setSummary(data.summary);
         const loadedMessages = (data.messages || []).slice(3);
-        const formattedMessages = loadedMessages.map((msg: { role: string, content: string }) => {
-          return msg.role === "user" ? `You: ${msg.content}` : `Assistant: ${msg.content}`;
-        });
+        const formattedMessages = loadedMessages.map(
+          (msg: { role: string; content: string }) => {
+            return msg.role === "user"
+              ? `You: ${msg.content}`
+              : `Assistant: ${msg.content}`;
+          }
+        );
         setChatMessages(formattedMessages);
         setShowChat(true);
-    } else {
+      } else {
         console.error("Failed to load session");
-    }
+      }
     } catch (error) {
       console.error("Error loading session:", error);
     }
@@ -222,9 +227,12 @@ export default function Home() {
         <button
           onClick={async () => {
             try {
-              const response = await fetch("http://localhost:8000/new_session", {
-                method: "POST",
-              });
+              const response = await fetch(
+                "http://localhost:8000/new_session",
+                {
+                  method: "POST",
+                }
+              );
               if (response.ok) {
                 setTranscriptFile(null);
                 setRecordingFile(null);
@@ -248,11 +256,14 @@ export default function Home() {
         <h2 className="text-xl font-semibold mb-4 text-slate-800 dark:text-slate-100">
           Sessions
         </h2>
-        <ul className="space-y-2 text-slate-800 dark:text-slate-100">
-          {sessions.map((session) => (
-            <li key={session.id} className="flex justify-between items-center truncate group">
+        <ul className="space-y-1 text-slate-800 dark:text-slate-100">
+            {[...sessions].reverse().map((session) => (
+            <li
+              key={session.id}
+              className="flex justify-between items-center truncate group"
+            >
               <span
-                className="cursor-pointer hover:underline flex-1"
+                className="cursor-pointer flex-1 truncate text-sm hover:bg-gray-200 dark:hover:bg-gray-700 p-2 rounded"
                 onClick={() => loadSession(session.id)}
               >
                 {session.name}
@@ -261,12 +272,18 @@ export default function Home() {
                 onClick={async (e) => {
                   e.stopPropagation();
                   try {
-                    const response = await fetch(`http://localhost:8000/delete_session/${session.id}`, {
-                      method: "DELETE",
-                    });
+                    const response = await fetch(
+                      `http://localhost:8000/delete_session/${session.id}`,
+                      {
+                        method: "DELETE",
+                      }
+                    );
                     if (response.ok) {
                       if (session.id === currentSessionId) {
-                        const newSessionRes = await fetch("http://localhost:8000/new_session", { method: "POST" });
+                        const newSessionRes = await fetch(
+                          "http://localhost:8000/new_session",
+                          { method: "POST" }
+                        );
                         if (newSessionRes.ok) {
                           setTranscriptFile(null);
                           setRecordingFile(null);
@@ -278,7 +295,6 @@ export default function Home() {
                           await fetchSessions();
                         }
                       }
-                      
                     } else {
                       console.error("Failed to delete session");
                     }
@@ -295,9 +311,7 @@ export default function Home() {
           ))}
         </ul>
       </div>
-      <div
-        className="max-w-screen-xl mx-auto flex flex-col lg:flex-row gap-10 transition-all duration-500 ease-in-out"
-      >
+      <div className="max-w-screen-xl mx-auto flex flex-col lg:flex-row gap-10 transition-all duration-500 ease-in-out">
         <div className="lg:w-1/2 bg-slate-50 dark:bg-slate-700 p-8 shadow rounded-lg">
           <h1 className="text-2xl font-semibold mb-6 text-center text-slate-800 dark:text-slate-100">
             Interview Summarizer
@@ -305,67 +319,67 @@ export default function Home() {
 
           {!summary && (
             <>
-          <div className="flex justify-center gap-6 flex-wrap">
-            <div className="flex-1 min-w-[220px]">
-              <label className="block text-md font-semibold text-slate-800 dark:text-slate-100 mb-1">
-                Transcript (.docx)
-              </label>
-              <div className="flex items-center gap-3">
-                <input
-                  type="file"
-                  accept=".docx"
-                  id="transcriptUpload"
-                  className="hidden"
-                  onChange={(e) =>
-                    setTranscriptFile(e.target.files?.[0] || null)
-                  }
-                />
-                <label
-                  htmlFor="transcriptUpload"
-                  className="cursor-pointer bg-blue-100 text-blue-600 hover:bg-blue-200 font-bold py-2 px-4 rounded-lg"
-                >
-                  Choose File
-                </label>
-                <span className="text-slate-800 dark:text-slate-100 text-sm font-light">
-                  {transcriptFile ? transcriptFile.name : "No file chosen"}
-                </span>
-              </div>
-            </div>
+              <div className="flex justify-center gap-6 flex-wrap">
+                <div className="flex-1 min-w-[220px]">
+                  <label className="block text-md font-semibold text-slate-800 dark:text-slate-100 mb-1">
+                    Transcript (.docx)
+                  </label>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="file"
+                      accept=".docx"
+                      id="transcriptUpload"
+                      className="hidden"
+                      onChange={(e) =>
+                        setTranscriptFile(e.target.files?.[0] || null)
+                      }
+                    />
+                    <label
+                      htmlFor="transcriptUpload"
+                      className="cursor-pointer bg-blue-100 text-blue-600 hover:bg-blue-200 font-bold py-2 px-4 rounded-lg"
+                    >
+                      Choose File
+                    </label>
+                    <span className="text-slate-800 dark:text-slate-100 text-sm font-light">
+                      {transcriptFile ? transcriptFile.name : "No file chosen"}
+                    </span>
+                  </div>
+                </div>
 
-            <div className="flex-1 min-w-[220px]">
-              <label className="block text-md font-semibold text-slate-800 dark:text-slate-100 mb-1">
-                Recording (.mp4)
-              </label>
-              <div className="flex items-center gap-3">
-                <input
-                  type="file"
-                  accept=".mp4"
-                  id="recordingUpload"
-                  className="hidden"
-                  onChange={(e) =>
-                    setRecordingFile(e.target.files?.[0] || null)
-                  }
-                />
-                <label
-                  htmlFor="recordingUpload"
-                  className="cursor-pointer bg-blue-100 text-blue-600 hover:bg-blue-200 font-bold py-2 px-4 rounded-lg"
-                >
-                  Choose File
-                </label>
-                <span className="text-slate-800 dark:text-slate-100 text-sm font-light">
-                  {recordingFile ? recordingFile.name : "No file chosen"}
-                </span>
+                <div className="flex-1 min-w-[220px]">
+                  <label className="block text-md font-semibold text-slate-800 dark:text-slate-100 mb-1">
+                    Recording (.mp4)
+                  </label>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="file"
+                      accept=".mp4"
+                      id="recordingUpload"
+                      className="hidden"
+                      onChange={(e) =>
+                        setRecordingFile(e.target.files?.[0] || null)
+                      }
+                    />
+                    <label
+                      htmlFor="recordingUpload"
+                      className="cursor-pointer bg-blue-100 text-blue-600 hover:bg-blue-200 font-bold py-2 px-4 rounded-lg"
+                    >
+                      Choose File
+                    </label>
+                    <span className="text-slate-800 dark:text-slate-100 text-sm font-light">
+                      {recordingFile ? recordingFile.name : "No file chosen"}
+                    </span>
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
 
-          <button
-            onClick={handleSubmit}
-            disabled={loading}
-            className="w-full py-2 px-4 mt-6 bg-blue-600 text-slate-100 rounded-lg hover:bg-blue-700 transition disabled:opacity-50 font-bold"
-          >
-            {loading ? "Generating summary..." : "Generate Summary"}
-          </button>
+              <button
+                onClick={handleSubmit}
+                disabled={loading}
+                className="w-full py-2 px-4 mt-6 bg-blue-600 text-slate-100 rounded-lg hover:bg-blue-700 transition disabled:opacity-50 font-bold"
+              >
+                {loading ? "Generating summary..." : "Generate Summary"}
+              </button>
             </>
           )}
 

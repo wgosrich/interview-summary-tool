@@ -156,10 +156,11 @@ class InterviewSummarizer:
         - Each section should be clearly labeled with a **heading** that summarizes the main topic of that section. This should be in heading level 2 format.
         - Separate sections with an extra newline for clarity, DO NOT ADD DIVIDERS.
         - The summary should capture **everything that transpired according to the interviewee**, providing a full account of their perspective and experiences.
+        - Present only the **facts and details learned during the interview**, omitting any mention of the interviewee.
+        - Do **not** include phrases like “the interviewee said,” “reported,” “affirmed,” “described,” or any variation of those. Simply state the facts as directly as possible.
         - Do **not** mention the investigator or interviewer.
-        - Do **not** use first-person language.
-        - The summary must be written entirely in **third person**, focusing solely on the interviewee's account.
-        - There is no need to specify that the interviewee is the one saying the words; just present the information as a narrative.
+        - There is no need to specify that the interviewee is the one saying the words; just present the information as detached events with no storyteller.
+        - Avoid all first-person and third-person attribution. The summary must read as an objective report of discovered facts.
         - Avoid editorializing or drawing conclusions not supported directly by the transcript.
         - Include **timestamps** in brackets like [hh:mm:ss] to cite when important details were mentioned.
         - Organize the summary into **short, informative paragraphs** or clear sections to improve readability.
@@ -193,7 +194,8 @@ class InterviewSummarizer:
         Your task is to generate a title for the following summary:
         {summary}
         The title should be a plain string without any formatting or special characters.
-        It should be concise and accurately reflect the content of the summary. Preferably, it should be the interviewee's name if possible.
+        It should be concise and accurately reflect the content of the summary.
+        If the name of ther interviewee is known, make that the title with no other information.
         """
 
         # Call the GPT-4 model to generate the title
