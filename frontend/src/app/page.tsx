@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import MarkdownPreview from "@uiw/react-markdown-preview";
 import BurnesLogo from "@/images/burnes_logo";
 
@@ -13,6 +13,21 @@ export default function Home() {
   const [chatMessages, setChatMessages] = useState<string[]>([]);
   const [showSuccess, setShowSuccess] = useState(false);
   const [showPanel, setShowPanel] = useState(false);
+  const [sessions, setSessions] = useState<{ id: number; name: string }[]>([]);
+
+  const fetchSessions = async () => {
+    try {
+      const response = await fetch("http://localhost:8000/get_sessions");
+      if (response.ok) {
+        const data = await response.json();
+        setSessions(data);
+      } else {
+        console.error("Failed to fetch sessions");
+      }
+    } catch (error) {
+      console.error("Error fetching sessions:", error);
+    }
+  };
 
   const handleSaveSession = async () => {
     try {
@@ -122,6 +137,26 @@ export default function Home() {
     }
   };
 
+  const loadSession = async (sessionId: number) => {
+    try {
+      const response = await fetch(`http://localhost:8000/load_session/${sessionId}`);
+      if (response.ok) {
+        const data = await response.json();
+        setSummary(data.summary);
+        const loadedMessages = (data.messages || []).slice(3);
+        const formattedMessages = loadedMessages.map((msg: { role: string, content: string }) => {
+          return `${msg.role === "user" ? "You" : "Assistant"}: ${msg.content}`;
+        });
+        setChatMessages(formattedMessages);
+        setShowChat(true);
+      } else {
+        console.error("Failed to load session");
+      }
+    } catch (error) {
+      console.error("Error loading session:", error);
+    }
+  };
+
   return (
     <div className="min-h-screen font-sans bg-slate-100 dark:bg-slate-600 py-10 px-6 sm:px-8 lg:px-16">
       <div
@@ -153,8 +188,11 @@ export default function Home() {
         }`}
       >
         <button
-          onClick={() => setShowPanel(!showPanel)}
-          className="absolute top-4 right-[-20px] bg-blue-600 text-white w-10 h-10 rounded-full shadow-lg hover:bg-blue-700 flex items-center justify-center"
+          onClick={() => {
+            setShowPanel(!showPanel);
+            if (!showPanel) fetchSessions();
+          }}
+          className="absolute top-4 right-[-50px] bg-blue-600 text-white w-10 h-10 rounded-full shadow-lg hover:bg-blue-700 flex items-center justify-center"
           title={showPanel ? "Hide Panel" : "Show Panel"}
         >
           <svg
@@ -175,16 +213,19 @@ export default function Home() {
         <div className="flex items-start justify-start mb-4 w-full">
           <BurnesLogo />
         </div>
+        <h2 className="text-xl font-semibold mb-4 text-slate-800 dark:text-slate-100">
+          Sessions
+        </h2>
         <ul className="space-y-2 text-slate-800 dark:text-slate-100">
-          <li>🔍 Review Uploads</li>
-          <li>📄 Summary Insights</li>
-          <li>💬 Assistant History</li>
+          {sessions.map((session) => (
+            <li key={session.id} className="truncate cursor-pointer hover:underline" onClick={() => loadSession(session.id)}>
+              {session.name}
+            </li>
+          ))}
         </ul>
       </div>
       <div
-        className={`max-w-screen-xl mx-auto flex flex-col lg:flex-row gap-10 transition-all duration-500 ease-in-out ${
-          showPanel ? "ml-48" : ""
-        }`}
+        className="max-w-screen-xl mx-auto flex flex-col lg:flex-row gap-10 transition-all duration-500 ease-in-out"
       >
         <div className="lg:w-1/2 bg-slate-50 dark:bg-slate-700 p-8 shadow rounded-lg">
           <h1 className="text-2xl font-semibold mb-6 text-center text-slate-800 dark:text-slate-100">

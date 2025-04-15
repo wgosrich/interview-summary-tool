@@ -112,6 +112,14 @@ def load_session(session_id):
         'transcript': record.transcript,
         'messages': record.messages,
     })
+    
+@app.route('/get_sessions', methods=['GET'])
+def get_sessions():
+    sessions = SessionModel.query.all()
+    session_list = []
+    for session in sessions:
+        session_list.append({'id': session.id, 'name': session.name})
+    return jsonify(session_list)
 
 with app.app_context():
     db.create_all()
