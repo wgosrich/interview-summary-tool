@@ -3,11 +3,12 @@ from llm.chat import Chat
 
 class Session:
     
-    def __init__(self, id):
+    def __init__(self, id, name="Untitled", summary="", transcript="", messages=[]):
         self.id = id
-        self.summary = ""
-        self.transcript = ""
-        self.messages = []
+        self.name = name
+        self.summary = summary
+        self.transcript = transcript
+        self.messages = messages
         
     def summarize(self, transcript: str, recording: str):
         assert transcript.lower().endswith(
@@ -52,4 +53,3 @@ class Session:
             else:
                 self.messages.append({"role": "assistant", "content": chunk})
             yield chunk
-    

@@ -14,6 +14,23 @@ export default function Home() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [showPanel, setShowPanel] = useState(false);
 
+  const handleSaveSession = async () => {
+    try {
+      const saveResponse = await fetch("http://localhost:8000/save_session", {
+        method: "POST",
+      });
+
+      if (!saveResponse.ok) {
+        console.error("Failed to save session.");
+      } else {
+        const data = await saveResponse.json();
+        console.log("Session saved:", data.session_id);
+      }
+    } catch (saveError) {
+      console.error("Error saving session:", saveError);
+    }
+  };
+
   const handleSubmit = async () => {
     if (!transcriptFile || !recordingFile) {
       alert("Please upload both transcript and recording files.");
@@ -50,7 +67,10 @@ export default function Home() {
 
       setShowChat(true);
       setShowSuccess(true);
-      setTimeout(() => setShowSuccess(false), 5000);
+      setTimeout(() => {
+        setShowSuccess(false);
+        handleSaveSession();
+      }, 5000);
     } catch (error) {
       console.error("Streaming error:", error);
       alert("Error while streaming summary.");
@@ -92,6 +112,10 @@ export default function Home() {
         assistantMessage += chunk;
         setChatMessages((prev) => [...prev.slice(0, -1), assistantMessage]);
       }
+
+      // save session after chat
+      handleSaveSession();
+      
     } catch (error) {
       console.error("Chat streaming error:", error);
       alert("Error while streaming chat response.");

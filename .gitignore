@@ -43,3 +43,9 @@
 
 /node_modules
 .env
+
+# Python cache
+backend/llm/__pycache__/
+backend/llm/__pycache__/chat.cpython-310.pyc
+backend/llm/__pycache__/interview_summarizer.cpython-310.pyc
+backend/__pycache__/session.cpython-310.pyc
