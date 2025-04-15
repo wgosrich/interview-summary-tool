@@ -133,8 +133,6 @@ export default function Home() {
         setChatMessages((prev) => [...prev.slice(0, -1), assistantMessage]);
       }
 
-      console.log(chatMessages)
-
       // save session after chat
       handleSaveSession();
       
@@ -155,7 +153,6 @@ export default function Home() {
         const formattedMessages = loadedMessages.map((msg: { role: string, content: string }) => {
           return msg.role === "user" ? `You: ${msg.content}` : `Assistant: ${msg.content}`;
         });
-        console.log("Loaded messages:", formattedMessages);
         setChatMessages(formattedMessages);
         setShowChat(true);
     } else {
@@ -306,6 +303,8 @@ export default function Home() {
             Interview Summarizer
           </h1>
 
+          {!summary && (
+            <>
           <div className="flex justify-center gap-6 flex-wrap">
             <div className="flex-1 min-w-[220px]">
               <label className="block text-md font-semibold text-slate-800 dark:text-slate-100 mb-1">
@@ -367,6 +366,8 @@ export default function Home() {
           >
             {loading ? "Generating summary..." : "Generate Summary"}
           </button>
+            </>
+          )}
 
           {summary && (
             <div className="mt-4">
@@ -383,8 +384,8 @@ export default function Home() {
         </div>
 
         {showChat && (
-          <div className="lg:w-1/2 bg-white dark:bg-slate-800 p-6 rounded-lg shadow h-full flex flex-col">
-            <h2 className="text-xl font-semibold mb-4 text-slate-800 dark:text-slate-100 text-center">
+          <div className="lg:w-1/2 bg-white dark:bg-slate-800 p-8 rounded-lg shadow h-full flex flex-col">
+            <h2 className="text-2xl font-semibold mb-4 text-slate-800 dark:text-slate-100 text-center">
               Chat with Assistant
             </h2>
             {chatMessages.length > 0 && (
