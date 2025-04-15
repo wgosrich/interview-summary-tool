@@ -7,7 +7,7 @@ export default function BurnesLogo() {
       alt="Burnes Logo"
       width={2000}
       height={2000}
-      className="rounded-full invert"
+      className="rounded-full invert dark:invert-0"
     />
   );
 }

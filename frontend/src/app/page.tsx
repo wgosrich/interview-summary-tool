@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import MarkdownPreview from "@uiw/react-markdown-preview";
 import BurnesLogo from "@/images/burnes_logo";
 
@@ -14,6 +14,7 @@ export default function Home() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [showPanel, setShowPanel] = useState(false);
   const [sessions, setSessions] = useState<{ id: number; name: string }[]>([]);
+  const [currentSessionId, setCurrentSessionId] = useState<number | null>(null);
 
   const fetchSessions = async () => {
     try {
@@ -36,7 +37,11 @@ export default function Home() {
       });
 
       if (!saveResponse.ok) {
-        console.error("Failed to save session.");
+        if (saveResponse.statusText === "Session already in progress") {
+          alert("Press new session to reset system.");
+        } else {
+          console.error("Failed to save session.");
+        }
       } else {
         const data = await saveResponse.json();
         console.log("Session saved:", data.session_id);
@@ -128,6 +133,8 @@ export default function Home() {
         setChatMessages((prev) => [...prev.slice(0, -1), assistantMessage]);
       }
 
+      console.log(chatMessages)
+
       // save session after chat
       handleSaveSession();
       
@@ -140,18 +147,20 @@ export default function Home() {
   const loadSession = async (sessionId: number) => {
     try {
       const response = await fetch(`http://localhost:8000/load_session/${sessionId}`);
-      if (response.ok) {
+    if (response.ok) {
         const data = await response.json();
+        setCurrentSessionId(data.session_id);
         setSummary(data.summary);
         const loadedMessages = (data.messages || []).slice(3);
         const formattedMessages = loadedMessages.map((msg: { role: string, content: string }) => {
-          return `${msg.role === "user" ? "You" : "Assistant"}: ${msg.content}`;
+          return msg.role === "user" ? `You: ${msg.content}` : `Assistant: ${msg.content}`;
         });
+        console.log("Loaded messages:", formattedMessages);
         setChatMessages(formattedMessages);
         setShowChat(true);
-      } else {
+    } else {
         console.error("Failed to load session");
-      }
+    }
     } catch (error) {
       console.error("Error loading session:", error);
     }
@@ -183,7 +192,7 @@ export default function Home() {
         Summary generated successfully!
       </div>
       <div
-        className={`fixed top-0 left-0 h-full w-48 bg-white dark:bg-slate-800 shadow-lg p-6 z-40 transform transition-transform duration-300 ${
+        className={`fixed top-0 left-0 h-full w-56 bg-white dark:bg-slate-800 shadow-lg p-6 z-40 transform transition-transform duration-300 ${
           showPanel ? "translate-x-0" : "-translate-x-full"
         }`}
       >
@@ -213,13 +222,78 @@ export default function Home() {
         <div className="flex items-start justify-start mb-4 w-full">
           <BurnesLogo />
         </div>
+        <button
+          onClick={async () => {
+            try {
+              const response = await fetch("http://localhost:8000/new_session", {
+                method: "POST",
+              });
+              if (response.ok) {
+                setTranscriptFile(null);
+                setRecordingFile(null);
+                setSummary("");
+                setShowChat(false);
+                setChatInput("");
+                setChatMessages([]);
+                setCurrentSessionId(null);
+                await fetchSessions();
+              } else {
+                console.error("Failed to create new session.");
+              }
+            } catch (error) {
+              console.error("Error creating new session:", error);
+            }
+          }}
+          className="w-full bg-blue-600 text-white py-2 px-3 rounded-lg hover:bg-blue-700 mb-4 font-semibold"
+        >
+          + New Session
+        </button>
         <h2 className="text-xl font-semibold mb-4 text-slate-800 dark:text-slate-100">
           Sessions
         </h2>
         <ul className="space-y-2 text-slate-800 dark:text-slate-100">
           {sessions.map((session) => (
-            <li key={session.id} className="truncate cursor-pointer hover:underline" onClick={() => loadSession(session.id)}>
-              {session.name}
+            <li key={session.id} className="flex justify-between items-center truncate group">
+              <span
+                className="cursor-pointer hover:underline flex-1"
+                onClick={() => loadSession(session.id)}
+              >
+                {session.name}
+              </span>
+              <button
+                onClick={async (e) => {
+                  e.stopPropagation();
+                  try {
+                    const response = await fetch(`http://localhost:8000/delete_session/${session.id}`, {
+                      method: "DELETE",
+                    });
+                    if (response.ok) {
+                      if (session.id === currentSessionId) {
+                        const newSessionRes = await fetch("http://localhost:8000/new_session", { method: "POST" });
+                        if (newSessionRes.ok) {
+                          setTranscriptFile(null);
+                          setRecordingFile(null);
+                          setSummary("");
+                          setShowChat(false);
+                          setChatInput("");
+                          setChatMessages([]);
+                          setCurrentSessionId(null);
+                          await fetchSessions();
+                        }
+                      }
+                      
+                    } else {
+                      console.error("Failed to delete session");
+                    }
+                  } catch (error) {
+                    console.error("Error deleting session:", error);
+                  }
+                }}
+                className="text-red-600 hover:text-red-800 ml-2 text-sm font-bold"
+                title="Delete session"
+              >
+                ✕
+              </button>
             </li>
           ))}
         </ul>

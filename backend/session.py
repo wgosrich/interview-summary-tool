@@ -53,4 +53,4 @@ class Session:
             response += chunk
             yield chunk
         # add final response to conversation
-        self.messages.append({"role": "user", "content": response})
+        self.messages.append({"role": "assistant", "content": response})

@@ -190,11 +190,10 @@ class InterviewSummarizer:
     def generate_title(summary: str):
         prompt = f"""
         You are an AI assistant helping to summarize interview transcripts for a civil rights investigation.
-
-        Your task is to generate a **title** for the summary below. The title should include the interviewee's name and be in heading level 1 format.
-
-        Summary:
+        Your task is to generate a title for the following summary:
         {summary}
+        The title should be a plain string without any formatting or special characters.
+        It should be concise and accurately reflect the content of the summary. Preferably, it should be the interviewee's name if possible.
         """
 
         # Call the GPT-4 model to generate the title

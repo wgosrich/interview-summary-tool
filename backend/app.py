@@ -19,6 +19,14 @@ class SessionModel(db.Model):
     summary = db.Column(db.Text, default="")
     transcript = db.Column(db.Text, default="")
     messages = db.Column(db.JSON, default=list)
+    
+@app.route('/new_session', methods=['POST'])
+def new_session():
+    global current_session
+    current_session = Session(-1)
+    return jsonify({
+        'message': 'New session created',
+    }), 201
 
 @app.route('/save_session', methods=['POST'])
 def save_session():
@@ -37,7 +45,7 @@ def save_session():
             'session_id': new_session.id
         }), 201
     else:  # Existing session, update in the database
-        existing_session = SessionModel.query.get(current_session.id)
+        existing_session = db.session.get(SessionModel, current_session.id)
         if not existing_session:
             return jsonify({'error': 'Session not found'}), 404
 
@@ -56,7 +64,8 @@ def save_session():
 def summarize():
     if 'transcript' not in request.files or 'recording' not in request.files:
         return jsonify({'error': 'Missing transcript or recording file'}), 400
-
+    if current_session.id != -1:
+        return jsonify({'error': 'Session already in progress'}), 400
     transcript_file = request.files['transcript']
     recording_file = request.files['recording']
 
@@ -93,7 +102,7 @@ def chat():
 
 @app.route('/load_session/<int:session_id>', methods=['GET'])
 def load_session(session_id):
-    record = SessionModel.query.get(session_id)
+    record = db.session.get(SessionModel, session_id)
     if not record:
         return jsonify({'error': 'Session not found'}), 404
     global current_session
@@ -120,6 +129,15 @@ def get_sessions():
     for session in sessions:
         session_list.append({'id': session.id, 'name': session.name})
     return jsonify(session_list)
+
+@app.route('/delete_session/<int:session_id>', methods=['DELETE'])
+def delete_session(session_id):
+    session = db.session.get(SessionModel, session_id)
+    if not session:
+        return jsonify({'error': 'Session not found'}), 404
+    db.session.delete(session)
+    db.session.commit()
+    return jsonify({'message': 'Session deleted'}), 200
 
 with app.app_context():
     db.create_all()
