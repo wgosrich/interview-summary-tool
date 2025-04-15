@@ -345,18 +345,16 @@ export default function Home() {
         </div>
       </div>
       <div
-        className={`max-w-screen-xl mx-auto flex gap-10 overflow-hidden h-full transition-all duration-700 ease-in-out ${
+        className={`max-w-screen-xl mx-auto flex gap-10 py-1 h-full transition-all duration-700 ease-in-out ${
           showChat
             ? "flex-col lg:flex-row"
             : "flex-col items-center justify-center"
         }`}
       >
-        <div className="lg:w-1/2 h-full overflow-hidden">
+        <div className="lg:w-1/2 h-full">
           <div
             className={`relative bg-slate-50 dark:bg-slate-700 p-8 shadow rounded-lg transition-all duration-500 flex flex-col h-full ${
-              loading
-                ? "ring-4 ring-blue-500 animate-[pulse-border_2s_infinite] duration-700"
-                : ""
+              loading ? "animate-[pulse-border_2s_infinite]" : ""
             }`}
           >
             <h1 className="text-2xl font-semibold mb-5 text-center text-slate-800 dark:text-slate-100">
