@@ -257,7 +257,7 @@ export default function Home() {
           Sessions
         </h2>
         <ul className="space-y-1 text-slate-800 dark:text-slate-100">
-            {[...sessions].reverse().map((session) => (
+          {[...sessions].reverse().map((session) => (
             <li
               key={session.id}
               className="flex justify-between items-center truncate group"
@@ -311,7 +311,13 @@ export default function Home() {
           ))}
         </ul>
       </div>
-      <div className="max-w-screen-xl mx-auto flex flex-col lg:flex-row gap-10 transition-all duration-500 ease-in-out">
+      <div
+        className={`max-w-screen-xl mx-auto flex gap-10 transition-all duration-700 ease-in-out ${
+          showChat
+            ? "flex-col lg:flex-row"
+            : "flex-col items-center justify-center"
+        }`}
+      >
         <div className="lg:w-1/2 bg-slate-50 dark:bg-slate-700 p-8 shadow rounded-lg">
           <h1 className="text-2xl font-semibold mb-6 text-center text-slate-800 dark:text-slate-100">
             Interview Summarizer
