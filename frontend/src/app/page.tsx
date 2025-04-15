@@ -318,9 +318,14 @@ export default function Home() {
             : "flex-col items-center justify-center"
         }`}
       >
-        <div className="lg:w-1/2 bg-slate-50 dark:bg-slate-700 p-8 shadow rounded-lg">
+        <div className="lg:w-1/2">
+          <div
+            className={`relative bg-slate-50 dark:bg-slate-700 p-8 shadow rounded-lg transition-all duration-500 ${
+              loading ? "ring-4 ring-blue-500 animate-[pulse-border_2s_infinite] duration-700" : ""
+            }`}
+          >
           <h1 className="text-2xl font-semibold mb-6 text-center text-slate-800 dark:text-slate-100">
-            Interview Summarizer
+            Interview Summary
           </h1>
 
           {!summary && (
@@ -401,6 +406,7 @@ export default function Home() {
               </div>
             </div>
           )}
+          </div>
         </div>
 
         {showChat && (
