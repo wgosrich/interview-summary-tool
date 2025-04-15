@@ -19,6 +19,21 @@ export default function Home() {
   }, [chatMessages]);
   const [showSuccess, setShowSuccess] = useState(false);
   const [showPanel, setShowPanel] = useState(false);
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && showPanel) {
+        setShowPanel(false);
+      }
+      if (e.key === "Tab" && !showPanel) {
+        e.preventDefault();
+        setShowPanel(true);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [showPanel]);
   const [sessions, setSessions] = useState<{ id: number; name: string }[]>([]);
   const [currentSessionId, setCurrentSessionId] = useState<number | null>(null);
 
