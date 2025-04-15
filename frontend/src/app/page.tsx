@@ -326,6 +326,7 @@ export default function Home() {
                             await fetchSessions();
                           }
                         }
+                        fetchSessions();
                       } else {
                         console.error("Failed to delete session");
                       }
@@ -361,7 +362,10 @@ export default function Home() {
             <h1 className="text-2xl font-semibold mb-5 text-center text-slate-800 dark:text-slate-100">
               Interview Summary
             </h1>
-            <div className="overflow-y-auto flex-1" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
+            <div
+              className="overflow-y-auto flex-1"
+              style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+            >
               <style jsx>{`
                 div::-webkit-scrollbar {
                   display: none;
