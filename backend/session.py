@@ -1,6 +1,5 @@
-from .llm_clients import gpt4o_client, whisper_client
-from .interview_summarizer import InterviewSummarizer as IS
-from .chat import Chat
+from llm.interview_summarizer import InterviewSummarizer as IS
+from llm.chat import Chat
 
 class Session:
     
