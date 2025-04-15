@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import MarkdownPreview from "@uiw/react-markdown-preview";
 import BurnesLogo from "@/images/burnes_logo";
 
@@ -11,6 +11,12 @@ export default function Home() {
   const [showChat, setShowChat] = useState(false);
   const [chatInput, setChatInput] = useState("");
   const [chatMessages, setChatMessages] = useState<string[]>([]);
+  const chatContainerRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    }
+  }, [chatMessages]);
   const [showSuccess, setShowSuccess] = useState(false);
   const [showPanel, setShowPanel] = useState(false);
   const [sessions, setSessions] = useState<{ id: number; name: string }[]>([]);
@@ -169,7 +175,7 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen font-sans bg-slate-100 dark:bg-slate-600 py-10 px-6 sm:px-8 lg:px-16">
+    <div className="h-screen font-sans bg-slate-100 dark:bg-slate-600 py-10 px-6 sm:px-8 lg:px-16">
       <div
         className={`fixed top-0 left-1/2 transform -translate-x-1/2 transition-transform duration-500 ease-in-out z-50 ${
           showSuccess
@@ -312,111 +318,115 @@ export default function Home() {
         </ul>
       </div>
       <div
-        className={`max-w-screen-xl mx-auto flex gap-10 transition-all duration-700 ease-in-out ${
+        className={`max-w-screen-xl mx-auto flex gap-10 overflow-hidden h-full transition-all duration-700 ease-in-out ${
           showChat
             ? "flex-col lg:flex-row"
             : "flex-col items-center justify-center"
         }`}
       >
-        <div className="lg:w-1/2">
+        <div className="lg:w-1/2 h-full overflow-hidden">
           <div
-            className={`relative bg-slate-50 dark:bg-slate-700 p-8 shadow rounded-lg transition-all duration-500 ${
-              loading ? "ring-4 ring-blue-500 animate-[pulse-border_2s_infinite] duration-700" : ""
+            className={`relative bg-slate-50 dark:bg-slate-700 p-8 shadow rounded-lg transition-all duration-500 h-full overflow-y-auto ${
+              loading
+                ? "ring-4 ring-blue-500 animate-[pulse-border_2s_infinite] duration-700"
+                : ""
             }`}
           >
-          <h1 className="text-2xl font-semibold mb-6 text-center text-slate-800 dark:text-slate-100">
-            Interview Summary
-          </h1>
+            <h1 className="text-2xl font-semibold mb-6 text-center text-slate-800 dark:text-slate-100">
+              Interview Summary
+            </h1>
 
-          {!summary && (
-            <>
-              <div className="flex justify-center gap-6 flex-wrap">
-                <div className="flex-1 min-w-[220px]">
-                  <label className="block text-md font-semibold text-slate-800 dark:text-slate-100 mb-1">
-                    Transcript (.docx)
-                  </label>
-                  <div className="flex items-center gap-3">
-                    <input
-                      type="file"
-                      accept=".docx"
-                      id="transcriptUpload"
-                      className="hidden"
-                      onChange={(e) =>
-                        setTranscriptFile(e.target.files?.[0] || null)
-                      }
-                    />
-                    <label
-                      htmlFor="transcriptUpload"
-                      className="cursor-pointer bg-blue-100 text-blue-600 hover:bg-blue-200 font-bold py-2 px-4 rounded-lg"
-                    >
-                      Choose File
+            {!summary && (
+              <>
+                <div className="flex justify-center gap-6 flex-wrap">
+                  <div className="flex-1 min-w-[220px]">
+                    <label className="block text-md font-semibold text-slate-800 dark:text-slate-100 mb-1">
+                      Transcript (.docx)
                     </label>
-                    <span className="text-slate-800 dark:text-slate-100 text-sm font-light">
-                      {transcriptFile ? transcriptFile.name : "No file chosen"}
-                    </span>
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="file"
+                        accept=".docx"
+                        id="transcriptUpload"
+                        className="hidden"
+                        onChange={(e) =>
+                          setTranscriptFile(e.target.files?.[0] || null)
+                        }
+                      />
+                      <label
+                        htmlFor="transcriptUpload"
+                        className="cursor-pointer bg-blue-100 text-blue-600 hover:bg-blue-200 font-bold py-2 px-4 rounded-lg"
+                      >
+                        Choose File
+                      </label>
+                      <span className="text-slate-800 dark:text-slate-100 text-sm font-light">
+                        {transcriptFile
+                          ? transcriptFile.name
+                          : "No file chosen"}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex-1 min-w-[220px]">
+                    <label className="block text-md font-semibold text-slate-800 dark:text-slate-100 mb-1">
+                      Recording (.mp4)
+                    </label>
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="file"
+                        accept=".mp4"
+                        id="recordingUpload"
+                        className="hidden"
+                        onChange={(e) =>
+                          setRecordingFile(e.target.files?.[0] || null)
+                        }
+                      />
+                      <label
+                        htmlFor="recordingUpload"
+                        className="cursor-pointer bg-blue-100 text-blue-600 hover:bg-blue-200 font-bold py-2 px-4 rounded-lg"
+                      >
+                        Choose File
+                      </label>
+                      <span className="text-slate-800 dark:text-slate-100 text-sm font-light">
+                        {recordingFile ? recordingFile.name : "No file chosen"}
+                      </span>
+                    </div>
                   </div>
                 </div>
 
-                <div className="flex-1 min-w-[220px]">
-                  <label className="block text-md font-semibold text-slate-800 dark:text-slate-100 mb-1">
-                    Recording (.mp4)
-                  </label>
-                  <div className="flex items-center gap-3">
-                    <input
-                      type="file"
-                      accept=".mp4"
-                      id="recordingUpload"
-                      className="hidden"
-                      onChange={(e) =>
-                        setRecordingFile(e.target.files?.[0] || null)
-                      }
+                <button
+                  onClick={handleSubmit}
+                  disabled={loading}
+                  className="w-full py-2 px-4 mt-6 bg-blue-600 text-slate-100 rounded-lg hover:bg-blue-700 transition disabled:opacity-50 font-bold"
+                >
+                  {loading ? "Generating summary..." : "Generate Summary"}
+                </button>
+              </>
+            )}
+
+            {summary && (
+              <div className="mt-4">
+                <div className="prose prose-headings:font-bold prose-headings:mt-4 prose-headings:mb-2 dark:prose-invert max-w-none bg-slate-100 dark:bg-slate-700 rounded-lg text-sm">
+                  <div className="bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100 rounded-lg px-6 py-3">
+                    <MarkdownPreview
+                      source={summary}
+                      style={{ backgroundColor: "transparent" }}
                     />
-                    <label
-                      htmlFor="recordingUpload"
-                      className="cursor-pointer bg-blue-100 text-blue-600 hover:bg-blue-200 font-bold py-2 px-4 rounded-lg"
-                    >
-                      Choose File
-                    </label>
-                    <span className="text-slate-800 dark:text-slate-100 text-sm font-light">
-                      {recordingFile ? recordingFile.name : "No file chosen"}
-                    </span>
                   </div>
                 </div>
               </div>
-
-              <button
-                onClick={handleSubmit}
-                disabled={loading}
-                className="w-full py-2 px-4 mt-6 bg-blue-600 text-slate-100 rounded-lg hover:bg-blue-700 transition disabled:opacity-50 font-bold"
-              >
-                {loading ? "Generating summary..." : "Generate Summary"}
-              </button>
-            </>
-          )}
-
-          {summary && (
-            <div className="mt-4">
-              <div className="prose prose-headings:font-bold prose-headings:mt-4 prose-headings:mb-2 dark:prose-invert max-w-none bg-slate-100 dark:bg-slate-700 rounded-lg text-sm">
-                <div className="bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100 rounded-lg px-6 py-3">
-                  <MarkdownPreview
-                    source={summary}
-                    style={{ backgroundColor: "transparent" }}
-                  />
-                </div>
-              </div>
-            </div>
-          )}
+            )}
           </div>
         </div>
 
         {showChat && (
-          <div className="lg:w-1/2 bg-white dark:bg-slate-800 p-8 rounded-lg shadow h-full flex flex-col">
+          <div className="lg:w-1/2 h-full overflow-hidden bg-white dark:bg-slate-800 p-8 rounded-lg shadow flex flex-col">
             <h2 className="text-2xl font-semibold mb-4 text-slate-800 dark:text-slate-100 text-center">
               Chat with Assistant
             </h2>
             {chatMessages.length > 0 && (
-              <div className="flex-1 overflow-y-auto space-y-2 mb-4 bg-slate-100 dark:bg-slate-700 p-4 rounded-lg">
-                {chatMessages.map((msg, idx) => {
+              <div ref={chatContainerRef} className="flex-1 overflow-y-auto space-y-2 mb-4 bg-slate-100 dark:bg-slate-700 p-4 rounded-lg flex flex-col-reverse">
+                {[...chatMessages].reverse().map((msg, idx) => {
                   const isUser = msg.startsWith("You:");
                   const messageText = msg
                     .replace(/^You:\s*/, "")
