@@ -5,9 +5,9 @@ export default function BurnesLogo() {
     <Image
       src="/burnes_logo.png"
       alt="Burnes Logo"
-      width={1000}
-      height={1000}
-      className="rounded-full dark:filter dark:invert"
+      width={2000}
+      height={2000}
+      className="rounded-full invert dark:invert-0"
     />
   );
 }

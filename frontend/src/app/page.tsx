@@ -13,6 +13,43 @@ export default function Home() {
   const [chatMessages, setChatMessages] = useState<string[]>([]);
   const [showSuccess, setShowSuccess] = useState(false);
   const [showPanel, setShowPanel] = useState(false);
+  const [sessions, setSessions] = useState<{ id: number; name: string }[]>([]);
+  const [currentSessionId, setCurrentSessionId] = useState<number | null>(null);
+
+  const fetchSessions = async () => {
+    try {
+      const response = await fetch("http://localhost:8000/get_sessions");
+      if (response.ok) {
+        const data = await response.json();
+        setSessions(data);
+      } else {
+        console.error("Failed to fetch sessions");
+      }
+    } catch (error) {
+      console.error("Error fetching sessions:", error);
+    }
+  };
+
+  const handleSaveSession = async () => {
+    try {
+      const saveResponse = await fetch("http://localhost:8000/save_session", {
+        method: "POST",
+      });
+
+      if (!saveResponse.ok) {
+        if (saveResponse.statusText === "Session already in progress") {
+          alert("Press new session to reset system.");
+        } else {
+          console.error("Failed to save session.");
+        }
+      } else {
+        const data = await saveResponse.json();
+        console.log("Session saved:", data.session_id);
+      }
+    } catch (saveError) {
+      console.error("Error saving session:", saveError);
+    }
+  };
 
   const handleSubmit = async () => {
     if (!transcriptFile || !recordingFile) {
@@ -50,7 +87,10 @@ export default function Home() {
 
       setShowChat(true);
       setShowSuccess(true);
-      setTimeout(() => setShowSuccess(false), 5000);
+      handleSaveSession();
+      setTimeout(() => {
+        setShowSuccess(false);
+      }, 5000);
     } catch (error) {
       console.error("Streaming error:", error);
       alert("Error while streaming summary.");
@@ -92,9 +132,39 @@ export default function Home() {
         assistantMessage += chunk;
         setChatMessages((prev) => [...prev.slice(0, -1), assistantMessage]);
       }
+
+      // save session after chat
+      handleSaveSession();
     } catch (error) {
       console.error("Chat streaming error:", error);
       alert("Error while streaming chat response.");
+    }
+  };
+
+  const loadSession = async (sessionId: number) => {
+    try {
+      const response = await fetch(
+        `http://localhost:8000/load_session/${sessionId}`
+      );
+      if (response.ok) {
+        const data = await response.json();
+        setCurrentSessionId(data.session_id);
+        setSummary(data.summary);
+        const loadedMessages = (data.messages || []).slice(3);
+        const formattedMessages = loadedMessages.map(
+          (msg: { role: string; content: string }) => {
+            return msg.role === "user"
+              ? `You: ${msg.content}`
+              : `Assistant: ${msg.content}`;
+          }
+        );
+        setChatMessages(formattedMessages);
+        setShowChat(true);
+      } else {
+        console.error("Failed to load session");
+      }
+    } catch (error) {
+      console.error("Error loading session:", error);
     }
   };
 
@@ -124,13 +194,16 @@ export default function Home() {
         Summary generated successfully!
       </div>
       <div
-        className={`fixed top-0 left-0 h-full w-48 bg-white dark:bg-slate-800 shadow-lg p-6 z-40 transform transition-transform duration-300 ${
+        className={`fixed top-0 left-0 h-full w-56 bg-white dark:bg-slate-800 shadow-lg p-6 z-40 transform transition-transform duration-300 ${
           showPanel ? "translate-x-0" : "-translate-x-full"
         }`}
       >
         <button
-          onClick={() => setShowPanel(!showPanel)}
-          className="absolute top-4 right-[-20px] bg-blue-600 text-white w-10 h-10 rounded-full shadow-lg hover:bg-blue-700 flex items-center justify-center"
+          onClick={() => {
+            setShowPanel(!showPanel);
+            if (!showPanel) fetchSessions();
+          }}
+          className="absolute top-4 right-[-50px] bg-blue-600 text-white w-10 h-10 rounded-full shadow-lg hover:bg-blue-700 flex items-center justify-center"
           title={showPanel ? "Hide Panel" : "Show Panel"}
         >
           <svg
@@ -151,88 +224,180 @@ export default function Home() {
         <div className="flex items-start justify-start mb-4 w-full">
           <BurnesLogo />
         </div>
-        <ul className="space-y-2 text-slate-800 dark:text-slate-100">
-          <li>🔍 Review Uploads</li>
-          <li>📄 Summary Insights</li>
-          <li>💬 Assistant History</li>
+        <button
+          onClick={async () => {
+            try {
+              const response = await fetch(
+                "http://localhost:8000/new_session",
+                {
+                  method: "POST",
+                }
+              );
+              if (response.ok) {
+                setTranscriptFile(null);
+                setRecordingFile(null);
+                setSummary("");
+                setShowChat(false);
+                setChatInput("");
+                setChatMessages([]);
+                setCurrentSessionId(null);
+                await fetchSessions();
+              } else {
+                console.error("Failed to create new session.");
+              }
+            } catch (error) {
+              console.error("Error creating new session:", error);
+            }
+          }}
+          className="w-full bg-blue-600 text-white py-2 px-3 rounded-lg hover:bg-blue-700 mb-4 font-semibold"
+        >
+          + New Session
+        </button>
+        <h2 className="text-xl font-semibold mb-4 text-slate-800 dark:text-slate-100">
+          Sessions
+        </h2>
+        <ul className="space-y-1 text-slate-800 dark:text-slate-100">
+          {[...sessions].reverse().map((session) => (
+            <li
+              key={session.id}
+              className="flex justify-between items-center truncate group"
+            >
+              <span
+                className="cursor-pointer flex-1 truncate text-sm hover:bg-gray-200 dark:hover:bg-gray-700 p-2 rounded"
+                onClick={() => loadSession(session.id)}
+              >
+                {session.name}
+              </span>
+              <button
+                onClick={async (e) => {
+                  e.stopPropagation();
+                  try {
+                    const response = await fetch(
+                      `http://localhost:8000/delete_session/${session.id}`,
+                      {
+                        method: "DELETE",
+                      }
+                    );
+                    if (response.ok) {
+                      if (session.id === currentSessionId) {
+                        const newSessionRes = await fetch(
+                          "http://localhost:8000/new_session",
+                          { method: "POST" }
+                        );
+                        if (newSessionRes.ok) {
+                          setTranscriptFile(null);
+                          setRecordingFile(null);
+                          setSummary("");
+                          setShowChat(false);
+                          setChatInput("");
+                          setChatMessages([]);
+                          setCurrentSessionId(null);
+                          await fetchSessions();
+                        }
+                      }
+                    } else {
+                      console.error("Failed to delete session");
+                    }
+                  } catch (error) {
+                    console.error("Error deleting session:", error);
+                  }
+                }}
+                className="text-red-600 hover:text-red-800 ml-2 text-sm font-bold"
+                title="Delete session"
+              >
+                ✕
+              </button>
+            </li>
+          ))}
         </ul>
       </div>
       <div
-        className={`max-w-screen-xl mx-auto flex flex-col lg:flex-row gap-10 transition-all duration-500 ease-in-out ${
-          showPanel ? "ml-48" : ""
+        className={`max-w-screen-xl mx-auto flex gap-10 transition-all duration-700 ease-in-out ${
+          showChat
+            ? "flex-col lg:flex-row"
+            : "flex-col items-center justify-center"
         }`}
       >
-        <div className="lg:w-1/2 bg-slate-50 dark:bg-slate-700 p-8 shadow rounded-lg">
+        <div className="lg:w-1/2">
+          <div
+            className={`relative bg-slate-50 dark:bg-slate-700 p-8 shadow rounded-lg transition-all duration-500 ${
+              loading ? "ring-4 ring-blue-500 animate-[pulse-border_2s_infinite] duration-700" : ""
+            }`}
+          >
           <h1 className="text-2xl font-semibold mb-6 text-center text-slate-800 dark:text-slate-100">
-            Interview Summarizer
+            Interview Summary
           </h1>
 
-          <div className="flex justify-center gap-6 flex-wrap">
-            <div className="flex-1 min-w-[220px]">
-              <label className="block text-md font-semibold text-slate-800 dark:text-slate-100 mb-1">
-                Transcript (.docx)
-              </label>
-              <div className="flex items-center gap-3">
-                <input
-                  type="file"
-                  accept=".docx"
-                  id="transcriptUpload"
-                  className="hidden"
-                  onChange={(e) =>
-                    setTranscriptFile(e.target.files?.[0] || null)
-                  }
-                />
-                <label
-                  htmlFor="transcriptUpload"
-                  className="cursor-pointer bg-blue-100 text-blue-600 hover:bg-blue-200 font-bold py-2 px-4 rounded-lg"
-                >
-                  Choose File
-                </label>
-                <span className="text-slate-800 dark:text-slate-100 text-sm font-light">
-                  {transcriptFile ? transcriptFile.name : "No file chosen"}
-                </span>
-              </div>
-            </div>
+          {!summary && (
+            <>
+              <div className="flex justify-center gap-6 flex-wrap">
+                <div className="flex-1 min-w-[220px]">
+                  <label className="block text-md font-semibold text-slate-800 dark:text-slate-100 mb-1">
+                    Transcript (.docx)
+                  </label>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="file"
+                      accept=".docx"
+                      id="transcriptUpload"
+                      className="hidden"
+                      onChange={(e) =>
+                        setTranscriptFile(e.target.files?.[0] || null)
+                      }
+                    />
+                    <label
+                      htmlFor="transcriptUpload"
+                      className="cursor-pointer bg-blue-100 text-blue-600 hover:bg-blue-200 font-bold py-2 px-4 rounded-lg"
+                    >
+                      Choose File
+                    </label>
+                    <span className="text-slate-800 dark:text-slate-100 text-sm font-light">
+                      {transcriptFile ? transcriptFile.name : "No file chosen"}
+                    </span>
+                  </div>
+                </div>
 
-            <div className="flex-1 min-w-[220px]">
-              <label className="block text-md font-semibold text-slate-800 dark:text-slate-100 mb-1">
-                Recording (.mp4)
-              </label>
-              <div className="flex items-center gap-3">
-                <input
-                  type="file"
-                  accept=".mp4"
-                  id="recordingUpload"
-                  className="hidden"
-                  onChange={(e) =>
-                    setRecordingFile(e.target.files?.[0] || null)
-                  }
-                />
-                <label
-                  htmlFor="recordingUpload"
-                  className="cursor-pointer bg-blue-100 text-blue-600 hover:bg-blue-200 font-bold py-2 px-4 rounded-lg"
-                >
-                  Choose File
-                </label>
-                <span className="text-slate-800 dark:text-slate-100 text-sm font-light">
-                  {recordingFile ? recordingFile.name : "No file chosen"}
-                </span>
+                <div className="flex-1 min-w-[220px]">
+                  <label className="block text-md font-semibold text-slate-800 dark:text-slate-100 mb-1">
+                    Recording (.mp4)
+                  </label>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="file"
+                      accept=".mp4"
+                      id="recordingUpload"
+                      className="hidden"
+                      onChange={(e) =>
+                        setRecordingFile(e.target.files?.[0] || null)
+                      }
+                    />
+                    <label
+                      htmlFor="recordingUpload"
+                      className="cursor-pointer bg-blue-100 text-blue-600 hover:bg-blue-200 font-bold py-2 px-4 rounded-lg"
+                    >
+                      Choose File
+                    </label>
+                    <span className="text-slate-800 dark:text-slate-100 text-sm font-light">
+                      {recordingFile ? recordingFile.name : "No file chosen"}
+                    </span>
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
 
-          <button
-            onClick={handleSubmit}
-            disabled={loading}
-            className="w-full py-2 px-4 mt-6 bg-blue-600 text-slate-100 rounded-lg hover:bg-blue-700 transition disabled:opacity-50 font-bold"
-          >
-            {loading ? "Generating summary..." : "Generate Summary"}
-          </button>
+              <button
+                onClick={handleSubmit}
+                disabled={loading}
+                className="w-full py-2 px-4 mt-6 bg-blue-600 text-slate-100 rounded-lg hover:bg-blue-700 transition disabled:opacity-50 font-bold"
+              >
+                {loading ? "Generating summary..." : "Generate Summary"}
+              </button>
+            </>
+          )}
 
           {summary && (
-            <div className="mt-2">
-              <div className="prose prose-headings:font-bold prose-headings:mt-4 prose-headings:mb-2 dark:prose-invert max-w-none bg-slate-100 dark:bg-slate-700 p-4 rounded-lg text-sm">
-                <div className="bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100 rounded-lg px-6 py-4">
+            <div className="mt-4">
+              <div className="prose prose-headings:font-bold prose-headings:mt-4 prose-headings:mb-2 dark:prose-invert max-w-none bg-slate-100 dark:bg-slate-700 rounded-lg text-sm">
+                <div className="bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100 rounded-lg px-6 py-3">
                   <MarkdownPreview
                     source={summary}
                     style={{ backgroundColor: "transparent" }}
@@ -241,11 +406,12 @@ export default function Home() {
               </div>
             </div>
           )}
+          </div>
         </div>
 
         {showChat && (
-          <div className="lg:w-1/2 bg-white dark:bg-slate-800 p-6 rounded-lg shadow h-full flex flex-col">
-            <h2 className="text-xl font-semibold mb-4 text-slate-800 dark:text-slate-100 text-center">
+          <div className="lg:w-1/2 bg-white dark:bg-slate-800 p-8 rounded-lg shadow h-full flex flex-col">
+            <h2 className="text-2xl font-semibold mb-4 text-slate-800 dark:text-slate-100 text-center">
               Chat with Assistant
             </h2>
             {chatMessages.length > 0 && (

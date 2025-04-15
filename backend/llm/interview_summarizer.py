@@ -1,20 +1,18 @@
 import os
-from openai import AzureOpenAI
 from dotenv import load_dotenv
 from docx import Document
 from pydub import AudioSegment
 from pydub.utils import make_chunks
+from .llm_clients import gpt4o_client, whisper_client
 
 load_dotenv()
 
 # ------------ INTERVIEW SUMMARIZER ------------ #
 
-class InterviewSummarizer:
-    def __init__(self, gpt_client, whisper_client):
-        self.gpt_client = gpt_client
-        self.whisper_client = whisper_client
 
-    def summarize(self, transcript_path: str, recording_path: str):
+class InterviewSummarizer:
+    @staticmethod
+    def summarize(transcript_path: str, recording_path: str):
         # confirm file types
         assert transcript_path.lower().endswith(
             ".docx"
@@ -25,20 +23,23 @@ class InterviewSummarizer:
 
         # parse transcript and recording
         print("Parsing transcript...")
-        transcript = self.parse_transcript(transcript_path)
+        transcript = InterviewSummarizer.parse_transcript(transcript_path)
         print("Transcribing recording...")
-        recording_transcription = self.parse_recording(recording_path)
+        recording_transcription = InterviewSummarizer.parse_recording(recording_path)
 
         # align transcripts
         print("Aligning transcripts...")
-        aligned_transcript = self.align_transcripts(transcript, recording_transcription)
+        aligned_transcript = InterviewSummarizer.align_transcripts(
+            transcript, recording_transcription
+        )
 
         # generate summary
         print("Generating summary...")
-        for chunk in self.generate_summary(aligned_transcript):
+        for chunk in InterviewSummarizer.generate_summary(aligned_transcript):
             yield chunk
 
-    def parse_transcript(self, docx_file: str) -> str:
+    @staticmethod
+    def parse_transcript(docx_file: str) -> str:
         """Extract text from a DOCX transcript and return as a single string."""
 
         document = Document(docx_file)
@@ -53,7 +54,8 @@ class InterviewSummarizer:
 
         return transcription
 
-    def parse_recording(self, recording_path: str) -> str:
+    @staticmethod
+    def parse_recording(recording_path: str) -> str:
         """Transcribe the audio recording using Whisper and return the transcription."""
         # Check file size and chunk if necessary
         file_size_mb = os.path.getsize(recording_path) / (1024 * 1024)
@@ -76,7 +78,7 @@ class InterviewSummarizer:
                 chunk.export(chunk_path, format="mp4")
 
                 with open(chunk_path, "rb") as audio_file:
-                    response = self.whisper_client.audio.transcriptions.create(
+                    response = whisper_client.audio.transcriptions.create(
                         model="whisper-1",
                         file=audio_file,
                         response_format="verbose_json",
@@ -100,7 +102,7 @@ class InterviewSummarizer:
                 os.remove(chunk_path)  # Clean up temporary chunk file
         else:
             with open(recording_path, "rb") as audio_file:
-                response = self.whisper_client.audio.transcriptions.create(
+                response = whisper_client.audio.transcriptions.create(
                     model="whisper-1",
                     file=audio_file,
                     response_format="verbose_json",
@@ -118,7 +120,8 @@ class InterviewSummarizer:
 
         return transcription
 
-    def align_transcripts(self, vtt_transcript: str, whisper_transcript: str) -> str:
+    @staticmethod
+    def align_transcripts(vtt_transcript: str, whisper_transcript: str) -> str:
         """Use GPT-4 to align and merge transcripts while keeping timestamps."""
         prompt = (
             "You are a helpful assistant. Your task is to align and merge two transcripts "
@@ -131,7 +134,7 @@ class InterviewSummarizer:
         )
 
         # Call the GPT-4 model to align and merge the transcripts
-        response = self.gpt_client.chat.completions.create(
+        response = gpt4o_client.chat.completions.create(
             model="gpt-4o",
             messages=[{"role": "user", "content": prompt}],
         )
@@ -140,22 +143,24 @@ class InterviewSummarizer:
 
         return content
 
-    def generate_summary(self, aligned_transcript: str):
+    @staticmethod
+    def generate_summary(aligned_transcript: str):
         prompt = f"""
         You are an AI assistant helping to summarize interview transcripts for a civil rights investigation.
 
         Your task is to generate a comprehensive, detailed, and structured third-person narrative summary of the transcript below, following these guidelines:
 
-        - The summary should begin with a **title** that includes the interviewee's name (e.g., "Interview with [Interviewee's Name]"). This should be in heading level 2 format.
+        - The summary should begin with a **title** that includes the interviewee's name (e.g., "Interview with [Interviewee's Name]"). This should be in heading level 1 format.
         - Use a **standard format** for each summary, starting with the title, followed by a brief introductory sentence, and then the detailed narrative.
         - The narrative should be organized into **sections** that capture different themes or topics discussed during the interview.
-        - Each section should be clearly labeled with a **heading** that summarizes the main topic of that section. This should be in heading level 3 format.
-        - Separate sections with an extra newline for clarity.
+        - Each section should be clearly labeled with a **heading** that summarizes the main topic of that section. This should be in heading level 2 format.
+        - Separate sections with an extra newline for clarity, DO NOT ADD DIVIDERS.
         - The summary should capture **everything that transpired according to the interviewee**, providing a full account of their perspective and experiences.
+        - Present only the **facts and details learned during the interview**, omitting any mention of the interviewee.
+        - Do **not** include phrases like “the interviewee said,” “reported,” “affirmed,” “described,” or any variation of those. Simply state the facts as directly as possible.
         - Do **not** mention the investigator or interviewer.
-        - Do **not** use first-person language.
-        - The summary must be written entirely in **third person**, focusing solely on the interviewee's account.
-        - There is no need to specify that the interviewee is the one saying the words; just present the information as a narrative.
+        - There is no need to specify that the interviewee is the one saying the words; just present the information as detached events with no storyteller.
+        - Avoid all first-person and third-person attribution. The summary must read as an objective report of discovered facts.
         - Avoid editorializing or drawing conclusions not supported directly by the transcript.
         - Include **timestamps** in brackets like [hh:mm:ss] to cite when important details were mentioned.
         - Organize the summary into **short, informative paragraphs** or clear sections to improve readability.
@@ -167,7 +172,7 @@ class InterviewSummarizer:
         """
 
         # Call the GPT-4 model to generate the summary in a streaming manner
-        response = self.gpt_client.chat.completions.create(
+        response = gpt4o_client.chat.completions.create(
             model="gpt-4o",
             messages=[{"role": "user", "content": prompt}],
             stream=True,  # Enable streaming
@@ -181,3 +186,24 @@ class InterviewSummarizer:
             delta = getattr(chunk.choices[0].delta, "content", "") or ""
             summary += delta
             yield delta
+
+    @staticmethod
+    def generate_title(summary: str):
+        prompt = f"""
+        You are an AI assistant helping to summarize interview transcripts for a civil rights investigation.
+        Your task is to generate a title for the following summary:
+        {summary}
+        The title should be a plain string without any formatting or special characters.
+        It should be concise and accurately reflect the content of the summary.
+        If the name of ther interviewee is known, make that the title with no other information.
+        """
+
+        # Call the GPT-4 model to generate the title
+        response = gpt4o_client.chat.completions.create(
+            model="gpt-4o",
+            messages=[{"role": "user", "content": prompt}],
+        )
+
+        content = response.choices[0].message.content
+
+        return content
