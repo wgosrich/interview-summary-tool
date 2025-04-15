@@ -67,9 +67,9 @@ export default function Home() {
 
       setShowChat(true);
       setShowSuccess(true);
+      handleSaveSession();
       setTimeout(() => {
         setShowSuccess(false);
-        handleSaveSession();
       }, 5000);
     } catch (error) {
       console.error("Streaming error:", error);

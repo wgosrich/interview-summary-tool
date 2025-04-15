@@ -9,6 +9,7 @@ load_dotenv()
 
 # ------------ INTERVIEW SUMMARIZER ------------ #
 
+
 class InterviewSummarizer:
     @staticmethod
     def summarize(transcript_path: str, recording_path: str):
@@ -28,7 +29,9 @@ class InterviewSummarizer:
 
         # align transcripts
         print("Aligning transcripts...")
-        aligned_transcript = InterviewSummarizer.align_transcripts(transcript, recording_transcription)
+        aligned_transcript = InterviewSummarizer.align_transcripts(
+            transcript, recording_transcription
+        )
 
         # generate summary
         print("Generating summary...")
@@ -183,3 +186,23 @@ class InterviewSummarizer:
             summary += delta
             yield delta
 
+    @staticmethod
+    def generate_title(summary: str):
+        prompt = f"""
+        You are an AI assistant helping to summarize interview transcripts for a civil rights investigation.
+
+        Your task is to generate a **title** for the summary below. The title should include the interviewee's name and be in heading level 1 format.
+
+        Summary:
+        {summary}
+        """
+
+        # Call the GPT-4 model to generate the title
+        response = gpt4o_client.chat.completions.create(
+            model="gpt-4o",
+            messages=[{"role": "user", "content": prompt}],
+        )
+
+        content = response.choices[0].message.content
+
+        return content

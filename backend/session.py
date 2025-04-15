@@ -35,21 +35,22 @@ class Session:
         
         # generate summary
         print("Generating summary...")
-        self.messages.append({"role": "assistant", "content": "Initial Summary:"})
         for chunk in IS.generate_summary(aligned_transcript):
             # add summary to chat
-            self.messages[-1]["content"] += chunk
             self.summary += chunk
             yield chunk
+            
+        self.messages.append({"role": "assistant", "content": f'Initial Summary: {self.summary}'})
+        self.name = IS.generate_title(self.summary)
         
     def prompt_chat(self, prompt: str):
         # add user message to conversation
         self.messages.append({"role": "user", "content": prompt})
         # get response in a streaming manner
+        response = ""
         for chunk in Chat.stream_response(self.messages):
             # add assistant message to conversation
-            if self.messages and self.messages[-1]["role"] == "assistant":
-                self.messages[-1]["content"] += chunk
-            else:
-                self.messages.append({"role": "assistant", "content": chunk})
+            response += chunk
             yield chunk
+        # add final response to conversation
+        self.messages.append({"role": "user", "content": response})
