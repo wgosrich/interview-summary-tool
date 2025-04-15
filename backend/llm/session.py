@@ -1,19 +1,14 @@
 from .llm_clients import gpt4o_client, whisper_client
-from .interview_summarizer import InterviewSummarizer
+from .interview_summarizer import InterviewSummarizer as IS
 from .chat import Chat
 
 class Session:
     
     def __init__(self, id):
         self.id = id
-        
-        self.gpt_client = gpt4o_client
-        self.whisper_client = whisper_client
-        self.chat = Chat(self.gpt_client)
-        self.summarizer = InterviewSummarizer(self.gpt_client, self.whisper_client)
-        
         self.summary = ""
         self.transcript = ""
+        self.messages = []
         
     def summarize(self, transcript: str, recording: str):
         assert transcript.lower().endswith(
@@ -25,31 +20,37 @@ class Session:
 
         # parse transcript and recording
         print("Parsing transcript...")
-        og_transcript = self.summarizer.parse_transcript(transcript)
+        og_transcript = IS.parse_transcript(transcript)
         print("Transcribing recording...")
-        whisper_transcript = self.summarizer.parse_recording(recording)
+        whisper_transcript = IS.parse_recording(recording)
 
         # align transcripts
         print("Aligning transcripts...")
-        aligned_transcript = self.summarizer.align_transcripts(og_transcript, whisper_transcript)
+        aligned_transcript = IS.align_transcripts(og_transcript, whisper_transcript)
         self.transcript = aligned_transcript
-        self.chat.add_message("user", f"Transcript: {aligned_transcript}")
+        
+        
+        self.messages.append({"role": "system", "content": Chat.PROMPT})
+        self.messages.append({"role": "user", "content": f"Transcript: {aligned_transcript}"})
         
         # generate summary
         print("Generating summary...")
-        self.chat.add_stream_message("assistant", "Initial summary: ")
-        for chunk in self.summarizer.generate_summary(aligned_transcript):
+        self.messages.append({"role": "assistant", "content": "Initial Summary:"})
+        for chunk in IS.generate_summary(aligned_transcript):
             # add summary to chat
-            self.chat.add_stream_message("assistant", chunk)
+            self.messages[-1]["content"] += chunk
             self.summary += chunk
             yield chunk
         
     def prompt_chat(self, prompt: str):
         # add user message to conversation
-        self.chat.add_message("user", prompt)
+        self.messages.append({"role": "user", "content": prompt})
         # get response in a streaming manner
-        for chunk in self.chat.stream_response():
+        for chunk in Chat.stream_response(self.messages):
             # add assistant message to conversation
-            self.chat.add_stream_message("assistant", chunk)
+            if self.messages and self.messages[-1]["role"] == "assistant":
+                self.messages[-1]["content"] += chunk
+            else:
+                self.messages.append({"role": "assistant", "content": chunk})
             yield chunk
     

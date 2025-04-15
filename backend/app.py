@@ -39,8 +39,6 @@ def chat():
     if not prompt:
         return jsonify({'error': 'Missing prompt'}), 400
     
-    session.chat.add_message("user", prompt)
-    
     def generate():
         try:
             for chunk in session.prompt_chat(prompt):
