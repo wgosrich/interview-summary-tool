@@ -14,7 +14,8 @@ export default function Home() {
   const chatContainerRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
     if (chatContainerRef.current) {
-      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+      chatContainerRef.current.scrollTop =
+        chatContainerRef.current.scrollHeight;
     }
   }, [chatMessages]);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -277,60 +278,70 @@ export default function Home() {
         <h2 className="text-xl font-semibold mb-4 text-slate-800 dark:text-slate-100">
           Sessions
         </h2>
-        <ul className="space-y-1 text-slate-800 dark:text-slate-100">
-          {[...sessions].reverse().map((session) => (
-            <li
-              key={session.id}
-              className="flex justify-between items-center truncate group"
-            >
-              <span
-                className="cursor-pointer flex-1 truncate text-sm hover:bg-gray-200 dark:hover:bg-gray-700 p-2 rounded"
-                onClick={() => loadSession(session.id)}
+        <div
+          className="overflow-y-auto h-[calc(100vh-260px)] pr-1"
+          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+        >
+          <style jsx>{`
+            div::-webkit-scrollbar {
+              display: none;
+            }
+          `}</style>
+          <ul className="space-y-1 text-slate-800 dark:text-slate-100">
+            {[...sessions].reverse().map((session) => (
+              <li
+                key={session.id}
+                className="flex justify-between items-center truncate group"
               >
-                {session.name}
-              </span>
-              <button
-                onClick={async (e) => {
-                  e.stopPropagation();
-                  try {
-                    const response = await fetch(
-                      `http://localhost:8000/delete_session/${session.id}`,
-                      {
-                        method: "DELETE",
-                      }
-                    );
-                    if (response.ok) {
-                      if (session.id === currentSessionId) {
-                        const newSessionRes = await fetch(
-                          "http://localhost:8000/new_session",
-                          { method: "POST" }
-                        );
-                        if (newSessionRes.ok) {
-                          setTranscriptFile(null);
-                          setRecordingFile(null);
-                          setSummary("");
-                          setShowChat(false);
-                          setChatInput("");
-                          setChatMessages([]);
-                          setCurrentSessionId(null);
-                          await fetchSessions();
+                <span
+                  className="cursor-pointer flex-1 truncate text-sm hover:bg-gray-200 dark:hover:bg-gray-700 p-2 rounded"
+                  onClick={() => loadSession(session.id)}
+                >
+                  {session.name}
+                </span>
+                <button
+                  onClick={async (e) => {
+                    e.stopPropagation();
+                    try {
+                      const response = await fetch(
+                        `http://localhost:8000/delete_session/${session.id}`,
+                        {
+                          method: "DELETE",
                         }
+                      );
+                      if (response.ok) {
+                        if (session.id === currentSessionId) {
+                          const newSessionRes = await fetch(
+                            "http://localhost:8000/new_session",
+                            { method: "POST" }
+                          );
+                          if (newSessionRes.ok) {
+                            setTranscriptFile(null);
+                            setRecordingFile(null);
+                            setSummary("");
+                            setShowChat(false);
+                            setChatInput("");
+                            setChatMessages([]);
+                            setCurrentSessionId(null);
+                            await fetchSessions();
+                          }
+                        }
+                      } else {
+                        console.error("Failed to delete session");
                       }
-                    } else {
-                      console.error("Failed to delete session");
+                    } catch (error) {
+                      console.error("Error deleting session:", error);
                     }
-                  } catch (error) {
-                    console.error("Error deleting session:", error);
-                  }
-                }}
-                className="text-red-600 hover:text-red-800 ml-2 text-sm font-bold"
-                title="Delete session"
-              >
-                ✕
-              </button>
-            </li>
-          ))}
-        </ul>
+                  }}
+                  className="text-red-600 hover:text-red-800 ml-2 text-sm font-bold"
+                  title="Delete session"
+                >
+                  ✕
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
       </div>
       <div
         className={`max-w-screen-xl mx-auto flex gap-10 overflow-hidden h-full transition-all duration-700 ease-in-out ${
@@ -341,86 +352,92 @@ export default function Home() {
       >
         <div className="lg:w-1/2 h-full overflow-hidden">
           <div
-            className={`relative bg-slate-50 dark:bg-slate-700 p-8 shadow rounded-lg transition-all duration-500 h-full overflow-y-auto ${
+            className={`relative bg-slate-50 dark:bg-slate-700 p-8 shadow rounded-lg transition-all duration-500 flex flex-col h-full ${
               loading
                 ? "ring-4 ring-blue-500 animate-[pulse-border_2s_infinite] duration-700"
                 : ""
             }`}
           >
-            <h1 className="text-2xl font-semibold mb-6 text-center text-slate-800 dark:text-slate-100">
+            <h1 className="text-2xl font-semibold mb-5 text-center text-slate-800 dark:text-slate-100">
               Interview Summary
             </h1>
-
-            {!summary && (
-              <>
-                <div className="flex justify-center gap-6 flex-wrap">
-                  <div className="flex-1 min-w-[220px]">
-                    <label className="block text-md font-semibold text-slate-800 dark:text-slate-100 mb-1">
-                      Transcript (.docx)
-                    </label>
-                    <div className="flex items-center gap-3">
-                      <input
-                        type="file"
-                        accept=".docx"
-                        id="transcriptUpload"
-                        className="hidden"
-                        onChange={(e) =>
-                          setTranscriptFile(e.target.files?.[0] || null)
-                        }
-                      />
-                      <label
-                        htmlFor="transcriptUpload"
-                        className="cursor-pointer bg-blue-100 text-blue-600 hover:bg-blue-200 font-bold py-2 px-4 rounded-lg"
-                      >
-                        Choose File
+            <div className="overflow-y-auto flex-1" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
+              <style jsx>{`
+                div::-webkit-scrollbar {
+                  display: none;
+                }
+              `}</style>
+              {!summary && (
+                <>
+                  <div className="flex justify-center gap-6 flex-wrap">
+                    <div className="flex-1 min-w-[220px]">
+                      <label className="block text-md font-semibold text-slate-800 dark:text-slate-100 mb-1">
+                        Transcript (.docx)
                       </label>
-                      <span className="text-slate-800 dark:text-slate-100 text-sm font-light">
-                        {transcriptFile
-                          ? transcriptFile.name
-                          : "No file chosen"}
-                      </span>
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="file"
+                          accept=".docx"
+                          id="transcriptUpload"
+                          className="hidden"
+                          onChange={(e) =>
+                            setTranscriptFile(e.target.files?.[0] || null)
+                          }
+                        />
+                        <label
+                          htmlFor="transcriptUpload"
+                          className="cursor-pointer bg-blue-100 text-blue-600 hover:bg-blue-200 font-bold py-2 px-4 rounded-lg"
+                        >
+                          Choose File
+                        </label>
+                        <span className="text-slate-800 dark:text-slate-100 text-sm font-light">
+                          {transcriptFile
+                            ? transcriptFile.name
+                            : "No file chosen"}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex-1 min-w-[220px]">
+                      <label className="block text-md font-semibold text-slate-800 dark:text-slate-100 mb-1">
+                        Recording (.mp4)
+                      </label>
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="file"
+                          accept=".mp4"
+                          id="recordingUpload"
+                          className="hidden"
+                          onChange={(e) =>
+                            setRecordingFile(e.target.files?.[0] || null)
+                          }
+                        />
+                        <label
+                          htmlFor="recordingUpload"
+                          className="cursor-pointer bg-blue-100 text-blue-600 hover:bg-blue-200 font-bold py-2 px-4 rounded-lg"
+                        >
+                          Choose File
+                        </label>
+                        <span className="text-slate-800 dark:text-slate-100 text-sm font-light">
+                          {recordingFile
+                            ? recordingFile.name
+                            : "No file chosen"}
+                        </span>
+                      </div>
                     </div>
                   </div>
 
-                  <div className="flex-1 min-w-[220px]">
-                    <label className="block text-md font-semibold text-slate-800 dark:text-slate-100 mb-1">
-                      Recording (.mp4)
-                    </label>
-                    <div className="flex items-center gap-3">
-                      <input
-                        type="file"
-                        accept=".mp4"
-                        id="recordingUpload"
-                        className="hidden"
-                        onChange={(e) =>
-                          setRecordingFile(e.target.files?.[0] || null)
-                        }
-                      />
-                      <label
-                        htmlFor="recordingUpload"
-                        className="cursor-pointer bg-blue-100 text-blue-600 hover:bg-blue-200 font-bold py-2 px-4 rounded-lg"
-                      >
-                        Choose File
-                      </label>
-                      <span className="text-slate-800 dark:text-slate-100 text-sm font-light">
-                        {recordingFile ? recordingFile.name : "No file chosen"}
-                      </span>
-                    </div>
-                  </div>
-                </div>
+                  <button
+                    onClick={handleSubmit}
+                    disabled={loading}
+                    className="w-full py-2 px-4 mt-6 bg-blue-600 text-slate-100 rounded-lg hover:bg-blue-700 transition disabled:opacity-50 font-bold"
+                  >
+                    {loading ? "Generating summary..." : "Generate Summary"}
+                  </button>
+                </>
+              )}
 
-                <button
-                  onClick={handleSubmit}
-                  disabled={loading}
-                  className="w-full py-2 px-4 mt-6 bg-blue-600 text-slate-100 rounded-lg hover:bg-blue-700 transition disabled:opacity-50 font-bold"
-                >
-                  {loading ? "Generating summary..." : "Generate Summary"}
-                </button>
-              </>
-            )}
-
-            {summary && (
-              <div className="mt-4">
+              {summary && (
                 <div className="prose prose-headings:font-bold prose-headings:mt-4 prose-headings:mb-2 dark:prose-invert max-w-none bg-slate-100 dark:bg-slate-700 rounded-lg text-sm">
                   <div className="bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100 rounded-lg px-6 py-3">
                     <MarkdownPreview
@@ -429,51 +446,59 @@ export default function Home() {
                     />
                   </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
 
         {showChat && (
           <div className="lg:w-1/2 h-full overflow-hidden bg-white dark:bg-slate-800 p-8 rounded-lg shadow flex flex-col">
-            <h2 className="text-2xl font-semibold mb-4 text-slate-800 dark:text-slate-100 text-center">
+            <h2 className="text-2xl font-semibold mb-5 text-slate-800 dark:text-slate-100 text-center">
               Chat with Assistant
             </h2>
-            {chatMessages.length > 0 && (
-              <div ref={chatContainerRef} className="flex-1 overflow-y-auto space-y-2 mb-4 bg-slate-100 dark:bg-slate-700 p-4 rounded-lg flex flex-col-reverse">
-                {[...chatMessages].reverse().map((msg, idx) => {
-                  const isUser = msg.startsWith("You:");
-                  const messageText = msg
-                    .replace(/^You:\s*/, "")
-                    .replace(/^Assistant:\s*/, "");
-                  return (
+
+            <div
+              ref={chatContainerRef}
+              className="flex-1 overflow-y-auto space-y-2 mb-4 bg-slate-100 dark:bg-slate-700 p-4 rounded-lg flex flex-col-reverse"
+              style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+            >
+              <style jsx>{`
+                div::-webkit-scrollbar {
+                  display: none;
+                }
+              `}</style>
+              {[...chatMessages].reverse().map((msg, idx) => {
+                const isUser = msg.startsWith("You:");
+                const messageText = msg
+                  .replace(/^You:\s*/, "")
+                  .replace(/^Assistant:\s*/, "");
+                return (
+                  <div
+                    key={idx}
+                    className={`flex ${
+                      isUser ? "justify-end" : "justify-start"
+                    }`}
+                  >
                     <div
-                      key={idx}
-                      className={`flex ${
-                        isUser ? "justify-end" : "justify-start"
+                      className={`inline-block px-4 py-2 rounded-lg text-sm max-w-[90%] ${
+                        isUser
+                          ? "bg-blue-600 text-white rounded-lg"
+                          : "bg-gray-200 dark:bg-slate-600 text-gray-900 dark:text-white rounded-lg"
                       }`}
                     >
-                      <div
-                        className={`inline-block px-4 py-2 rounded-lg text-sm max-w-[90%] ${
-                          isUser
-                            ? "bg-blue-600 text-white rounded-lg"
-                            : "bg-gray-200 dark:bg-slate-600 text-gray-900 dark:text-white rounded-lg"
-                        }`}
-                      >
-                        {isUser ? (
-                          messageText
-                        ) : (
-                          <MarkdownPreview
-                            source={messageText}
-                            style={{ backgroundColor: "transparent" }}
-                          />
-                        )}
-                      </div>
+                      {isUser ? (
+                        messageText
+                      ) : (
+                        <MarkdownPreview
+                          source={messageText}
+                          style={{ backgroundColor: "transparent" }}
+                        />
+                      )}
                     </div>
-                  );
-                })}
-              </div>
-            )}
+                  </div>
+                );
+              })}
+            </div>
             <div className="flex gap-2">
               <input
                 type="text"
