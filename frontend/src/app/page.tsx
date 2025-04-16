@@ -12,6 +12,9 @@ export default function Home() {
   const [showChat, setShowChat] = useState(false);
   const [chatInput, setChatInput] = useState("");
   const [chatMessages, setChatMessages] = useState<string[]>([]);
+  const [summaryCopied, setSummaryCopied] = useState(false);
+  const [summaryDownloaded, setSummaryDownloaded] = useState(false);
+
   const chatContainerRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
     if (chatContainerRef.current) {
@@ -25,6 +28,7 @@ export default function Home() {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape" && showPanel) {
         setShowPanel(false);
+        setContextMenu(null);
       }
       if (e.key === "Tab" && !showPanel) {
         e.preventDefault();
@@ -38,6 +42,14 @@ export default function Home() {
   }, [showPanel]);
   const [sessions, setSessions] = useState<{ id: number; name: string }[]>([]);
   const [currentSessionId, setCurrentSessionId] = useState<number | null>(null);
+  const [contextMenu, setContextMenu] = useState<{ mouseX: number; mouseY: number } | null>(null);
+  const [selectedSessionId, setSelectedSessionId] = useState<number | null>(null);
+  
+  useEffect(() => {
+    const handleClick = () => setContextMenu(null);
+    window.addEventListener("click", handleClick);
+    return () => window.removeEventListener("click", handleClick);
+  }, []);
 
   const fetchSessions = async () => {
     try {
@@ -174,6 +186,8 @@ export default function Home() {
         setCurrentSessionId(data.session_id);
         setSummary(data.summary);
         const loadedMessages = (data.messages || []).slice(3);
+        console.log("Stored messages: ", data.messages);
+        console.log("Loaded messages:", loadedMessages);
         const formattedMessages = loadedMessages.map(
           (msg: { role: string; content: string }) => {
             return msg.role === "user"
@@ -215,6 +229,52 @@ export default function Home() {
           />
         </svg>
         Summary generated successfully!
+      </div>
+      <div
+        className={`fixed top-0 left-1/2 transform -translate-x-1/2 transition-transform duration-500 ease-in-out z-50 ${
+          summaryCopied
+            ? "translate-y-6 opacity-100"
+            : "-translate-y-full opacity-0"
+        } bg-green-100 text-green-800 px-5 py-3 rounded-lg shadow-lg text-sm font-semibold flex items-center gap-1`}
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={4}
+          className="h-5 w-5 text-green-800"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M5 13l4 4L19 7"
+          />
+        </svg>
+        Summary copied successfully!
+      </div>
+      <div
+        className={`fixed top-0 left-1/2 transform -translate-x-1/2 transition-transform duration-500 ease-in-out z-50 ${
+          summaryDownloaded
+            ? "translate-y-6 opacity-100"
+            : "-translate-y-full opacity-0"
+        } bg-green-100 text-green-800 px-5 py-3 rounded-lg shadow-lg text-sm font-semibold flex items-center gap-1`}
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={4}
+          className="h-5 w-5 text-green-800"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M5 13l4 4L19 7"
+          />
+        </svg>
+        Summary downloaded successfully!
       </div>
       <div
         className={`fixed top-0 left-0 h-full w-56 bg-white dark:bg-slate-800 shadow-lg p-6 z-40 transform transition-transform duration-300 ${
@@ -276,7 +336,7 @@ export default function Home() {
         >
           + New Session
         </button>
-        <h2 className="text-xl font-semibold mb-4 text-slate-800 dark:text-slate-100">
+        <h2 className="text-xs font-bold mb-2 text-slate-800 dark:text-slate-100">
           Sessions
         </h2>
         <div
@@ -292,54 +352,23 @@ export default function Home() {
             {[...sessions].reverse().map((session) => (
               <li
                 key={session.id}
-                className="flex justify-between items-center truncate group"
+                onContextMenu={(e) => {
+                  e.preventDefault();
+                  setSelectedSessionId(session.id);
+                  setContextMenu({ mouseX: e.clientX, mouseY: e.clientY });
+                }}
+                className={`flex justify-between items-center truncate group cursor-pointer ${
+                  session.id === currentSessionId ? 'bg-gray-300 rounded-lg' : ''
+                }`}
               >
                 <span
-                  className="cursor-pointer flex-1 truncate text-sm hover:bg-gray-200 dark:hover:bg-gray-700 p-2 rounded"
+                  className={`flex-1 truncate text-sm p-2 rounded-lg ${
+                    session.id !== currentSessionId ? 'hover:bg-gray-200 dark:hover:bg-gray-700' : ''
+                  }`}
                   onClick={() => loadSession(session.id)}
                 >
                   {session.name}
                 </span>
-                <button
-                  onClick={async (e) => {
-                    e.stopPropagation();
-                    try {
-                      const response = await fetch(
-                        `http://localhost:8000/delete_session/${session.id}`,
-                        {
-                          method: "DELETE",
-                        }
-                      );
-                      if (response.ok) {
-                        if (session.id === currentSessionId) {
-                          const newSessionRes = await fetch(
-                            "http://localhost:8000/new_session",
-                            { method: "POST" }
-                          );
-                          if (newSessionRes.ok) {
-                            setTranscriptFile(null);
-                            setRecordingFile(null);
-                            setSummary("");
-                            setShowChat(false);
-                            setChatInput("");
-                            setChatMessages([]);
-                            setCurrentSessionId(null);
-                            await fetchSessions();
-                          }
-                        }
-                        fetchSessions();
-                      } else {
-                        console.error("Failed to delete session");
-                      }
-                    } catch (error) {
-                      console.error("Error deleting session:", error);
-                    }
-                  }}
-                  className="text-red-600 hover:text-red-800 ml-2 text-sm font-bold"
-                  title="Delete session"
-                >
-                  ✕
-                </button>
               </li>
             ))}
           </ul>
@@ -370,7 +399,15 @@ export default function Home() {
                 }`}
               >
                 <button
-                  onClick={() => navigator.clipboard.writeText(summary)}
+                  onClick={() => {
+                    navigator.clipboard.writeText(
+                      "The following summary was generated with AI:\n\n" + summary
+                    );
+                    setSummaryCopied(true);
+                    setTimeout(() => {
+                      setSummaryCopied(false);
+                    }, 3000);
+                  }}
                   className="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded"
                   title="Copy"
                 >
@@ -391,12 +428,17 @@ export default function Home() {
                       sections: [
                         {
                           properties: {},
-                          children: summary.split("\n").map(
-                            (line) =>
-                              new Paragraph({
-                                children: [new TextRun(line)],
-                              })
-                          ),
+                          children: (
+                            "The following summary was generated with AI:\n\n" +
+                            summary
+                          )
+                            .split("\n")
+                            .map(
+                              (line) =>
+                                new Paragraph({
+                                  children: [new TextRun(line)],
+                                })
+                            ),
                         },
                       ],
                     });
@@ -410,6 +452,11 @@ export default function Home() {
                     a.click();
                     document.body.removeChild(a);
                     URL.revokeObjectURL(url);
+
+                    setSummaryDownloaded(true);
+                    setTimeout(() => {
+                      setSummaryDownloaded(false);
+                    }, 3000);
                   }}
                   className="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded"
                   title="Download"
@@ -612,6 +659,46 @@ export default function Home() {
           </div>
         )}
       </div>
+      {contextMenu && (
+        <div
+          className="absolute z-50 bg-white dark:bg-slate-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg text-sm"
+          style={{ top: contextMenu.mouseY, left: contextMenu.mouseX }}
+        >
+          <button
+            className="w-fit text-left px-4 py-1 m-1 hover:bg-blue-500 hover:text-white rounded-lg"
+            onClick={async () => {
+              if (selectedSessionId !== null) {
+                try {
+                  const response = await fetch(`http://localhost:8000/delete_session/${selectedSessionId}`, { method: "DELETE" });
+                  if (response.ok) {
+                    if (selectedSessionId === currentSessionId) {
+                      const newSessionRes = await fetch("http://localhost:8000/new_session", { method: "POST" });
+                      if (newSessionRes.ok) {
+                        setTranscriptFile(null);
+                        setRecordingFile(null);
+                        setSummary("");
+                        setShowChat(false);
+                        setChatInput("");
+                        setChatMessages([]);
+                        setCurrentSessionId(null);
+                        await fetchSessions();
+                      }
+                    }
+                    fetchSessions();
+                  } else {
+                    console.error("Failed to delete session");
+                  }
+                } catch (error) {
+                  console.error("Error deleting session:", error);
+                }
+              }
+              setContextMenu(null);
+            }}
+          >
+            Delete
+          </button>
+        </div>
+      )}
     </div>
   );
 }

@@ -3,12 +3,12 @@ from llm.chat import Chat
 
 class Session:
     
-    def __init__(self, id, name="Untitled", summary="", transcript="", messages=[]):
+    def __init__(self, id, name="Untitled", summary="", transcript="", messages=None):
         self.id = id
         self.name = name
         self.summary = summary
         self.transcript = transcript
-        self.messages = messages
+        self.messages = list(messages) if messages else []
         
     def summarize(self, transcript: str, recording: str):
         assert transcript.lower().endswith(
@@ -31,7 +31,7 @@ class Session:
         
         
         self.messages.append({"role": "system", "content": Chat.PROMPT})
-        self.messages.append({"role": "user", "content": f"Transcript: {aligned_transcript}"})
+        self.messages.append({"role": "system", "content": f"Transcript: {aligned_transcript}"})
         
         # generate summary
         print("Generating summary...")
@@ -40,7 +40,7 @@ class Session:
             self.summary += chunk
             yield chunk
             
-        self.messages.append({"role": "assistant", "content": f'Initial Summary: {self.summary}'})
+        self.messages.append({"role": "system", "content": f'Initial Summary: {self.summary}'})
         self.name = IS.generate_title(self.summary)
         
     def prompt_chat(self, prompt: str):
