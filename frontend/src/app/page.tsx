@@ -14,16 +14,26 @@ export default function Home() {
   const [chatMessages, setChatMessages] = useState<string[]>([]);
   const [summaryCopied, setSummaryCopied] = useState(false);
   const [summaryDownloaded, setSummaryDownloaded] = useState(false);
-
   const chatContainerRef = useRef<HTMLDivElement | null>(null);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [showPanel, setShowPanel] = useState(false);
+  const [sessions, setSessions] = useState<{ id: number; name: string }[]>([]);
+  const [currentSessionId, setCurrentSessionId] = useState<number | null>(null);
+  const [contextMenu, setContextMenu] = useState<{
+    mouseX: number;
+    mouseY: number;
+  } | null>(null);
+  const [selectedSessionId, setSelectedSessionId] = useState<number | null>(
+    null
+  );
+
   useEffect(() => {
     if (chatContainerRef.current) {
       chatContainerRef.current.scrollTop =
         chatContainerRef.current.scrollHeight;
     }
   }, [chatMessages]);
-  const [showSuccess, setShowSuccess] = useState(false);
-  const [showPanel, setShowPanel] = useState(false);
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape" && showPanel) {
@@ -40,11 +50,7 @@ export default function Home() {
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, [showPanel]);
-  const [sessions, setSessions] = useState<{ id: number; name: string }[]>([]);
-  const [currentSessionId, setCurrentSessionId] = useState<number | null>(null);
-  const [contextMenu, setContextMenu] = useState<{ mouseX: number; mouseY: number } | null>(null);
-  const [selectedSessionId, setSelectedSessionId] = useState<number | null>(null);
-  
+
   useEffect(() => {
     const handleClick = () => setContextMenu(null);
     window.addEventListener("click", handleClick);
@@ -69,6 +75,10 @@ export default function Home() {
     try {
       const saveResponse = await fetch("http://localhost:8000/save_session", {
         method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          session_id: currentSessionId,
+        }),
       });
 
       if (!saveResponse.ok) {
@@ -117,12 +127,20 @@ export default function Home() {
         const { value, done: readerDone } = await reader.read();
         done = readerDone;
         const chunk = decoder.decode(value, { stream: true });
+
+        // Look for session ID marker
+        const sessionMatch = chunk.match(/\[SESSION_ID::(\d+)\]/);
+        if (sessionMatch) {
+          setCurrentSessionId(Number(sessionMatch[1]));
+          continue; // Don't add to summary
+        }
+
         setSummary((prev) => prev + chunk);
       }
 
       setShowChat(true);
       setShowSuccess(true);
-      handleSaveSession();
+      // handleSaveSession();
       setTimeout(() => {
         setShowSuccess(false);
       }, 5000);
@@ -145,7 +163,10 @@ export default function Home() {
       const response = await fetch("http://localhost:8000/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: currentInput }),
+        body: JSON.stringify({
+          message: currentInput,
+          session_id: currentSessionId,
+        }),
       });
 
       if (!response.ok || !response.body) {
@@ -309,28 +330,35 @@ export default function Home() {
         </div>
         <button
           onClick={async () => {
-            try {
-              const response = await fetch(
-                "http://localhost:8000/new_session",
-                {
-                  method: "POST",
-                }
-              );
-              if (response.ok) {
-                setTranscriptFile(null);
-                setRecordingFile(null);
-                setSummary("");
-                setShowChat(false);
-                setChatInput("");
-                setChatMessages([]);
-                setCurrentSessionId(null);
-                await fetchSessions();
-              } else {
-                console.error("Failed to create new session.");
-              }
-            } catch (error) {
-              console.error("Error creating new session:", error);
-            }
+            setTranscriptFile(null);
+            setRecordingFile(null);
+            setSummary("");
+            setShowChat(false);
+            setChatInput("");
+            setChatMessages([]);
+            setCurrentSessionId(null);
+            // try {
+            //   const response = await fetch(
+            //     "http://localhost:8000/new_session",
+            //     {
+            //       method: "POST",
+            //     }
+            //   );
+            //   if (response.ok) {
+            //     setTranscriptFile(null);
+            //     setRecordingFile(null);
+            //     setSummary("");
+            //     setShowChat(false);
+            //     setChatInput("");
+            //     setChatMessages([]);
+            //     setCurrentSessionId(null);
+            //     await fetchSessions();
+            //   } else {
+            //     console.error("Failed to create new session.");
+            //   }
+            // } catch (error) {
+            //   console.error("Error creating new session:", error);
+            // }
           }}
           className="w-full bg-blue-600 text-white py-2 px-3 rounded-lg hover:bg-blue-700 mb-4 font-semibold"
         >
@@ -358,12 +386,16 @@ export default function Home() {
                   setContextMenu({ mouseX: e.clientX, mouseY: e.clientY });
                 }}
                 className={`flex justify-between items-center truncate group cursor-pointer ${
-                  session.id === currentSessionId ? 'bg-gray-300 rounded-lg' : ''
+                  session.id === currentSessionId
+                    ? "bg-gray-300 rounded-lg"
+                    : ""
                 }`}
               >
                 <span
                   className={`flex-1 truncate text-sm p-2 rounded-lg ${
-                    session.id !== currentSessionId ? 'hover:bg-gray-200 dark:hover:bg-gray-700' : ''
+                    session.id !== currentSessionId
+                      ? "hover:bg-gray-200 dark:hover:bg-gray-700"
+                      : ""
                   }`}
                   onClick={() => loadSession(session.id)}
                 >
@@ -401,7 +433,8 @@ export default function Home() {
                 <button
                   onClick={() => {
                     navigator.clipboard.writeText(
-                      "The following summary was generated with AI:\n\n" + summary
+                      "The following summary was generated with AI:\n\n" +
+                        summary
                     );
                     setSummaryCopied(true);
                     setTimeout(() => {
@@ -669,20 +702,33 @@ export default function Home() {
             onClick={async () => {
               if (selectedSessionId !== null) {
                 try {
-                  const response = await fetch(`http://localhost:8000/delete_session/${selectedSessionId}`, { method: "DELETE" });
+                  const response = await fetch(
+                    `http://localhost:8000/delete_session/${selectedSessionId}`,
+                    { method: "DELETE" }
+                  );
                   if (response.ok) {
                     if (selectedSessionId === currentSessionId) {
-                      const newSessionRes = await fetch("http://localhost:8000/new_session", { method: "POST" });
-                      if (newSessionRes.ok) {
-                        setTranscriptFile(null);
-                        setRecordingFile(null);
-                        setSummary("");
-                        setShowChat(false);
-                        setChatInput("");
-                        setChatMessages([]);
-                        setCurrentSessionId(null);
-                        await fetchSessions();
-                      }
+                      setTranscriptFile(null);
+                      setRecordingFile(null);
+                      setSummary("");
+                      setShowChat(false);
+                      setChatInput("");
+                      setChatMessages([]);
+                      setCurrentSessionId(null);
+                      // const newSessionRes = await fetch(
+                      //   "http://localhost:8000/new_session",
+                      //   { method: "POST" }
+                      // );
+                      // if (newSessionRes.ok) {
+                      //   setTranscriptFile(null);
+                      //   setRecordingFile(null);
+                      //   setSummary("");
+                      //   setShowChat(false);
+                      //   setChatInput("");
+                      //   setChatMessages([]);
+                      //   setCurrentSessionId(null);
+                      //   await fetchSessions();
+                      // }
                     }
                     fetchSessions();
                   } else {
