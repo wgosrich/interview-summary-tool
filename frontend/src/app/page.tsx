@@ -26,6 +26,15 @@ export default function Home() {
   const [selectedSessionId, setSelectedSessionId] = useState<number | null>(
     null
   );
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    setIsDarkMode(mediaQuery.matches);
+    const handler = (e: MediaQueryListEvent) => setIsDarkMode(e.matches);
+    mediaQuery.addEventListener("change", handler);
+    return () => mediaQuery.removeEventListener("change", handler);
+  }, []);
 
   useEffect(() => {
     if (chatContainerRef.current) {
@@ -50,7 +59,29 @@ export default function Home() {
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, [showPanel]);
-
+ 
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      const panel = document.querySelector(".fixed.top-0.left-0.h-full.w-56");
+      const button = document.querySelector(".absolute.top-4.right-\\[-50px\\]");
+      if (
+        showPanel &&
+        panel &&
+        !panel.contains(e.target as Node) &&
+        button &&
+        !button.contains(e.target as Node)
+      ) {
+        setShowPanel(false);
+        setContextMenu(null);
+      }
+    };
+ 
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showPanel]);
+ 
   useEffect(() => {
     const handleClick = () => setContextMenu(null);
     window.addEventListener("click", handleClick);
@@ -128,11 +159,10 @@ export default function Home() {
         done = readerDone;
         const chunk = decoder.decode(value, { stream: true });
 
-        // Look for session ID marker
         const sessionMatch = chunk.match(/\[SESSION_ID::(\d+)\]/);
         if (sessionMatch) {
           setCurrentSessionId(Number(sessionMatch[1]));
-          continue; // Don't add to summary
+          continue;
         }
 
         setSummary((prev) => prev + chunk);
@@ -140,7 +170,6 @@ export default function Home() {
 
       setShowChat(true);
       setShowSuccess(true);
-      // handleSaveSession();
       setTimeout(() => {
         setShowSuccess(false);
       }, 5000);
@@ -337,28 +366,6 @@ export default function Home() {
             setChatInput("");
             setChatMessages([]);
             setCurrentSessionId(null);
-            // try {
-            //   const response = await fetch(
-            //     "http://localhost:8000/new_session",
-            //     {
-            //       method: "POST",
-            //     }
-            //   );
-            //   if (response.ok) {
-            //     setTranscriptFile(null);
-            //     setRecordingFile(null);
-            //     setSummary("");
-            //     setShowChat(false);
-            //     setChatInput("");
-            //     setChatMessages([]);
-            //     setCurrentSessionId(null);
-            //     await fetchSessions();
-            //   } else {
-            //     console.error("Failed to create new session.");
-            //   }
-            // } catch (error) {
-            //   console.error("Error creating new session:", error);
-            // }
           }}
           className="w-full bg-blue-600 text-white py-2 px-3 rounded-lg hover:bg-blue-700 mb-4 font-semibold"
         >
@@ -387,14 +394,14 @@ export default function Home() {
                 }}
                 className={`flex justify-between items-center truncate group cursor-pointer ${
                   session.id === currentSessionId
-                    ? "bg-gray-300 rounded-lg"
+                    ? "bg-gray-300 dark:bg-gray-900 rounded-lg"
                     : ""
                 }`}
               >
                 <span
                   className={`flex-1 truncate text-sm p-2 rounded-lg ${
                     session.id !== currentSessionId
-                      ? "hover:bg-gray-200 dark:hover:bg-gray-700"
+                      ? "hover:bg-gray-100 dark:hover:bg-gray-700"
                       : ""
                   }`}
                   onClick={() => loadSession(session.id)}
@@ -415,7 +422,7 @@ export default function Home() {
       >
         <div className="lg:w-1/2 h-full">
           <div
-            className={`relative bg-slate-50 dark:bg-slate-700 p-8 shadow rounded-lg transition-all duration-500 flex flex-col h-full ${
+            className={`relative bg-slate-50 dark:bg-slate-800 p-8 shadow rounded-lg transition-all duration-500 flex flex-col h-full ${
               loading ? "animate-[pulse-border_2s_infinite]" : ""
             }`}
           >
@@ -594,7 +601,10 @@ export default function Home() {
                   <div className="bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100 rounded-lg px-6 py-3">
                     <MarkdownPreview
                       source={summary}
-                      style={{ backgroundColor: "transparent" }}
+                      style={{
+                        backgroundColor: "transparent",
+                        color: isDarkMode ? "white" : "black",
+                      }}
                     />
                   </div>
                 </div>
@@ -624,7 +634,6 @@ export default function Home() {
                 const messageText = msg
                   .replace(/^You:\s*/, "")
                   .replace(/^Assistant:\s*/, "");
-
                 return (
                   <div
                     key={idx}
@@ -646,7 +655,9 @@ export default function Home() {
                           source={messageText}
                           style={{
                             backgroundColor: "transparent",
-                            margin: 0, // normalize spacing
+                            margin: 0,
+                            color: isDarkMode ? "white" : "black",
+                            fontSize: "0.875rem", // Tailwind's text-sm equivalent
                           }}
                         />
                       )}
@@ -715,20 +726,6 @@ export default function Home() {
                       setChatInput("");
                       setChatMessages([]);
                       setCurrentSessionId(null);
-                      // const newSessionRes = await fetch(
-                      //   "http://localhost:8000/new_session",
-                      //   { method: "POST" }
-                      // );
-                      // if (newSessionRes.ok) {
-                      //   setTranscriptFile(null);
-                      //   setRecordingFile(null);
-                      //   setSummary("");
-                      //   setShowChat(false);
-                      //   setChatInput("");
-                      //   setChatMessages([]);
-                      //   setCurrentSessionId(null);
-                      //   await fetchSessions();
-                      // }
                     }
                     fetchSessions();
                   } else {
