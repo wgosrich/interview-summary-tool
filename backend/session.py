@@ -3,8 +3,7 @@ from llm.chat import Chat
 
 class Session:
     
-    def __init__(self, id, name="Untitled", summary="", transcript="", messages=None):
-        self.id = id
+    def __init__(self, name="Untitled", summary="", transcript="", messages=None):
         self.name = name
         self.summary = summary
         self.transcript = transcript

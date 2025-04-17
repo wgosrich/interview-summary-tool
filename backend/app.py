@@ -48,7 +48,7 @@ def summarize():
     if "transcript" not in request.files or "recording" not in request.files:
         return jsonify({"error": "Missing transcript or recording file"}), 400
 
-    session = Session(-1)
+    session = Session()
 
     transcript_file = request.files["transcript"]
     recording_file = request.files["recording"]
@@ -96,7 +96,6 @@ def chat():
         return jsonify({"error": "Session not found"}), 404
 
     session = Session(
-        id=record.id,
         name=record.name,
         summary=record.summary,
         transcript=record.transcript,
