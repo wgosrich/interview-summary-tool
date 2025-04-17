@@ -43,6 +43,10 @@ class Session:
         self.messages.append({"role": "system", "content": f'Initial Summary: {self.summary}'})
         self.name = IS.generate_title(self.summary)
         
+        # initial message
+        greeting = IS.initial_greeting()
+        self.messages.append({"role": "assistant", "content": greeting})
+        
     def prompt_chat(self, prompt: str):
         # add user message to conversation
         self.messages.append({"role": "user", "content": prompt})

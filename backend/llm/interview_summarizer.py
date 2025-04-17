@@ -207,3 +207,22 @@ class InterviewSummarizer:
         content = response.choices[0].message.content
 
         return content
+
+    @staticmethod
+    def initial_greeting():
+        prompt = f"""
+        You are an AI assistant helping to summarize interview transcripts 
+        and assist investigators in identifying key insights for a civil rights
+        investigation. Your task is to generate a greeting message for the user.
+        The message should be concise and welcoming, setting the tone for the conversation.
+        """
+
+        # Call the GPT-4 model to generate the greeting
+        response = gpt4o_client.chat.completions.create(
+            model="gpt-4o",
+            messages=[{"role": "user", "content": prompt}],
+        )
+
+        content = response.choices[0].message.content
+
+        return content

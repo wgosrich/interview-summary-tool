@@ -202,9 +202,18 @@ export default function Home() {
         done = readerDone;
         const chunk = decoder.decode(value, { stream: true });
 
-        const sessionMatch = chunk.match(/\[SESSION_ID::(\d+)\]/);
-        if (sessionMatch) {
-          setCurrentSessionId(Number(sessionMatch[1]));
+        const metaMatch = chunk.match(/\[SESSION_META::(.*)\]/);
+        if (metaMatch) {
+          const meta = JSON.parse(metaMatch[1]);
+          setCurrentSessionId(meta.id);
+          const formattedMessages = meta.messages
+            .slice(3)
+            .map((msg: { role: string; content: string }) =>
+              msg.role === "user"
+                ? `You: ${msg.content}`
+                : `Assistant: ${msg.content}`
+            );
+          setChatMessages(formattedMessages);
           continue;
         }
 
@@ -279,8 +288,6 @@ export default function Home() {
         setCurrentSessionId(data.session_id);
         setSummary(data.summary);
         const loadedMessages = (data.messages || []).slice(3);
-        console.log("Stored messages: ", data.messages);
-        console.log("Loaded messages:", loadedMessages);
         const formattedMessages = loadedMessages.map(
           (msg: { role: string; content: string }) => {
             return msg.role === "user"
@@ -449,13 +456,8 @@ export default function Home() {
         </h2>
         <div
           className="overflow-y-auto h-[calc(100vh-260px)] pr-1"
-          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+          style={{ scrollbarWidth: "thin", msOverflowStyle: "auto" }}
         >
-          <style jsx>{`
-            div::-webkit-scrollbar {
-              display: none;
-            }
-          `}</style>
           <ul className="space-y-1 text-slate-800 dark:text-slate-100">
             {[...sessions].reverse().map((session) => (
               <li
@@ -625,13 +627,8 @@ export default function Home() {
             </div>
             <div
               className="overflow-y-auto flex-1"
-              style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+              style={{ scrollbarWidth: "thin", msOverflowStyle: "auto" }}
             >
-              <style jsx>{`
-                div::-webkit-scrollbar {
-                  display: none;
-                }
-              `}</style>
               {!summary && (
                 <>
                   <div className="flex justify-center gap-6 flex-wrap">
@@ -735,11 +732,6 @@ export default function Home() {
               className="flex-1 overflow-y-auto scrollbar-none mb-4 bg-slate-100 dark:bg-slate-700 p-4 rounded-lg flex flex-col-reverse gap-2"
               style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
             >
-              <style jsx>{`
-                div::-webkit-scrollbar {
-                  display: none;
-                }
-              `}</style>
               {[...chatMessages].reverse().map((msg, idx) => {
                 const isUser = msg.startsWith("You:");
                 const messageText = msg
