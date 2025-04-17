@@ -3,6 +3,7 @@ from flask_cors import CORS
 from werkzeug.utils import secure_filename
 from flask_sqlalchemy import SQLAlchemy
 import os
+import json
 from session import Session
 
 app = Flask(__name__)
@@ -65,7 +66,6 @@ def summarize():
         finally:
             os.remove(transcript_path)
             os.remove(recording_path)
-            print("Debugging...")
             new_session = SessionModel(
                 name=session.name,
                 summary=session.summary,
@@ -74,7 +74,9 @@ def summarize():
             )
             db.session.add(new_session)
             db.session.commit()
-            yield f"[SESSION_ID::{new_session.id}]"
+            yield "\n[SESSION_META::" + json.dumps(
+                {"id": new_session.id, "messages": new_session.messages}
+            ) + "]"
 
     return Response(stream_with_context(generate()), content_type="text/markdown")
 
