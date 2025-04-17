@@ -27,6 +27,7 @@ export default function Home() {
     null
   );
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [initializing, setInitializing] = useState(true);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
@@ -51,6 +52,7 @@ export default function Home() {
       }
       if (e.key === "Tab" && !showPanel) {
         e.preventDefault();
+        fetchSessions();
         setShowPanel(true);
       }
     };
@@ -59,34 +61,75 @@ export default function Home() {
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, [showPanel]);
- 
+
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       const panel = document.querySelector(".fixed.top-0.left-0.h-full.w-56");
-      const button = document.querySelector(".absolute.top-4.right-\\[-50px\\]");
+      const button = document.querySelector(
+        ".absolute.top-4.right-\\[-50px\\]"
+      );
+      const contextMenuEl = document.querySelector(".context-menu");
       if (
         showPanel &&
         panel &&
         !panel.contains(e.target as Node) &&
         button &&
-        !button.contains(e.target as Node)
+        !button.contains(e.target as Node) &&
+        (!contextMenuEl || !contextMenuEl.contains(e.target as Node))
       ) {
         setShowPanel(false);
         setContextMenu(null);
       }
     };
- 
+
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [showPanel]);
- 
+
   useEffect(() => {
-    const handleClick = () => setContextMenu(null);
+    const handleClick = (e: MouseEvent) => {
+      const contextMenuEl = document.querySelector(".context-menu");
+      if (contextMenuEl && !contextMenuEl.contains(e.target as Node)) {
+        setContextMenu(null);
+      }
+    };
     window.addEventListener("click", handleClick);
     return () => window.removeEventListener("click", handleClick);
   }, []);
+
+  useEffect(() => {
+    const savedSessionId = localStorage.getItem("currentSessionId");
+    const savedSummary = localStorage.getItem("summary");
+    const savedMessages = localStorage.getItem("chatMessages");
+    const savedShowChat = localStorage.getItem("showChat");
+
+    if (savedSessionId) setCurrentSessionId(Number(savedSessionId));
+    if (savedSummary) setSummary(savedSummary);
+    if (savedMessages) setChatMessages(JSON.parse(savedMessages));
+    if (savedShowChat) setShowChat(JSON.parse(savedShowChat));
+
+    setInitializing(false); // done initializing
+  }, []);
+
+  useEffect(() => {
+    if (currentSessionId !== null) {
+      localStorage.setItem("currentSessionId", currentSessionId.toString());
+    }
+  }, [currentSessionId]);
+
+  useEffect(() => {
+    localStorage.setItem("summary", summary);
+  }, [summary]);
+
+  useEffect(() => {
+    localStorage.setItem("chatMessages", JSON.stringify(chatMessages));
+  }, [chatMessages]);
+
+  useEffect(() => {
+    localStorage.setItem("showChat", JSON.stringify(showChat));
+  }, [showChat]);
 
   const fetchSessions = async () => {
     try {
@@ -255,6 +298,34 @@ export default function Home() {
     }
   };
 
+  if (initializing) {
+    return (
+      <div className="h-screen w-screen flex items-center justify-center bg-slate-100 dark:bg-slate-600">
+        <div className="flex flex-col items-center gap-4">
+          <svg
+            className="animate-spin h-6 w-6 text-blue-600"
+            style={{ animationDuration: "0.5s" }}
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+          >
+            <path
+              className="opacity-75"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="4"
+              strokeLinecap="round"
+              d="M12 4a8 8 0 018 8"
+            />
+          </svg>
+          <p className="text-slate-800 dark:text-slate-100 font-semibold text-sm">
+            Loading...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="h-screen font-sans bg-slate-100 dark:bg-slate-600 py-10 px-6 sm:px-8 lg:px-16">
       <div
@@ -359,6 +430,7 @@ export default function Home() {
         </div>
         <button
           onClick={async () => {
+            setShowPanel(false);
             setTranscriptFile(null);
             setRecordingFile(null);
             setSummary("");
@@ -366,6 +438,7 @@ export default function Home() {
             setChatInput("");
             setChatMessages([]);
             setCurrentSessionId(null);
+            localStorage.clear();
           }}
           className="w-full bg-blue-600 text-white py-2 px-3 rounded-lg hover:bg-blue-700 mb-4 font-semibold"
         >
@@ -404,7 +477,10 @@ export default function Home() {
                       ? "hover:bg-gray-100 dark:hover:bg-gray-700"
                       : ""
                   }`}
-                  onClick={() => loadSession(session.id)}
+                  onClick={() => {
+                    loadSession(session.id);
+                    setShowPanel(false);
+                  }}
                 >
                   {session.name}
                 </span>
@@ -426,12 +502,41 @@ export default function Home() {
               loading ? "animate-[pulse-border_2s_infinite]" : ""
             }`}
           >
-            <div className="relative flex justify-between items-center w-full mb-6">
-              <div className="absolute left-1/2 transform -translate-x-1/2">
-                <h1 className="text-2xl font-semibold text-slate-800 dark:text-slate-100">
-                  Interview Summary
-                </h1>
-              </div>
+            <div
+              className={`relative flex justify-between items-center w-full mb-6`}
+            >
+              {summary && (
+                <div className="absolute left-1/2 transform -translate-x-1/2">
+                  <h1
+                    className={`font-semibold text-slate-800 dark:text-slate-100 text-2xl`}
+                  >
+                    Interview Summary
+                  </h1>
+                </div>
+              )}
+              {!summary && (
+                <div className="text-center px-6 py-12 bg-slate-100 dark:bg-slate-700 rounded-lg">
+                  <h1 className="text-3xl font-extrabold text-slate-800 dark:text-slate-100 mb-6">
+                    Fast AI-Assisted
+                    <br />
+                    Investigation & Review
+                  </h1>
+                  <p className="text-lg text-slate-600 dark:text-slate-300 mb-4 max-w-2xl mx-auto text-left">
+                    Fast AI-Assisted Investigation & Review (FAIR) is a tool
+                    that helps you summarize and analyze your interview data
+                    quickly and efficiently.
+                  </p>
+                  <p className="text-lg text-slate-600 dark:text-slate-300 max-w-2xl mx-auto text-left">
+                    Upload your interview transcript and recording, then click{" "}
+                    <span className="inline-block bg-blue-600 text-white font-semibold px-3 py-1 rounded-md shadow-sm text-sm">
+                      Generate Summary
+                    </span>{" "}
+                    button to get started. FAIR will provide a detailed summary
+                    and launch a chat assistant to explore your insights
+                    further.
+                  </p>
+                </div>
+              )}
               <div
                 className={`ml-auto flex gap-2 ${
                   summary === "" ? "hidden" : ""
@@ -597,7 +702,13 @@ export default function Home() {
                 </>
               )}
               {summary && (
-                <div className="prose prose-headings:font-bold prose-headings:mt-4 prose-headings:mb-2 dark:prose-invert max-w-none bg-slate-100 dark:bg-slate-700 rounded-lg text-sm">
+                <div
+                  className={`transition-all duration-700 ease-in-out ${
+                    summary
+                      ? "opacity-100 max-h-[1000px]"
+                      : "opacity-0 max-h-0 overflow-hidden"
+                  }`}
+                >
                   <div className="bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100 rounded-lg px-6 py-3">
                     <MarkdownPreview
                       source={summary}
@@ -705,7 +816,7 @@ export default function Home() {
       </div>
       {contextMenu && (
         <div
-          className="absolute z-50 bg-white dark:bg-slate-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg text-sm"
+          className="context-menu absolute z-50 bg-white dark:bg-slate-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg text-xs font-semibold"
           style={{ top: contextMenu.mouseY, left: contextMenu.mouseX }}
         >
           <button
