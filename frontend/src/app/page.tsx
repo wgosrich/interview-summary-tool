@@ -518,24 +518,24 @@ export default function Home() {
               )}
               {!summary && (
                 <div className="text-center px-6 py-12 bg-slate-100 dark:bg-slate-700 rounded-lg">
-                  <h1 className="text-3xl font-extrabold text-slate-800 dark:text-slate-100 mb-6">
+                  <h1 className="text-3xl font-extrabold text-slate-800 dark:text-white mb-6">
                     Fast AI-Assisted
                     <br />
                     Investigation & Review
                   </h1>
-                  <p className="text-lg text-slate-600 dark:text-slate-300 mb-4 max-w-2xl mx-auto text-left">
+                  <p className="text-lg text-slate-600 dark:text-white mb-4 max-w-2xl mx-auto text-left">
                     Fast AI-Assisted Investigation & Review (FAIR) is a tool
-                    that helps you summarize and analyze your interview data
-                    quickly and efficiently.
+                    designed to summarize interviews and extract key case
+                    information.
                   </p>
-                  <p className="text-lg text-slate-600 dark:text-slate-300 max-w-2xl mx-auto text-left">
-                    Upload your interview transcript and recording, then click{" "}
+                  <p className="text-lg text-slate-600 dark:text-white max-w-2xl mx-auto text-left">
+                    Upload your interview transcript and recording along with
+                    any other relevant documentation, then click the{" "}
                     <span className="inline-block bg-blue-600 text-white font-semibold px-3 py-1 rounded-md shadow-sm text-sm">
                       Generate Summary
                     </span>{" "}
-                    button to get started. FAIR will provide a detailed summary
-                    and launch a chat assistant to explore your insights
-                    further.
+                    button to get started. FAIR will provide a summary and
+                    launch an AI assistant to explore your insights further.
                   </p>
                 </div>
               )}
@@ -631,7 +631,7 @@ export default function Home() {
             >
               {!summary && (
                 <>
-                  <div className="flex justify-center gap-6 flex-wrap">
+                  <div className="flex justify-center gap-6 flex-wrap mt-8">
                     <div className="flex-1 min-w-[220px]">
                       <label className="block text-md font-semibold text-slate-800 dark:text-slate-100 mb-1">
                         Transcript (.docx)
