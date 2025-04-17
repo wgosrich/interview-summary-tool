@@ -147,8 +147,8 @@ export default function Home() {
 
   const handleSaveSession = async () => {
     try {
-      const saveResponse = await fetch("http://localhost:8000/save_session", {
-        method: "POST",
+      const saveResponse = await fetch("http://localhost:8000/update_session", {
+        method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           session_id: currentSessionId,

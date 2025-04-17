@@ -21,8 +21,8 @@ class SessionModel(db.Model):
     messages = db.Column(db.JSON, default=list)
 
 
-@app.route("/save_session", methods=["POST"])
-def save_session():
+@app.route("/update_session", methods=["PUT"])
+def update_session():
     session_data = request.json
     session_id = session_data.get("session_id")
     existing_session = db.session.get(SessionModel, session_id)
