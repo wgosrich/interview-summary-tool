@@ -55,3 +55,8 @@ body {
 .animate-pulse-bg {
   animation: pulse-bg 2s infinite;
 }
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

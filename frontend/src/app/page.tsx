@@ -14,16 +14,36 @@ export default function Home() {
   const [chatMessages, setChatMessages] = useState<string[]>([]);
   const [summaryCopied, setSummaryCopied] = useState(false);
   const [summaryDownloaded, setSummaryDownloaded] = useState(false);
-
   const chatContainerRef = useRef<HTMLDivElement | null>(null);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [showPanel, setShowPanel] = useState(false);
+  const [sessions, setSessions] = useState<{ id: number; name: string }[]>([]);
+  const [currentSessionId, setCurrentSessionId] = useState<number | null>(null);
+  const [contextMenu, setContextMenu] = useState<{
+    mouseX: number;
+    mouseY: number;
+  } | null>(null);
+  const [selectedSessionId, setSelectedSessionId] = useState<number | null>(
+    null
+  );
+  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [initializing, setInitializing] = useState(true);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    setIsDarkMode(mediaQuery.matches);
+    const handler = (e: MediaQueryListEvent) => setIsDarkMode(e.matches);
+    mediaQuery.addEventListener("change", handler);
+    return () => mediaQuery.removeEventListener("change", handler);
+  }, []);
+
   useEffect(() => {
     if (chatContainerRef.current) {
       chatContainerRef.current.scrollTop =
         chatContainerRef.current.scrollHeight;
     }
   }, [chatMessages]);
-  const [showSuccess, setShowSuccess] = useState(false);
-  const [showPanel, setShowPanel] = useState(false);
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape" && showPanel) {
@@ -32,6 +52,7 @@ export default function Home() {
       }
       if (e.key === "Tab" && !showPanel) {
         e.preventDefault();
+        fetchSessions();
         setShowPanel(true);
       }
     };
@@ -40,16 +61,75 @@ export default function Home() {
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, [showPanel]);
-  const [sessions, setSessions] = useState<{ id: number; name: string }[]>([]);
-  const [currentSessionId, setCurrentSessionId] = useState<number | null>(null);
-  const [contextMenu, setContextMenu] = useState<{ mouseX: number; mouseY: number } | null>(null);
-  const [selectedSessionId, setSelectedSessionId] = useState<number | null>(null);
-  
+
   useEffect(() => {
-    const handleClick = () => setContextMenu(null);
+    const handleClickOutside = (e: MouseEvent) => {
+      const panel = document.querySelector(".fixed.top-0.left-0.h-full.w-56");
+      const button = document.querySelector(
+        ".absolute.top-4.right-\\[-50px\\]"
+      );
+      const contextMenuEl = document.querySelector(".context-menu");
+      if (
+        showPanel &&
+        panel &&
+        !panel.contains(e.target as Node) &&
+        button &&
+        !button.contains(e.target as Node) &&
+        (!contextMenuEl || !contextMenuEl.contains(e.target as Node))
+      ) {
+        setShowPanel(false);
+        setContextMenu(null);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showPanel]);
+
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      const contextMenuEl = document.querySelector(".context-menu");
+      if (contextMenuEl && !contextMenuEl.contains(e.target as Node)) {
+        setContextMenu(null);
+      }
+    };
     window.addEventListener("click", handleClick);
     return () => window.removeEventListener("click", handleClick);
   }, []);
+
+  useEffect(() => {
+    const savedSessionId = localStorage.getItem("currentSessionId");
+    const savedSummary = localStorage.getItem("summary");
+    const savedMessages = localStorage.getItem("chatMessages");
+    const savedShowChat = localStorage.getItem("showChat");
+
+    if (savedSessionId) setCurrentSessionId(Number(savedSessionId));
+    if (savedSummary) setSummary(savedSummary);
+    if (savedMessages) setChatMessages(JSON.parse(savedMessages));
+    if (savedShowChat) setShowChat(JSON.parse(savedShowChat));
+
+    setInitializing(false); // done initializing
+  }, []);
+
+  useEffect(() => {
+    if (currentSessionId !== null) {
+      localStorage.setItem("currentSessionId", currentSessionId.toString());
+    }
+  }, [currentSessionId]);
+
+  useEffect(() => {
+    localStorage.setItem("summary", summary);
+  }, [summary]);
+
+  useEffect(() => {
+    localStorage.setItem("chatMessages", JSON.stringify(chatMessages));
+  }, [chatMessages]);
+
+  useEffect(() => {
+    localStorage.setItem("showChat", JSON.stringify(showChat));
+  }, [showChat]);
 
   const fetchSessions = async () => {
     try {
@@ -69,6 +149,10 @@ export default function Home() {
     try {
       const saveResponse = await fetch("http://localhost:8000/save_session", {
         method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          session_id: currentSessionId,
+        }),
       });
 
       if (!saveResponse.ok) {
@@ -117,12 +201,18 @@ export default function Home() {
         const { value, done: readerDone } = await reader.read();
         done = readerDone;
         const chunk = decoder.decode(value, { stream: true });
+
+        const sessionMatch = chunk.match(/\[SESSION_ID::(\d+)\]/);
+        if (sessionMatch) {
+          setCurrentSessionId(Number(sessionMatch[1]));
+          continue;
+        }
+
         setSummary((prev) => prev + chunk);
       }
 
       setShowChat(true);
       setShowSuccess(true);
-      handleSaveSession();
       setTimeout(() => {
         setShowSuccess(false);
       }, 5000);
@@ -145,7 +235,10 @@ export default function Home() {
       const response = await fetch("http://localhost:8000/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: currentInput }),
+        body: JSON.stringify({
+          message: currentInput,
+          session_id: currentSessionId,
+        }),
       });
 
       if (!response.ok || !response.body) {
@@ -204,6 +297,34 @@ export default function Home() {
       console.error("Error loading session:", error);
     }
   };
+
+  if (initializing) {
+    return (
+      <div className="h-screen w-screen flex items-center justify-center bg-slate-100 dark:bg-slate-600">
+        <div className="flex flex-col items-center gap-4">
+          <svg
+            className="animate-spin h-6 w-6 text-blue-600"
+            style={{ animationDuration: "0.5s" }}
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+          >
+            <path
+              className="opacity-75"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="4"
+              strokeLinecap="round"
+              d="M12 4a8 8 0 018 8"
+            />
+          </svg>
+          <p className="text-slate-800 dark:text-slate-100 font-semibold text-sm">
+            Loading...
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-screen font-sans bg-slate-100 dark:bg-slate-600 py-10 px-6 sm:px-8 lg:px-16">
@@ -309,28 +430,15 @@ export default function Home() {
         </div>
         <button
           onClick={async () => {
-            try {
-              const response = await fetch(
-                "http://localhost:8000/new_session",
-                {
-                  method: "POST",
-                }
-              );
-              if (response.ok) {
-                setTranscriptFile(null);
-                setRecordingFile(null);
-                setSummary("");
-                setShowChat(false);
-                setChatInput("");
-                setChatMessages([]);
-                setCurrentSessionId(null);
-                await fetchSessions();
-              } else {
-                console.error("Failed to create new session.");
-              }
-            } catch (error) {
-              console.error("Error creating new session:", error);
-            }
+            setShowPanel(false);
+            setTranscriptFile(null);
+            setRecordingFile(null);
+            setSummary("");
+            setShowChat(false);
+            setChatInput("");
+            setChatMessages([]);
+            setCurrentSessionId(null);
+            localStorage.clear();
           }}
           className="w-full bg-blue-600 text-white py-2 px-3 rounded-lg hover:bg-blue-700 mb-4 font-semibold"
         >
@@ -358,14 +466,21 @@ export default function Home() {
                   setContextMenu({ mouseX: e.clientX, mouseY: e.clientY });
                 }}
                 className={`flex justify-between items-center truncate group cursor-pointer ${
-                  session.id === currentSessionId ? 'bg-gray-300 rounded-lg' : ''
+                  session.id === currentSessionId
+                    ? "bg-gray-300 dark:bg-gray-900 rounded-lg"
+                    : ""
                 }`}
               >
                 <span
                   className={`flex-1 truncate text-sm p-2 rounded-lg ${
-                    session.id !== currentSessionId ? 'hover:bg-gray-200 dark:hover:bg-gray-700' : ''
+                    session.id !== currentSessionId
+                      ? "hover:bg-gray-100 dark:hover:bg-gray-700"
+                      : ""
                   }`}
-                  onClick={() => loadSession(session.id)}
+                  onClick={() => {
+                    loadSession(session.id);
+                    setShowPanel(false);
+                  }}
                 >
                   {session.name}
                 </span>
@@ -383,16 +498,45 @@ export default function Home() {
       >
         <div className="lg:w-1/2 h-full">
           <div
-            className={`relative bg-slate-50 dark:bg-slate-700 p-8 shadow rounded-lg transition-all duration-500 flex flex-col h-full ${
+            className={`relative bg-slate-50 dark:bg-slate-800 p-8 shadow rounded-lg transition-all duration-500 flex flex-col h-full ${
               loading ? "animate-[pulse-border_2s_infinite]" : ""
             }`}
           >
-            <div className="relative flex justify-between items-center w-full mb-6">
-              <div className="absolute left-1/2 transform -translate-x-1/2">
-                <h1 className="text-2xl font-semibold text-slate-800 dark:text-slate-100">
-                  Interview Summary
-                </h1>
-              </div>
+            <div
+              className={`relative flex justify-between items-center w-full mb-6`}
+            >
+              {summary && (
+                <div className="absolute left-1/2 transform -translate-x-1/2">
+                  <h1
+                    className={`font-semibold text-slate-800 dark:text-slate-100 text-2xl`}
+                  >
+                    Interview Summary
+                  </h1>
+                </div>
+              )}
+              {!summary && (
+                <div className="text-center px-6 py-12 bg-slate-100 dark:bg-slate-700 rounded-lg">
+                  <h1 className="text-3xl font-extrabold text-slate-800 dark:text-slate-100 mb-6">
+                    Fast AI-Assisted
+                    <br />
+                    Investigation & Review
+                  </h1>
+                  <p className="text-lg text-slate-600 dark:text-slate-300 mb-4 max-w-2xl mx-auto text-left">
+                    Fast AI-Assisted Investigation & Review (FAIR) is a tool
+                    that helps you summarize and analyze your interview data
+                    quickly and efficiently.
+                  </p>
+                  <p className="text-lg text-slate-600 dark:text-slate-300 max-w-2xl mx-auto text-left">
+                    Upload your interview transcript and recording, then click{" "}
+                    <span className="inline-block bg-blue-600 text-white font-semibold px-3 py-1 rounded-md shadow-sm text-sm">
+                      Generate Summary
+                    </span>{" "}
+                    button to get started. FAIR will provide a detailed summary
+                    and launch a chat assistant to explore your insights
+                    further.
+                  </p>
+                </div>
+              )}
               <div
                 className={`ml-auto flex gap-2 ${
                   summary === "" ? "hidden" : ""
@@ -401,7 +545,8 @@ export default function Home() {
                 <button
                   onClick={() => {
                     navigator.clipboard.writeText(
-                      "The following summary was generated with AI:\n\n" + summary
+                      "The following summary was generated with AI:\n\n" +
+                        summary
                     );
                     setSummaryCopied(true);
                     setTimeout(() => {
@@ -557,11 +702,20 @@ export default function Home() {
                 </>
               )}
               {summary && (
-                <div className="prose prose-headings:font-bold prose-headings:mt-4 prose-headings:mb-2 dark:prose-invert max-w-none bg-slate-100 dark:bg-slate-700 rounded-lg text-sm">
+                <div
+                  className={`transition-all duration-700 ease-in-out ${
+                    summary
+                      ? "opacity-100 max-h-[1000px]"
+                      : "opacity-0 max-h-0 overflow-hidden"
+                  }`}
+                >
                   <div className="bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100 rounded-lg px-6 py-3">
                     <MarkdownPreview
                       source={summary}
-                      style={{ backgroundColor: "transparent" }}
+                      style={{
+                        backgroundColor: "transparent",
+                        color: isDarkMode ? "white" : "black",
+                      }}
                     />
                   </div>
                 </div>
@@ -591,7 +745,6 @@ export default function Home() {
                 const messageText = msg
                   .replace(/^You:\s*/, "")
                   .replace(/^Assistant:\s*/, "");
-
                 return (
                   <div
                     key={idx}
@@ -613,7 +766,9 @@ export default function Home() {
                           source={messageText}
                           style={{
                             backgroundColor: "transparent",
-                            margin: 0, // normalize spacing
+                            margin: 0,
+                            color: isDarkMode ? "white" : "black",
+                            fontSize: "0.875rem", // Tailwind's text-sm equivalent
                           }}
                         />
                       )}
@@ -661,7 +816,7 @@ export default function Home() {
       </div>
       {contextMenu && (
         <div
-          className="absolute z-50 bg-white dark:bg-slate-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg text-sm"
+          className="context-menu absolute z-50 bg-white dark:bg-slate-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg text-xs font-semibold"
           style={{ top: contextMenu.mouseY, left: contextMenu.mouseX }}
         >
           <button
@@ -669,20 +824,19 @@ export default function Home() {
             onClick={async () => {
               if (selectedSessionId !== null) {
                 try {
-                  const response = await fetch(`http://localhost:8000/delete_session/${selectedSessionId}`, { method: "DELETE" });
+                  const response = await fetch(
+                    `http://localhost:8000/delete_session/${selectedSessionId}`,
+                    { method: "DELETE" }
+                  );
                   if (response.ok) {
                     if (selectedSessionId === currentSessionId) {
-                      const newSessionRes = await fetch("http://localhost:8000/new_session", { method: "POST" });
-                      if (newSessionRes.ok) {
-                        setTranscriptFile(null);
-                        setRecordingFile(null);
-                        setSummary("");
-                        setShowChat(false);
-                        setChatInput("");
-                        setChatMessages([]);
-                        setCurrentSessionId(null);
-                        await fetchSessions();
-                      }
+                      setTranscriptFile(null);
+                      setRecordingFile(null);
+                      setSummary("");
+                      setShowChat(false);
+                      setChatInput("");
+                      setChatMessages([]);
+                      setCurrentSessionId(null);
                     }
                     fetchSessions();
                   } else {

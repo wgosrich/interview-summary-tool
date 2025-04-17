@@ -8,10 +8,9 @@ from session import Session
 app = Flask(__name__)
 CORS(app)  # Enable CORS so Next.js frontend can talk to Flask
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///sessions.db'
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///sessions.db"
 db = SQLAlchemy(app)
 
-current_session = Session(-1)
 
 class SessionModel(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -19,55 +18,39 @@ class SessionModel(db.Model):
     summary = db.Column(db.Text, default="")
     transcript = db.Column(db.Text, default="")
     messages = db.Column(db.JSON, default=list)
-    
-@app.route('/new_session', methods=['POST'])
-def new_session():
-    global current_session
-    current_session = Session(-1)
-    return jsonify({
-        'message': 'New session created',
-    }), 201
 
-@app.route('/save_session', methods=['POST'])
+
+@app.route("/save_session", methods=["POST"])
 def save_session():
-    if current_session.id == -1:  # New session, add to the database
-        new_session = SessionModel(
-            name=current_session.name,
-            summary=current_session.summary,
-            transcript=current_session.transcript,
-            messages=current_session.messages
-        )
-        db.session.add(new_session)
-        db.session.commit()
-        current_session.id = new_session.id  # Update current_session id
-        return jsonify({
-            'message': 'Session created',
-            'session_id': new_session.id
-        }), 201
-    else:  # Existing session, update in the database
-        existing_session = db.session.get(SessionModel, current_session.id)
-        if not existing_session:
-            return jsonify({'error': 'Session not found'}), 404
+    session_data = request.json
+    session_id = session_data.get("session_id")
+    existing_session = db.session.get(SessionModel, session_id)
+    if not existing_session:
+        return jsonify({"error": "Session not found"}), 404
 
-        existing_session.name = current_session.name
-        existing_session.summary = current_session.summary
-        existing_session.transcript = current_session.transcript
-        existing_session.messages = current_session.messages
-        db.session.commit()
+    existing_session.name = session_data.get("name", existing_session.name)
+    existing_session.summary = session_data.get("summary", existing_session.summary)
+    existing_session.transcript = session_data.get(
+        "transcript", existing_session.transcript
+    )
+    existing_session.messages = session_data.get("messages", existing_session.messages)
+    db.session.commit()
 
-        return jsonify({
-            'message': 'Session updated',
-            'session_id': existing_session.id
-        }), 200
+    return (
+        jsonify({"message": "Session updated", "session_id": existing_session.id}),
+        200,
+    )
 
-@app.route('/summarize', methods=['POST'])
+
+@app.route("/summarize", methods=["POST"])
 def summarize():
-    if 'transcript' not in request.files or 'recording' not in request.files:
-        return jsonify({'error': 'Missing transcript or recording file'}), 400
-    if current_session.id != -1:
-        return jsonify({'error': 'Session already in progress'}), 400
-    transcript_file = request.files['transcript']
-    recording_file = request.files['recording']
+    if "transcript" not in request.files or "recording" not in request.files:
+        return jsonify({"error": "Missing transcript or recording file"}), 400
+
+    session = Session(-1)
+
+    transcript_file = request.files["transcript"]
+    recording_file = request.files["recording"]
 
     transcript_path = secure_filename(transcript_file.filename)
     recording_path = secure_filename(recording_file.filename)
@@ -77,70 +60,97 @@ def summarize():
 
     def generate():
         try:
-            for chunk in current_session.summarize(transcript_path, recording_path):
+            for chunk in session.summarize(transcript_path, recording_path):
                 yield chunk
         finally:
             os.remove(transcript_path)
             os.remove(recording_path)
+            print("Debugging...")
+            new_session = SessionModel(
+                name=session.name,
+                summary=session.summary,
+                transcript=session.transcript,
+                messages=session.messages,
+            )
+            db.session.add(new_session)
+            db.session.commit()
+            yield f"[SESSION_ID::{new_session.id}]"
 
-    return Response(stream_with_context(generate()), content_type='text/markdown')
+    return Response(stream_with_context(generate()), content_type="text/markdown")
 
-@app.route('/chat', methods=['POST'])
+
+@app.route("/chat", methods=["POST"])
 def chat():
-    prompt = request.json.get('message')
+    prompt = request.json.get("message")
     if not prompt:
-        return jsonify({'error': 'Missing prompt'}), 400
-    
-    def generate():
-        try:
-            for chunk in current_session.prompt_chat(prompt):
-                yield chunk
-        finally:
-            pass
+        return jsonify({"error": "Missing prompt"}), 400
 
-    return Response(stream_with_context(generate()), content_type='text/markdown')
+    session_id = request.json.get("session_id")
+    if session_id is None:
+        return jsonify({"error": "Missing session_id"}), 400
 
-@app.route('/load_session/<int:session_id>', methods=['GET'])
-def load_session(session_id):
     record = db.session.get(SessionModel, session_id)
     if not record:
-        return jsonify({'error': 'Session not found'}), 404
-    global current_session
-    current_session = Session(
+        return jsonify({"error": "Session not found"}), 404
+
+    session = Session(
         id=record.id,
         name=record.name,
         summary=record.summary,
         transcript=record.transcript,
-        messages=record.messages,
+        messages=list(record.messages),
     )
-    return jsonify({
-        'message': 'Session loaded',
-        'session_id': session_id,
-        'name': record.name,
-        'summary': record.summary,
-        'transcript': record.transcript,
-        'messages': record.messages,
-    })
-    
-@app.route('/get_sessions', methods=['GET'])
+
+    def generate():
+        try:
+            for chunk in session.prompt_chat(prompt):
+                yield chunk
+        finally:
+            record.messages = session.messages
+            db.session.commit()
+
+    return Response(stream_with_context(generate()), content_type="text/markdown")
+
+
+@app.route("/load_session/<int:session_id>", methods=["GET"])
+def load_session(session_id):
+    record = db.session.get(SessionModel, session_id)
+    if not record:
+        return jsonify({"error": "Session not found"}), 404
+
+    return jsonify(
+        {
+            "message": "Session loaded",
+            "session_id": session_id,
+            "name": record.name,
+            "summary": record.summary,
+            "transcript": record.transcript,
+            "messages": record.messages,
+        }
+    )
+
+
+@app.route("/get_sessions", methods=["GET"])
 def get_sessions():
     sessions = SessionModel.query.all()
     session_list = []
     for session in sessions:
-        session_list.append({'id': session.id, 'name': session.name})
+        session_list.append({"id": session.id, "name": session.name})
     return jsonify(session_list)
 
-@app.route('/delete_session/<int:session_id>', methods=['DELETE'])
+
+@app.route("/delete_session/<int:session_id>", methods=["DELETE"])
 def delete_session(session_id):
     session = db.session.get(SessionModel, session_id)
     if not session:
-        return jsonify({'error': 'Session not found'}), 404
+        return jsonify({"error": "Session not found"}), 404
     db.session.delete(session)
     db.session.commit()
-    return jsonify({'message': 'Session deleted'}), 200
+    return jsonify({"message": "Session deleted"}), 200
+
 
 with app.app_context():
     db.create_all()
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=8000)
