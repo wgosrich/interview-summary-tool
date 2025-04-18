@@ -33,6 +33,9 @@ export default function Home() {
   const [loggedIn, setLoggedIn] = useState(false);
   const [username, setUsername] = useState("");
   const [sessionIDCopied, setSessionIDCopied] = useState(false);
+  const [sessionRemoved, setSessionRemoved] = useState(false);
+  const [sessionDeleted, setSessionDeleted] = useState(false);
+  const [subscribed, setSubscribed] = useState(false);
 
   const fetchSessions = async () => {
     if (!currentUserId) {
@@ -167,8 +170,6 @@ export default function Home() {
   useEffect(() => {
     localStorage.setItem("showChat", JSON.stringify(showChat));
   }, [showChat]);
-
-  
 
   const handleSubmit = async () => {
     if (!transcriptFile || !recordingFile) {
@@ -413,6 +414,75 @@ export default function Home() {
     <div className="h-screen font-sans bg-slate-100 dark:bg-slate-600 py-10 px-6 sm:px-8 lg:px-16">
       <div
         className={`fixed top-0 left-1/2 transform -translate-x-1/2 transition-transform duration-500 ease-in-out z-50 ${
+          subscribed
+            ? "translate-y-6 opacity-100"
+            : "-translate-y-full opacity-0"
+        } bg-green-100 text-green-800 px-5 py-3 rounded-lg shadow-lg text-sm font-semibold flex items-center gap-1`}
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={4}
+          className="h-5 w-5 text-green-800"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M5 13l4 4L19 7"
+          />
+        </svg>
+        Subscribed to Session Successfully!
+      </div>
+      <div
+        className={`fixed top-0 left-1/2 transform -translate-x-1/2 transition-transform duration-500 ease-in-out z-50 ${
+          sessionRemoved
+            ? "translate-y-6 opacity-100"
+            : "-translate-y-full opacity-0"
+        } bg-green-100 text-green-800 px-5 py-3 rounded-lg shadow-lg text-sm font-semibold flex items-center gap-1`}
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={4}
+          className="h-5 w-5 text-green-800"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M5 13l4 4L19 7"
+          />
+        </svg>
+        Session Removed Successfully!
+      </div>
+      <div
+        className={`fixed top-0 left-1/2 transform -translate-x-1/2 transition-transform duration-500 ease-in-out z-50 ${
+          sessionDeleted
+            ? "translate-y-6 opacity-100"
+            : "-translate-y-full opacity-0"
+        } bg-green-100 text-green-800 px-5 py-3 rounded-lg shadow-lg text-sm font-semibold flex items-center gap-1`}
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={4}
+          className="h-5 w-5 text-green-800"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M5 13l4 4L19 7"
+          />
+        </svg>
+        Session Deleted Successfully!
+      </div>
+      <div
+        className={`fixed top-0 left-1/2 transform -translate-x-1/2 transition-transform duration-500 ease-in-out z-50 ${
           sessionIDCopied
             ? "translate-y-6 opacity-100"
             : "-translate-y-full opacity-0"
@@ -547,7 +617,9 @@ export default function Home() {
               if (!subscribeSessionId || !currentUserId) return;
               try {
                 const response = await fetch(
-                  `http://localhost:8000/subscribe/${currentUserId}/${Number(subscribeSessionId)}`,
+                  `http://localhost:8000/subscribe/${currentUserId}/${Number(
+                    subscribeSessionId
+                  )}`,
                   {
                     method: "POST",
                   }
@@ -561,6 +633,10 @@ export default function Home() {
                 console.error("Error subscribing to session:", error);
               } finally {
                 setSubscribeSessionId("");
+                setSubscribed(true);
+                setTimeout(() => {
+                  setSubscribed(false);
+                }, 3000);
               }
             }}
             className="px-3 py-1 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700"
@@ -959,11 +1035,27 @@ export default function Home() {
       </div>
       {contextMenu && (
         <div
-          className="context-menu absolute z-50 bg-white dark:bg-slate-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg text-xs font-semibold"
+          className="context-menu absolute z-50 bg-white dark:bg-slate-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg text-xs font-semibold flex flex-col space-y-0.5 p-1"
           style={{ top: contextMenu.mouseY, left: contextMenu.mouseX }}
         >
           <button
-            className="w-fit text-left px-4 py-1 m-1 hover:bg-blue-500 hover:text-white rounded-lg"
+            className="text-left px-4 py-1 hover:bg-blue-500 hover:text-white rounded-lg"
+            onClick={() => {
+              navigator.clipboard.writeText(
+                selectedSessionId
+                  ? selectedSessionId.toString()
+                  : "No Session ID"
+              );
+              setSessionIDCopied(true);
+              setTimeout(() => {
+                setSessionIDCopied(false);
+              }, 3000);
+            }}
+          >
+            Copy ID
+          </button>
+          <button
+            className="text-left px-4 py-1 hover:bg-blue-500 hover:text-white rounded-lg"
             onClick={async () => {
               if (selectedSessionId !== null) {
                 try {
@@ -990,24 +1082,49 @@ export default function Home() {
                 }
               }
               setContextMenu(null);
+              setSessionDeleted(true);
+              setTimeout(() => {
+                setSessionDeleted(false);
+              }, 3000);
             }}
           >
             Delete
           </button>
           <button
-            className="w-fit text-left px-4 py-1 m-1 hover:bg-blue-500 hover:text-white rounded-lg"
-            onClick={() => {
-              navigator.clipboard.writeText(
-                selectedSessionId ? selectedSessionId.toString() : "No Session ID"
-              );
-              setSessionIDCopied(true);
+            className="text-left px-4 py-1 hover:bg-blue-500 hover:text-white rounded-lg"
+            onClick={async () => {
+              if (selectedSessionId !== null) {
+                try {
+                  const response = await fetch(
+                    `http://localhost:8000/unsubscribe/${currentUserId}/${selectedSessionId}`,
+                    { method: "DELETE" }
+                  );
+                  if (response.ok) {
+                    if (selectedSessionId === currentSessionId) {
+                      setTranscriptFile(null);
+                      setRecordingFile(null);
+                      setSummary("");
+                      setShowChat(false);
+                      setChatInput("");
+                      setChatMessages([]);
+                      setCurrentSessionId(null);
+                    }
+                    fetchSessions();
+                  } else {
+                    console.error("Failed to delete session");
+                  }
+                } catch (error) {
+                  console.error("Error deleting session:", error);
+                }
+              }
+              setContextMenu(null);
+              setSessionRemoved(true);
               setTimeout(() => {
-                setSessionIDCopied(false);
+                setSessionRemoved(false);
               }, 3000);
-            }
-            }
+            }}
           >
-            Copy ID
+            Remove
           </button>
         </div>
       )}
