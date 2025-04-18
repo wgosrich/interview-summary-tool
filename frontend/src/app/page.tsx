@@ -615,6 +615,7 @@ export default function Home() {
             setChatInput("");
             setChatMessages([]);
             setCurrentSessionId(null);
+            setTab("field1");
             localStorage.clear();
           }}
           className="w-full bg-blue-600 text-white py-2 px-3 rounded-lg hover:bg-blue-700 mb-4 font-semibold"
@@ -674,7 +675,7 @@ export default function Home() {
             setCurrentSessionId(null);
             localStorage.clear();
           }}
-          className="absolute bottom-6 left-6 w-[calc(100%-3rem)] bg-red-500 text-white py-2 px-3 rounded-lg hover:bg-red-600 font-semibold"
+          className="absolute bottom-6 left-6 w-[calc(100%-3rem)] bg-slate-600 text-white py-2 px-3 rounded-lg hover:bg-red-600 font-semibold"
         >
           Logout
         </button>
@@ -826,7 +827,7 @@ export default function Home() {
                         className={`flex-1 px-4 py-2 font-semibold ${
                           tab === "field1"
                             ? "border-b-2 border-blue-600 text-blue-600"
-                            : "text-slate-600 dark:text-slate-300"
+                            : "text-slate-600 dark:text-slate-100"
                         }`}
                       >
                         Generate New Summary
@@ -836,7 +837,7 @@ export default function Home() {
                         className={`flex-1 px-4 py-2 font-semibold ${
                           tab === "field2"
                             ? "border-b-2 border-blue-600 text-blue-600"
-                            : "text-slate-600 dark:text-slate-300"
+                            : "text-slate-600 dark:text-slate-100"
                         }`}
                       >
                         Add Existing Summary
@@ -844,7 +845,7 @@ export default function Home() {
                     </div>
                     <div className="mt-4 bg-slate-100 dark:bg-slate-700 p-4 rounded-lg text-slate-800 dark:text-slate-100">
                       {tab === "field1" ? (
-                        <div className="flex justify-center gap-6 flex-wrap mt-8">
+                        <div className="flex justify-center gap-6 flex-wrap mt-3">
                           <div className="flex-1 min-w-[220px]">
                             <label className="block text-md font-semibold text-slate-800 dark:text-slate-100 mb-1">
                               Transcript (.docx)
@@ -903,7 +904,7 @@ export default function Home() {
                           <button
                             onClick={handleSubmit}
                             disabled={loading}
-                            className="w-full py-2 px-4 mt-6 bg-blue-600 text-slate-100 rounded-lg hover:bg-blue-700 transition disabled:opacity-50 font-bold"
+                            className="w-full py-2 px-4 mt-6 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50 font-bold"
                           >
                             {loading
                               ? "Generating summary..."
@@ -911,7 +912,7 @@ export default function Home() {
                           </button>
                         </div>
                       ) : (
-                        <div className="flex items-center gap-2 mb-4">
+                      <div className="flex flex-col gap-5 mt-5 py-1 h-full w-full">
                           <input
                             type="number"
                             placeholder="Session ID"
@@ -919,8 +920,22 @@ export default function Home() {
                             onChange={(e) =>
                               setSubscribeSessionId(e.target.value)
                             }
-                            className="flex-1 px-2 py-1 rounded-lg border border-slate-300 dark:border-slate-600 text-sm bg-white dark:bg-slate-700 text-slate-800 dark:text-white"
+                            className="px-2 py-1 rounded-lg border border-slate-300 dark:border-slate-600 text-sm bg-white dark:bg-slate-700 text-slate-800 dark:text-white"
                           />
+                          <select
+                            onChange={(e) =>
+                              setSubscribeSessionId(e.target.value)
+                            }
+                            value={subscribeSessionId}
+                            className="px-2 py-1 rounded-lg border border-slate-300 dark:border-slate-600 text-sm bg-white dark:bg-slate-700 text-slate-800 dark:text-white"
+                          >
+                            <option value="">Select a session</option>
+                            {sessions.map((session) => (
+                              <option key={session.id} value={session.id}>
+                                {session.name}
+                              </option>
+                            ))}
+                          </select>
                           <button
                             onClick={async () => {
                               if (!subscribeSessionId || !currentUserId) return;
@@ -953,7 +968,7 @@ export default function Home() {
                                 }, 3000);
                               }
                             }}
-                            className="px-3 py-1 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700"
+                            className="w-full px-3 py-2 bg-blue-600 text-white text-base font-bold rounded-lg hover:bg-blue-700"
                           >
                             Subscribe
                           </button>

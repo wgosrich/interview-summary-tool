@@ -231,6 +231,14 @@ def get_sessions(user_id):
     ]
     return jsonify(session_list)
 
+@app.route("/get_all_sessions", methods=["GET"])
+def get_all_sessions():
+    sessions = SessionModel.query.all()
+    session_list = [
+        {"id": session.id, "name": session.name} for session in sessions
+    ]
+    return jsonify(session_list)
+
 
 # requires session_id, does not require user_id
 @app.route("/delete_session/<int:session_id>", methods=["DELETE"])
