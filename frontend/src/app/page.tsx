@@ -20,9 +20,7 @@ export default function Home() {
   const [sessions, setSessions] = useState<{ id: number; name: string }[]>([]);
   const [currentSessionId, setCurrentSessionId] = useState<number | null>(null);
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
-  const [subscribeSessionId, setSubscribeSessionId] = useState<number | null>(
-    null
-  );
+  const [subscribeSessionId, setSubscribeSessionId] = useState<string>("");
   const [contextMenu, setContextMenu] = useState<{
     mouseX: number;
     mouseY: number;
@@ -540,8 +538,8 @@ export default function Home() {
           <input
             type="number"
             placeholder="Session ID"
-            value={subscribeSessionId ? subscribeSessionId : ""}
-            onChange={(e) => setSubscribeSessionId(Number(e.target.value))}
+            value={subscribeSessionId}
+            onChange={(e) => setSubscribeSessionId(e.target.value)}
             className="flex-1 px-2 py-1 rounded-lg border border-slate-300 dark:border-slate-600 text-sm bg-white dark:bg-slate-700 text-slate-800 dark:text-white"
           />
           <button
@@ -549,7 +547,7 @@ export default function Home() {
               if (!subscribeSessionId || !currentUserId) return;
               try {
                 const response = await fetch(
-                  `http://localhost:8000/subscribe/${currentUserId}/${subscribeSessionId}`,
+                  `http://localhost:8000/subscribe/${currentUserId}/${Number(subscribeSessionId)}`,
                   {
                     method: "POST",
                   }
@@ -561,6 +559,8 @@ export default function Home() {
                 }
               } catch (error) {
                 console.error("Error subscribing to session:", error);
+              } finally {
+                setSubscribeSessionId("");
               }
             }}
             className="px-3 py-1 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700"
