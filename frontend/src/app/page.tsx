@@ -34,6 +34,7 @@ export default function Home() {
   const [initializing, setInitializing] = useState(true);
   const [loggedIn, setLoggedIn] = useState(false);
   const [username, setUsername] = useState("");
+  const [sessionIDCopied, setSessionIDCopied] = useState(false);
 
   const fetchSessions = async () => {
     if (!currentUserId) {
@@ -412,6 +413,29 @@ export default function Home() {
 
   return (
     <div className="h-screen font-sans bg-slate-100 dark:bg-slate-600 py-10 px-6 sm:px-8 lg:px-16">
+      <div
+        className={`fixed top-0 left-1/2 transform -translate-x-1/2 transition-transform duration-500 ease-in-out z-50 ${
+          sessionIDCopied
+            ? "translate-y-6 opacity-100"
+            : "-translate-y-full opacity-0"
+        } bg-green-100 text-green-800 px-5 py-3 rounded-lg shadow-lg text-sm font-semibold flex items-center gap-1`}
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={4}
+          className="h-5 w-5 text-green-800"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M5 13l4 4L19 7"
+          />
+        </svg>
+        Session ID Copied!
+      </div>
       <div
         className={`fixed top-0 left-1/2 transform -translate-x-1/2 transition-transform duration-500 ease-in-out z-50 ${
           showSuccess
@@ -969,6 +993,21 @@ export default function Home() {
             }}
           >
             Delete
+          </button>
+          <button
+            className="w-fit text-left px-4 py-1 m-1 hover:bg-blue-500 hover:text-white rounded-lg"
+            onClick={() => {
+              navigator.clipboard.writeText(
+                selectedSessionId ? selectedSessionId.toString() : "No Session ID"
+              );
+              setSessionIDCopied(true);
+              setTimeout(() => {
+                setSessionIDCopied(false);
+              }, 3000);
+            }
+            }
+          >
+            Copy ID
           </button>
         </div>
       )}
