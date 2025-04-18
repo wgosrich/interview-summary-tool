@@ -36,6 +36,7 @@ export default function Home() {
   const [sessionRemoved, setSessionRemoved] = useState(false);
   const [sessionDeleted, setSessionDeleted] = useState(false);
   const [subscribed, setSubscribed] = useState(false);
+  const [tab, setTab] = useState("field1");
 
   const fetchSessions = async () => {
     if (!currentUserId) {
@@ -604,46 +605,6 @@ export default function Home() {
         <div className="flex items-start justify-start mb-4 w-full">
           <BurnesLogo />
         </div>
-        <div className="flex flex-col items-center gap-2 mb-4">
-          <input
-            type="number"
-            placeholder="Session ID"
-            value={subscribeSessionId}
-            onChange={(e) => setSubscribeSessionId(e.target.value)}
-            className="flex-1 px-2 py-1 rounded-lg border border-slate-300 dark:border-slate-600 text-sm bg-white dark:bg-slate-700 text-slate-800 dark:text-white"
-          />
-          <button
-            onClick={async () => {
-              if (!subscribeSessionId || !currentUserId) return;
-              try {
-                const response = await fetch(
-                  `http://localhost:8000/subscribe/${currentUserId}/${Number(
-                    subscribeSessionId
-                  )}`,
-                  {
-                    method: "POST",
-                  }
-                );
-                if (response.ok) {
-                  fetchSessions();
-                } else {
-                  console.error("Failed to subscribe to session");
-                }
-              } catch (error) {
-                console.error("Error subscribing to session:", error);
-              } finally {
-                setSubscribeSessionId("");
-                setSubscribed(true);
-                setTimeout(() => {
-                  setSubscribed(false);
-                }, 3000);
-              }
-            }}
-            className="px-3 py-1 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700"
-          >
-            Subscribe
-          </button>
-        </div>
         <button
           onClick={async () => {
             setShowPanel(false);
@@ -858,71 +819,148 @@ export default function Home() {
             >
               {!summary && (
                 <>
-                  <div className="flex justify-center gap-6 flex-wrap mt-8">
-                    <div className="flex-1 min-w-[220px]">
-                      <label className="block text-md font-semibold text-slate-800 dark:text-slate-100 mb-1">
-                        Transcript (.docx)
-                      </label>
-                      <div className="flex items-center gap-3">
-                        <input
-                          type="file"
-                          accept=".docx"
-                          id="transcriptUpload"
-                          className="hidden"
-                          onChange={(e) =>
-                            setTranscriptFile(e.target.files?.[0] || null)
-                          }
-                        />
-                        <label
-                          htmlFor="transcriptUpload"
-                          className="cursor-pointer bg-blue-100 text-blue-600 hover:bg-blue-200 font-bold py-2 px-4 rounded-lg"
-                        >
-                          Choose File
-                        </label>
-                        <span className="text-slate-800 dark:text-slate-100 text-sm font-light">
-                          {transcriptFile
-                            ? transcriptFile.name
-                            : "No file chosen"}
-                        </span>
-                      </div>
+                  <div className="mt-6">
+                    <div className="flex border-b border-slate-300 dark:border-slate-600">
+                      <button
+                        onClick={() => setTab("field1")}
+                        className={`flex-1 px-4 py-2 font-semibold ${
+                          tab === "field1"
+                            ? "border-b-2 border-blue-600 text-blue-600"
+                            : "text-slate-600 dark:text-slate-300"
+                        }`}
+                      >
+                        Generate New Summary
+                      </button>
+                      <button
+                        onClick={() => setTab("field2")}
+                        className={`flex-1 px-4 py-2 font-semibold ${
+                          tab === "field2"
+                            ? "border-b-2 border-blue-600 text-blue-600"
+                            : "text-slate-600 dark:text-slate-300"
+                        }`}
+                      >
+                        Add Existing Summary
+                      </button>
                     </div>
+                    <div className="mt-4 bg-slate-100 dark:bg-slate-700 p-4 rounded-lg text-slate-800 dark:text-slate-100">
+                      {tab === "field1" ? (
+                        <div className="flex justify-center gap-6 flex-wrap mt-8">
+                          <div className="flex-1 min-w-[220px]">
+                            <label className="block text-md font-semibold text-slate-800 dark:text-slate-100 mb-1">
+                              Transcript (.docx)
+                            </label>
+                            <div className="flex items-center gap-3">
+                              <input
+                                type="file"
+                                accept=".docx"
+                                id="transcriptUpload"
+                                className="hidden"
+                                onChange={(e) =>
+                                  setTranscriptFile(e.target.files?.[0] || null)
+                                }
+                              />
+                              <label
+                                htmlFor="transcriptUpload"
+                                className="cursor-pointer bg-blue-100 text-blue-600 hover:bg-blue-200 font-bold py-2 px-4 rounded-lg"
+                              >
+                                Choose File
+                              </label>
+                              <span className="text-slate-800 dark:text-slate-100 text-sm font-light">
+                                {transcriptFile
+                                  ? transcriptFile.name
+                                  : "No file chosen"}
+                              </span>
+                            </div>
+                          </div>
 
-                    <div className="flex-1 min-w-[220px]">
-                      <label className="block text-md font-semibold text-slate-800 dark:text-slate-100 mb-1">
-                        Recording (.mp4)
-                      </label>
-                      <div className="flex items-center gap-3">
-                        <input
-                          type="file"
-                          accept=".mp4"
-                          id="recordingUpload"
-                          className="hidden"
-                          onChange={(e) =>
-                            setRecordingFile(e.target.files?.[0] || null)
-                          }
-                        />
-                        <label
-                          htmlFor="recordingUpload"
-                          className="cursor-pointer bg-blue-100 text-blue-600 hover:bg-blue-200 font-bold py-2 px-4 rounded-lg"
-                        >
-                          Choose File
-                        </label>
-                        <span className="text-slate-800 dark:text-slate-100 text-sm font-light">
-                          {recordingFile
-                            ? recordingFile.name
-                            : "No file chosen"}
-                        </span>
-                      </div>
+                          <div className="flex-1 min-w-[220px]">
+                            <label className="block text-md font-semibold text-slate-800 dark:text-slate-100 mb-1">
+                              Recording (.mp4)
+                            </label>
+                            <div className="flex items-center gap-3">
+                              <input
+                                type="file"
+                                accept=".mp4"
+                                id="recordingUpload"
+                                className="hidden"
+                                onChange={(e) =>
+                                  setRecordingFile(e.target.files?.[0] || null)
+                                }
+                              />
+                              <label
+                                htmlFor="recordingUpload"
+                                className="cursor-pointer bg-blue-100 text-blue-600 hover:bg-blue-200 font-bold py-2 px-4 rounded-lg"
+                              >
+                                Choose File
+                              </label>
+                              <span className="text-slate-800 dark:text-slate-100 text-sm font-light">
+                                {recordingFile
+                                  ? recordingFile.name
+                                  : "No file chosen"}
+                              </span>
+                            </div>
+                          </div>
+                          <button
+                            onClick={handleSubmit}
+                            disabled={loading}
+                            className="w-full py-2 px-4 mt-6 bg-blue-600 text-slate-100 rounded-lg hover:bg-blue-700 transition disabled:opacity-50 font-bold"
+                          >
+                            {loading
+                              ? "Generating summary..."
+                              : "Generate Summary"}
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2 mb-4">
+                          <input
+                            type="number"
+                            placeholder="Session ID"
+                            value={subscribeSessionId}
+                            onChange={(e) =>
+                              setSubscribeSessionId(e.target.value)
+                            }
+                            className="flex-1 px-2 py-1 rounded-lg border border-slate-300 dark:border-slate-600 text-sm bg-white dark:bg-slate-700 text-slate-800 dark:text-white"
+                          />
+                          <button
+                            onClick={async () => {
+                              if (!subscribeSessionId || !currentUserId) return;
+                              try {
+                                const response = await fetch(
+                                  `http://localhost:8000/subscribe/${currentUserId}/${Number(
+                                    subscribeSessionId
+                                  )}`,
+                                  {
+                                    method: "POST",
+                                  }
+                                );
+                                if (response.ok) {
+                                  fetchSessions();
+                                } else {
+                                  console.error(
+                                    "Failed to subscribe to session"
+                                  );
+                                }
+                              } catch (error) {
+                                console.error(
+                                  "Error subscribing to session:",
+                                  error
+                                );
+                              } finally {
+                                setSubscribeSessionId("");
+                                setSubscribed(true);
+                                setTimeout(() => {
+                                  setSubscribed(false);
+                                }, 3000);
+                              }
+                            }}
+                            className="px-3 py-1 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700"
+                          >
+                            Subscribe
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
-
-                  <button
-                    onClick={handleSubmit}
-                    disabled={loading}
-                    className="w-full py-2 px-4 mt-6 bg-blue-600 text-slate-100 rounded-lg hover:bg-blue-700 transition disabled:opacity-50 font-bold"
-                  >
-                    {loading ? "Generating summary..." : "Generate Summary"}
-                  </button>
                 </>
               )}
               {summary && (
