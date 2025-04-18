@@ -17,7 +17,9 @@ export default function Home() {
   const chatContainerRef = useRef<HTMLDivElement | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
   const [showPanel, setShowPanel] = useState(false);
-  const [sessions, setSessions] = useState<{ id: number; name: string }[]>([]);
+  const [sessions, setSessions] = useState<
+    { id: number; name: string; creator_id: number }[]
+  >([]);
   const [currentSessionId, setCurrentSessionId] = useState<number | null>(null);
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
   const [subscribeSessionId, setSubscribeSessionId] = useState<string>("");
@@ -622,44 +624,97 @@ export default function Home() {
         >
           + New Session
         </button>
-        <h2 className="text-xs font-bold mb-2 text-slate-800 dark:text-slate-100">
-          Sessions
-        </h2>
-        <div
-          className="overflow-y-auto h-[calc(100vh-260px)] pr-1"
-          style={{ scrollbarWidth: "thin", msOverflowStyle: "auto" }}
-        >
-          <ul className="space-y-1 text-slate-800 dark:text-slate-100">
-            {[...sessions].reverse().map((session) => (
-              <li
-                key={session.id}
-                onContextMenu={(e) => {
-                  e.preventDefault();
-                  setSelectedSessionId(session.id);
-                  setContextMenu({ mouseX: e.clientX, mouseY: e.clientY });
-                }}
-                className={`flex justify-between items-center truncate group cursor-pointer ${
-                  session.id === currentSessionId
-                    ? "bg-gray-300 dark:bg-gray-900 rounded-lg"
-                    : ""
-                }`}
-              >
-                <span
-                  className={`flex-1 truncate text-sm p-2 rounded-lg ${
-                    session.id !== currentSessionId
-                      ? "hover:bg-gray-100 dark:hover:bg-gray-700"
-                      : ""
-                  }`}
-                  onClick={() => {
-                    loadSession(session.id);
-                    setShowPanel(false);
-                  }}
-                >
-                  {session.name}
-                </span>
-              </li>
-            ))}
-          </ul>
+        <div className="flex flex-col gap-2 h-1/2">
+          <h2 className="text-xs font-bold mb-1 text-slate-800 dark:text-slate-100">
+            Sessions
+          </h2>
+          <div
+            className="overflow-y-auto h-[calc(100vh-260px)] pr-1"
+            style={{ scrollbarWidth: "thin", msOverflowStyle: "auto" }}
+          >
+            <ul className="space-y-1 text-slate-800 dark:text-slate-100">
+              {[...sessions].reverse().map(
+                (session) =>
+                  session.creator_id === currentUserId && (
+                    <li
+                      key={session.id}
+                      onContextMenu={(e) => {
+                        e.preventDefault();
+                        setSelectedSessionId(session.id);
+                        setContextMenu({
+                          mouseX: e.clientX,
+                          mouseY: e.clientY,
+                        });
+                      }}
+                      className={`flex justify-between items-center truncate group cursor-pointer ${
+                        session.id === currentSessionId
+                          ? "bg-gray-300 dark:bg-gray-900 rounded-lg"
+                          : ""
+                      }`}
+                    >
+                      <span
+                        className={`flex-1 truncate text-sm p-2 rounded-lg ${
+                          session.id !== currentSessionId
+                            ? "hover:bg-gray-100 dark:hover:bg-gray-700"
+                            : ""
+                        }`}
+                        onClick={() => {
+                          loadSession(session.id);
+                          setShowPanel(false);
+                        }}
+                      >
+                        {session.name}
+                      </span>
+                    </li>
+                  )
+              )}
+            </ul>
+          </div>
+          <h2 className="text-xs font-bold mb-1 text-slate-800 dark:text-slate-100">
+            Subscribed Sessions
+          </h2>
+          <div
+            className="overflow-y-auto h-[calc(100vh-260px)] pr-1"
+            style={{ scrollbarWidth: "thin", msOverflowStyle: "auto" }}
+          >
+            <ul className="space-y-1 text-slate-800 dark:text-slate-100">
+              {[...sessions].reverse().map(
+                (session) =>
+                  session.creator_id !== currentUserId && (
+                    <li
+                      key={session.id}
+                      onContextMenu={(e) => {
+                        e.preventDefault();
+                        setSelectedSessionId(session.id);
+                        setContextMenu({
+                          mouseX: e.clientX,
+                          mouseY: e.clientY,
+                        });
+                      }}
+                      className={`flex justify-between items-center truncate group cursor-pointer ${
+                        session.id === currentSessionId
+                          ? "bg-gray-300 dark:bg-gray-900 rounded-lg"
+                          : ""
+                      }`}
+                    >
+                      <span
+                        className={`flex-1 truncate text-sm p-2 rounded-lg ${
+                          session.id !== currentSessionId
+                            ? "hover:bg-gray-100 dark:hover:bg-gray-700"
+                            : ""
+                        }`}
+                        onClick={() => {
+                          loadSession(session.id);
+                          setShowPanel(false);
+                        }}
+                      >
+                        {session.name}
+                      </span>
+                    </li>
+                  )
+              )}
+            </ul>
+          </div>
         </div>
         <button
           onClick={() => {
@@ -912,7 +967,7 @@ export default function Home() {
                           </button>
                         </div>
                       ) : (
-                      <div className="flex flex-col gap-5 mt-5 py-1 h-full w-full">
+                        <div className="flex flex-col gap-5 mt-5 py-1 h-full w-full">
                           <input
                             type="number"
                             placeholder="Session ID"

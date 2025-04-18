@@ -23,6 +23,7 @@ class UserModel(db.Model):
 
 class SessionModel(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    creator_id = db.Column(db.Integer, db.ForeignKey("user_model.id"), nullable=False)
     name = db.Column(db.String(100), default="Untitled")
     summary = db.Column(db.Text, default="")
     transcript = db.Column(db.Text, default="")
@@ -151,6 +152,7 @@ def summarize(user_id):
             os.remove(transcript_path)
             os.remove(recording_path)
             new_session = SessionModel(
+                creator_id=user_id,
                 name=session.name,
                 summary=session.summary,
                 transcript=session.transcript,
@@ -227,16 +229,15 @@ def get_sessions(user_id):
         return jsonify({"error": "User not found"}), 404
 
     session_list = [
-        {"id": session.id, "name": session.name} for session in user.sessions
+        {"id": session.id, "name": session.name, "creator_id": session.creator_id} for session in user.sessions
     ]
     return jsonify(session_list)
+
 
 @app.route("/get_all_sessions", methods=["GET"])
 def get_all_sessions():
     sessions = SessionModel.query.all()
-    session_list = [
-        {"id": session.id, "name": session.name} for session in sessions
-    ]
+    session_list = [{"id": session.id, "name": session.name} for session in sessions]
     return jsonify(session_list)
 
 
