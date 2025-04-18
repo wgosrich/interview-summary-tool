@@ -19,6 +19,10 @@ export default function Home() {
   const [showPanel, setShowPanel] = useState(false);
   const [sessions, setSessions] = useState<{ id: number; name: string }[]>([]);
   const [currentSessionId, setCurrentSessionId] = useState<number | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<number | null>(null);
+  const [subscribeSessionId, setSubscribeSessionId] = useState<number | null>(
+    null
+  );
   const [contextMenu, setContextMenu] = useState<{
     mouseX: number;
     mouseY: number;
@@ -28,6 +32,8 @@ export default function Home() {
   );
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [initializing, setInitializing] = useState(true);
+  const [loggedIn, setLoggedIn] = useState(false);
+  const [username, setUsername] = useState("");
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
@@ -104,11 +110,16 @@ export default function Home() {
     const savedSummary = localStorage.getItem("summary");
     const savedMessages = localStorage.getItem("chatMessages");
     const savedShowChat = localStorage.getItem("showChat");
+    const storedUserId = localStorage.getItem("user_id");
 
     if (savedSessionId) setCurrentSessionId(Number(savedSessionId));
     if (savedSummary) setSummary(savedSummary);
     if (savedMessages) setChatMessages(JSON.parse(savedMessages));
     if (savedShowChat) setShowChat(JSON.parse(savedShowChat));
+    if (storedUserId) {
+      setCurrentUserId(Number(storedUserId));
+      setLoggedIn(true);
+    }
 
     setInitializing(false); // done initializing
   }, []);
@@ -132,8 +143,15 @@ export default function Home() {
   }, [showChat]);
 
   const fetchSessions = async () => {
+    if (!currentUserId) {
+      console.error("No current user ID found");
+      return;
+    }
+
     try {
-      const response = await fetch("http://localhost:8000/get_sessions");
+      const response = await fetch(
+        `http://localhost:8000/get_sessions/${currentUserId}`
+      );
       if (response.ok) {
         const data = await response.json();
         setSessions(data);
@@ -142,31 +160,6 @@ export default function Home() {
       }
     } catch (error) {
       console.error("Error fetching sessions:", error);
-    }
-  };
-
-  const handleSaveSession = async () => {
-    try {
-      const saveResponse = await fetch("http://localhost:8000/update_session", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          session_id: currentSessionId,
-        }),
-      });
-
-      if (!saveResponse.ok) {
-        if (saveResponse.statusText === "Session already in progress") {
-          alert("Press new session to reset system.");
-        } else {
-          console.error("Failed to save session.");
-        }
-      } else {
-        const data = await saveResponse.json();
-        console.log("Session saved:", data.session_id);
-      }
-    } catch (saveError) {
-      console.error("Error saving session:", saveError);
     }
   };
 
@@ -184,10 +177,13 @@ export default function Home() {
       setSummary("");
       setLoading(true);
 
-      const response = await fetch("http://localhost:8000/summarize", {
-        method: "POST",
-        body: formData,
-      });
+      const response = await fetch(
+        `http://localhost:8000/summarize/${currentUserId}`,
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
 
       if (!response.ok || !response.body) {
         throw new Error("Failed to connect to backend.");
@@ -241,14 +237,16 @@ export default function Home() {
     setChatInput("");
 
     try {
-      const response = await fetch("http://localhost:8000/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          message: currentInput,
-          session_id: currentSessionId,
-        }),
-      });
+      const response = await fetch(
+        `http://localhost:8000/chat/${currentSessionId}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            message: currentInput,
+          }),
+        }
+      );
 
       if (!response.ok || !response.body) {
         throw new Error("Failed to connect to chat backend.");
@@ -269,9 +267,6 @@ export default function Home() {
         assistantMessage += chunk;
         setChatMessages((prev) => [...prev.slice(0, -1), assistantMessage]);
       }
-
-      // save session after chat
-      handleSaveSession();
     } catch (error) {
       console.error("Chat streaming error:", error);
       alert("Error while streaming chat response.");
@@ -304,6 +299,78 @@ export default function Home() {
       console.error("Error loading session:", error);
     }
   };
+
+  if (!loggedIn) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-slate-100 dark:bg-slate-600">
+        <div className="bg-white dark:bg-slate-700 p-8 rounded-lg shadow-lg w-80 flex flex-col gap-4">
+          <h2 className="text-xl font-bold text-center text-slate-800 dark:text-white">
+            Login to FAIR
+          </h2>
+          <input
+            type="text"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            className="border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 bg-white dark:bg-slate-600 text-slate-800 dark:text-slate-100"
+            placeholder="Enter your username"
+          />
+          <button
+            onClick={async () => {
+              if (!username.trim()) return;
+              try {
+                const response = await fetch("http://localhost:8000/login", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ username }),
+                });
+                if (response.ok) {
+                  const data = await response.json();
+                  console.log("Login response:", data);
+                  localStorage.setItem("user_id", data.user_id);
+                  setCurrentUserId(data.user_id);
+                  setLoggedIn(true);
+                } else {
+                  alert("Login failed.");
+                }
+              } catch (error) {
+                console.error("Login error:", error);
+                alert("Login error.");
+              }
+            }}
+            className="bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 font-bold"
+          >
+            Login
+          </button>
+          <button
+            onClick={async () => {
+              if (!username.trim()) return;
+              try {
+                const response = await fetch("http://localhost:8000/add_user", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ username }),
+                });
+                if (response.ok) {
+                  const data = await response.json();
+                  localStorage.setItem("user_id", data.user_id);
+                  setCurrentUserId(data.user_id);
+                  setLoggedIn(true);
+                } else {
+                  alert("Account creation failed.");
+                }
+              } catch (error) {
+                console.error("Account creation error:", error);
+                alert("Account creation error.");
+              }
+            }}
+            className="bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 font-bold"
+          >
+            Create Account
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (initializing) {
     return (
@@ -435,6 +502,38 @@ export default function Home() {
         <div className="flex items-start justify-start mb-4 w-full">
           <BurnesLogo />
         </div>
+        <div className="flex flex-col items-center gap-2 mb-4">
+          <input
+            type="number"
+            placeholder="Session ID"
+            value={subscribeSessionId ? subscribeSessionId : ""}
+            onChange={(e) => setSubscribeSessionId(Number(e.target.value))}
+            className="flex-1 px-2 py-1 rounded-lg border border-slate-300 dark:border-slate-600 text-sm bg-white dark:bg-slate-700 text-slate-800 dark:text-white"
+          />
+          <button
+            onClick={async () => {
+              if (!subscribeSessionId || !currentUserId) return;
+              try {
+                const response = await fetch(
+                  `http://localhost:8000/subscribe/${currentUserId}/${subscribeSessionId}`,
+                  {
+                    method: "POST",
+                  }
+                );
+                if (response.ok) {
+                  fetchSessions();
+                } else {
+                  console.error("Failed to subscribe to session");
+                }
+              } catch (error) {
+                console.error("Error subscribing to session:", error);
+              }
+            }}
+            className="px-3 py-1 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700"
+          >
+            Subscribe
+          </button>
+        </div>
         <button
           onClick={async () => {
             setShowPanel(false);
@@ -490,6 +589,17 @@ export default function Home() {
             ))}
           </ul>
         </div>
+        <button
+          onClick={() => {
+            setLoggedIn(false);
+            setCurrentUserId(null);
+            setUsername("");
+            localStorage.clear();
+          }}
+          className="absolute bottom-6 left-6 w-[calc(100%-3rem)] bg-red-500 text-white py-2 px-3 rounded-lg hover:bg-red-600 font-semibold"
+        >
+          Logout
+        </button>
       </div>
       <div
         className={`max-w-screen-xl mx-auto flex gap-10 py-1 h-full transition-all duration-700 ease-in-out ${
