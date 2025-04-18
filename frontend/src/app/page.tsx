@@ -35,6 +35,33 @@ export default function Home() {
   const [loggedIn, setLoggedIn] = useState(false);
   const [username, setUsername] = useState("");
 
+  const fetchSessions = async () => {
+    if (!currentUserId) {
+      console.error("No current user ID found");
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `http://localhost:8000/get_sessions/${currentUserId}`
+      );
+      if (response.ok) {
+        const data = await response.json();
+        setSessions(data);
+      } else {
+        console.error("Failed to fetch sessions");
+      }
+    } catch (error) {
+      console.error("Error fetching sessions:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (currentUserId) {
+      fetchSessions();
+    }
+  }, [currentUserId]);
+
   useEffect(() => {
     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
     setIsDarkMode(mediaQuery.matches);
@@ -142,26 +169,7 @@ export default function Home() {
     localStorage.setItem("showChat", JSON.stringify(showChat));
   }, [showChat]);
 
-  const fetchSessions = async () => {
-    if (!currentUserId) {
-      console.error("No current user ID found");
-      return;
-    }
-
-    try {
-      const response = await fetch(
-        `http://localhost:8000/get_sessions/${currentUserId}`
-      );
-      if (response.ok) {
-        const data = await response.json();
-        setSessions(data);
-      } else {
-        console.error("Failed to fetch sessions");
-      }
-    } catch (error) {
-      console.error("Error fetching sessions:", error);
-    }
-  };
+  
 
   const handleSubmit = async () => {
     if (!transcriptFile || !recordingFile) {
@@ -328,6 +336,7 @@ export default function Home() {
                   console.log("Login response:", data);
                   localStorage.setItem("user_id", data.user_id);
                   setCurrentUserId(data.user_id);
+                  setShowPanel(false); // force it to be closed on login
                   setLoggedIn(true);
                 } else {
                   alert("Login failed.");
@@ -354,6 +363,7 @@ export default function Home() {
                   const data = await response.json();
                   localStorage.setItem("user_id", data.user_id);
                   setCurrentUserId(data.user_id);
+                  setShowPanel(false); // force it to be closed on login
                   setLoggedIn(true);
                 } else {
                   alert("Account creation failed.");
@@ -594,6 +604,13 @@ export default function Home() {
             setLoggedIn(false);
             setCurrentUserId(null);
             setUsername("");
+            setTranscriptFile(null);
+            setRecordingFile(null);
+            setSummary("");
+            setShowChat(false);
+            setChatInput("");
+            setChatMessages([]);
+            setCurrentSessionId(null);
             localStorage.clear();
           }}
           className="absolute bottom-6 left-6 w-[calc(100%-3rem)] bg-red-500 text-white py-2 px-3 rounded-lg hover:bg-red-600 font-semibold"
