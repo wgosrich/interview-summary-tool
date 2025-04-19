@@ -39,6 +39,9 @@ export default function Home() {
   const [sessionDeleted, setSessionDeleted] = useState(false);
   const [subscribed, setSubscribed] = useState(false);
   const [tab, setTab] = useState("field1");
+  const [allSessions, setAllSessions] = useState<
+    { id: number; name: string }[]
+  >([]);
 
   const fetchSessions = async () => {
     if (!currentUserId) {
@@ -60,6 +63,24 @@ export default function Home() {
       console.error("Error fetching sessions:", error);
     }
   };
+
+  useEffect(() => {
+    const fetchAllSessions = async () => {
+      try {
+        const response = await fetch("http://localhost:8000/get_all_sessions");
+        if (response.ok) {
+          const data = await response.json();
+          setAllSessions(data);
+        } else {
+          console.error("Failed to fetch all sessions");
+        }
+      } catch (error) {
+        console.error("Error fetching all sessions:", error);
+      }
+    };
+
+    fetchAllSessions();
+  }, []);
 
   useEffect(() => {
     if (currentUserId) {
@@ -985,15 +1006,37 @@ export default function Home() {
                             className="px-2 py-1 rounded-lg border border-slate-300 dark:border-slate-600 text-sm bg-white dark:bg-slate-700 text-slate-800 dark:text-white"
                           >
                             <option value="">Select a session</option>
-                            {sessions.map((session) => (
-                              <option key={session.id} value={session.id}>
-                                {session.name}
-                              </option>
-                            ))}
+                            {allSessions
+                              .filter(
+                                (session) =>
+                                  !sessions.some(
+                                    (userSession) =>
+                                      userSession.id === session.id
+                                  )
+                              )
+                              .map((session) => (
+                                <option key={session.id} value={session.id}>
+                                  {session.name}
+                                </option>
+                              ))}
                           </select>
                           <button
                             onClick={async () => {
                               if (!subscribeSessionId || !currentUserId) return;
+                              if (Number(subscribeSessionId) <= 0) {
+                                alert("Invalid session ID.");
+                                return;
+                              }
+                              if (
+                                sessions.some(
+                                  (s) => s.id === Number(subscribeSessionId)
+                                )
+                              ) {
+                                alert(
+                                  "You are already subscribed to this session."
+                                );
+                                return;
+                              }
                               try {
                                 const response = await fetch(
                                   `http://localhost:8000/subscribe/${currentUserId}/${Number(
