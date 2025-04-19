@@ -42,6 +42,8 @@ export default function Home() {
   const [allSessions, setAllSessions] = useState<
     { id: number; name: string }[]
   >([]);
+  const [revisionWindow, setRevisionWindow] = useState(false);
+  const [revisionRequest, setRevisionRequest] = useState("");
 
   const fetchSessions = async () => {
     if (!currentUserId) {
@@ -195,6 +197,42 @@ export default function Home() {
     localStorage.setItem("showChat", JSON.stringify(showChat));
   }, [showChat]);
 
+  const handleRevise = async (request: string) => {
+    if (!summary) {
+      alert("Please generate a summary first.");
+      return;
+    }
+
+    const response = await fetch(
+      `http://localhost:8000/revise/${currentSessionId}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          revision: request,
+        }),
+      }
+    );
+
+    if (!response.ok || !response.body) {
+      throw new Error("Failed to connect to backend.");
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let done = false;
+
+    setSummary("");
+
+    while (!done) {
+      const { value, done: readerDone } = await reader.read();
+      done = readerDone;
+      const chunk = decoder.decode(value, { stream: true });
+
+      setSummary((prev) => prev + chunk);
+    }
+  };
+
   const handleSubmit = async () => {
     if (!transcriptFile || !recordingFile) {
       alert("Please upload both transcript and recording files.");
@@ -314,14 +352,16 @@ export default function Home() {
         const data = await response.json();
         setCurrentSessionId(data.session_id);
         setSummary(data.summary);
-        const loadedMessages = (data.messages || []).slice(3);
-        const formattedMessages = loadedMessages.map(
-          (msg: { role: string; content: string }) => {
+        const loadedMessages = data.messages || [];
+        const formattedMessages = loadedMessages
+          .filter(
+            (msg: { role: string; content: string }) => msg.role !== "system"
+          )
+          .map((msg: { role: string; content: string }) => {
             return msg.role === "user"
               ? `You: ${msg.content}`
               : `Assistant: ${msg.content}`;
-          }
-        );
+          });
         setChatMessages(formattedMessages);
         setShowChat(true);
       } else {
@@ -331,6 +371,34 @@ export default function Home() {
       console.error("Error loading session:", error);
     }
   };
+
+  if (initializing) {
+    return (
+      <div className="h-screen w-screen flex items-center justify-center bg-slate-100 dark:bg-slate-600">
+        <div className="flex flex-col items-center gap-4">
+          <svg
+            className="animate-spin h-6 w-6 text-blue-600"
+            style={{ animationDuration: "0.5s" }}
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+          >
+            <path
+              className="opacity-75"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="4"
+              strokeLinecap="round"
+              d="M12 4a8 8 0 018 8"
+            />
+          </svg>
+          <p className="text-slate-800 dark:text-slate-100 font-semibold text-sm">
+            Loading...
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   if (!loggedIn) {
     return (
@@ -357,7 +425,6 @@ export default function Home() {
                 });
                 if (response.ok) {
                   const data = await response.json();
-                  console.log("Login response:", data);
                   localStorage.setItem("user_id", data.user_id);
                   setCurrentUserId(data.user_id);
                   setShowPanel(false); // force it to be closed on login
@@ -401,34 +468,6 @@ export default function Home() {
           >
             Create Account
           </button>
-        </div>
-      </div>
-    );
-  }
-
-  if (initializing) {
-    return (
-      <div className="h-screen w-screen flex items-center justify-center bg-slate-100 dark:bg-slate-600">
-        <div className="flex flex-col items-center gap-4">
-          <svg
-            className="animate-spin h-6 w-6 text-blue-600"
-            style={{ animationDuration: "0.5s" }}
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-          >
-            <path
-              className="opacity-75"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="4"
-              strokeLinecap="round"
-              d="M12 4a8 8 0 018 8"
-            />
-          </svg>
-          <p className="text-slate-800 dark:text-slate-100 font-semibold text-sm">
-            Loading...
-          </p>
         </div>
       </div>
     );
@@ -773,6 +812,18 @@ export default function Home() {
               className={`relative flex justify-between items-center w-full mb-6`}
             >
               {summary && (
+                <div>
+                  <button
+                    onClick={() => {
+                      setRevisionWindow(!revisionWindow);
+                    }}
+                    className="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-sm font-semibold"
+                  >
+                    Revise
+                  </button>
+                </div>
+              )}
+              {summary && (
                 <div className="absolute left-1/2 transform -translate-x-1/2">
                   <h1
                     className={`font-semibold text-slate-800 dark:text-slate-100 text-2xl`}
@@ -805,91 +856,89 @@ export default function Home() {
                   </p>
                 </div>
               )}
-              <div
-                className={`ml-auto flex gap-2 ${
-                  summary === "" ? "hidden" : ""
-                }`}
-              >
-                <button
-                  onClick={() => {
-                    navigator.clipboard.writeText(
-                      "The following summary was generated with AI:\n\n" +
-                        summary
-                    );
-                    setSummaryCopied(true);
-                    setTimeout(() => {
-                      setSummaryCopied(false);
-                    }, 3000);
-                  }}
-                  className="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded"
-                  title="Copy"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth={1.5}
-                    stroke="currentColor"
-                    className="h-3 w-3"
+              {summary && (
+                <div className="ml-auto flex gap-2">
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(
+                        "The following summary was generated with AI:\n\n" +
+                          summary
+                      );
+                      setSummaryCopied(true);
+                      setTimeout(() => {
+                        setSummaryCopied(false);
+                      }, 3000);
+                    }}
+                    className="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded"
+                    title="Copy"
                   >
-                    <path d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 0 1-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 0 1 1.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 0 0-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 0 1-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 0 0-3.375-3.375h-1.5a1.125 1.125 0 0 1-1.125-1.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H9.75" />
-                  </svg>
-                </button>
-                <button
-                  onClick={async () => {
-                    const doc = new Document({
-                      sections: [
-                        {
-                          properties: {},
-                          children: (
-                            "The following summary was generated with AI:\n\n" +
-                            summary
-                          )
-                            .split("\n")
-                            .map(
-                              (line) =>
-                                new Paragraph({
-                                  children: [new TextRun(line)],
-                                })
-                            ),
-                        },
-                      ],
-                    });
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      strokeWidth={1.5}
+                      stroke="currentColor"
+                      className="h-3 w-3"
+                    >
+                      <path d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 0 1-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 0 1 1.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 0 0-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 0 1-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 0 0-3.375-3.375h-1.5a1.125 1.125 0 0 1-1.125-1.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H9.75" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={async () => {
+                      const doc = new Document({
+                        sections: [
+                          {
+                            properties: {},
+                            children: (
+                              "The following summary was generated with AI:\n\n" +
+                              summary
+                            )
+                              .split("\n")
+                              .map(
+                                (line) =>
+                                  new Paragraph({
+                                    children: [new TextRun(line)],
+                                  })
+                              ),
+                          },
+                        ],
+                      });
 
-                    const blob = await Packer.toBlob(doc);
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement("a");
-                    a.href = url;
-                    a.download = "summary.docx";
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    URL.revokeObjectURL(url);
+                      const blob = await Packer.toBlob(doc);
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement("a");
+                      a.href = url;
+                      a.download = "summary.docx";
+                      document.body.appendChild(a);
+                      a.click();
+                      document.body.removeChild(a);
+                      URL.revokeObjectURL(url);
 
-                    setSummaryDownloaded(true);
-                    setTimeout(() => {
-                      setSummaryDownloaded(false);
-                    }, 3000);
-                  }}
-                  className="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded"
-                  title="Download"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth={1.5}
-                    stroke="currentColor"
-                    className="h-3 w-3"
+                      setSummaryDownloaded(true);
+                      setTimeout(() => {
+                        setSummaryDownloaded(false);
+                      }, 3000);
+                    }}
+                    className="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded"
+                    title="Download"
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"
-                    />
-                  </svg>
-                </button>
-              </div>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      strokeWidth={1.5}
+                      stroke="currentColor"
+                      className="h-3 w-3"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"
+                      />
+                    </svg>
+                  </button>
+                </div>
+              )}
             </div>
             <div
               className="overflow-y-auto flex-1"
@@ -1101,7 +1150,7 @@ export default function Home() {
         </div>
 
         {showChat && (
-          <div className="lg:w-1/2 h-full overflow-hidden bg-white dark:bg-slate-800 p-8 rounded-lg shadow flex flex-col">
+          <div className="lg:w-1/2 h-full overflow-hidden bg-white dark:bg-slate-800 p-8 rounded-lg shadow flex flex-col relative">
             <h2 className="text-2xl font-semibold mb-5 text-slate-800 dark:text-slate-100 text-center">
               Chat with Assistant
             </h2>
@@ -1182,6 +1231,42 @@ export default function Home() {
                 </svg>
               </button>
             </div>
+            {revisionWindow && (
+              <div className="absolute inset-0 bg-black bg-opacity-40 z-10 flex items-center justify-center">
+                <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-lg w-11/12 max-w-md relative z-20">
+                  <h2 className="text-xl font-bold text-slate-800 dark:text-white mb-4">
+                    Request a Revision
+                  </h2>
+                  <textarea
+                    placeholder="Enter your revision request here..."
+                    className="w-full h-32 p-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-800 dark:text-white mb-4"
+                    onChange={(e) => setRevisionRequest(e.target.value)}
+                    value={revisionRequest}
+                  />
+                  <div className="flex justify-end gap-2">
+                    <button
+                      className="px-4 py-2 bg-gray-300 dark:bg-gray-600 text-slate-800 dark:text-white rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500"
+                      onClick={() => {
+                        setRevisionWindow(false);
+                        setRevisionRequest("");
+                      }}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold"
+                      onClick={() => {
+                        handleRevise(revisionRequest);
+                        setRevisionWindow(false);
+                        setRevisionRequest("");
+                      }}
+                    >
+                      Submit
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

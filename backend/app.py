@@ -172,6 +172,35 @@ def summarize(user_id):
 
     return Response(stream_with_context(generate()), content_type="text/markdown")
 
+@app.route("/revise/<int:session_id>", methods=["POST"])
+def revise(session_id):
+    data = request.json
+    revision = data.get("revision")
+    if not revision:
+        return jsonify({"error": "Missing revision request"}), 400
+    
+    current_session = db.session.get(SessionModel, session_id)
+    if not current_session:
+        return jsonify({"error": "Session not found"}), 404
+    
+    session = Session(
+        name=current_session.name,
+        summary=current_session.summary,
+        transcript=current_session.transcript,
+        messages=list(current_session.messages),
+    )
+    
+    def generate():
+        try:
+            yield " "
+            for chunk in session.revise(revision):
+                yield chunk
+        finally:
+            current_session.summary = session.summary
+            db.session.commit()
+            
+    return Response(stream_with_context(generate()), content_type="text/markdown")
+
 
 # requires session_id, does not require user_id, returns chat response
 @app.route("/chat/<int:session_id>", methods=["POST"])

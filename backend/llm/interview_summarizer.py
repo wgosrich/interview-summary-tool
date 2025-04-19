@@ -178,13 +178,11 @@ class InterviewSummarizer:
             stream=True,  # Enable streaming
         )
 
-        summary = ""
         for chunk in response:
             if not chunk or not hasattr(chunk, "choices") or len(chunk.choices) == 0:
                 continue  # skip invalid or empty chunks
 
             delta = getattr(chunk.choices[0].delta, "content", "") or ""
-            summary += delta
             yield delta
 
     @staticmethod
@@ -226,3 +224,20 @@ class InterviewSummarizer:
         content = response.choices[0].message.content
 
         return content
+
+    @staticmethod
+    def generate_revision(messages: list):
+
+        # Call the GPT-4 model to generate the revised summary
+        response = gpt4o_client.chat.completions.create(
+            model="gpt-4o",
+            messages=messages,
+            stream=True,  # Enable streaming
+        )
+
+        for chunk in response:
+            if not chunk or not hasattr(chunk, "choices") or len(chunk.choices) == 0:
+                continue  # skip invalid or empty chunks
+
+            delta = getattr(chunk.choices[0].delta, "content", "") or ""
+            yield delta

@@ -1,21 +1,20 @@
 from llm.interview_summarizer import InterviewSummarizer as IS
 from llm.chat import Chat
 
+
 class Session:
-    
+
     def __init__(self, name="Untitled", summary="", transcript="", messages=None):
         self.name = name
         self.summary = summary
         self.transcript = transcript
         self.messages = list(messages) if messages else []
-        
+
     def summarize(self, transcript: str, recording: str):
         assert transcript.lower().endswith(
             ".docx"
         ), "Transcript file must be a .docx file."
-        assert recording.lower().endswith(
-            ".mp4"
-        ), "Recording file must be a .mp4 file."
+        assert recording.lower().endswith(".mp4"), "Recording file must be a .mp4 file."
 
         # parse transcript and recording
         print("Parsing transcript...")
@@ -27,25 +26,28 @@ class Session:
         print("Aligning transcripts...")
         aligned_transcript = IS.align_transcripts(og_transcript, whisper_transcript)
         self.transcript = aligned_transcript
-        
-        
+
         self.messages.append({"role": "system", "content": Chat.PROMPT})
-        self.messages.append({"role": "system", "content": f"Transcript: {aligned_transcript}"})
-        
+        self.messages.append(
+            {"role": "system", "content": f"Transcript: {aligned_transcript}"}
+        )
+
         # generate summary
         print("Generating summary...")
         for chunk in IS.generate_summary(aligned_transcript):
             # add summary to chat
             self.summary += chunk
             yield chunk
-            
-        self.messages.append({"role": "system", "content": f'Initial Summary: {self.summary}'})
+
+        self.messages.append(
+            {"role": "system", "content": f"Initial Summary: {self.summary}"}
+        )
         self.name = IS.generate_title(self.summary)
-        
+
         # initial message
         greeting = IS.initial_greeting()
         self.messages.append({"role": "assistant", "content": greeting})
-        
+
     def prompt_chat(self, prompt: str):
         # add user message to conversation
         self.messages.append({"role": "user", "content": prompt})
@@ -57,3 +59,30 @@ class Session:
             yield chunk
         # add final response to conversation
         self.messages.append({"role": "assistant", "content": response})
+
+    def revise(self, request: str):
+        # initial system prompt, summary, and transcript
+        system_messages = self.messages[:3]
+        # most recent summary
+        system_messages.append(
+            {"role": "system", "content": f"Current Summary: {self.summary}"}
+        )
+        # revision system prompt
+        system_messages.append(
+            {
+                "role": "system",
+                "content": "Do not include any leading text. Just provide the revised summary.",
+            }
+        )
+        # revision request
+        system_messages.append(
+            {
+                "role": "user",
+                "content": f"Can you make these revisions to the summary: {request}",
+            }
+        )
+
+        for chunk in IS.generate_revision(system_messages):
+            # add revision to chat
+            self.summary += chunk
+            yield chunk
