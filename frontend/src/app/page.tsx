@@ -645,8 +645,8 @@ export default function Home() {
         >
           + New Session
         </button>
-        <div className="flex flex-col gap-2 h-1/2">
-          <h2 className="text-xs font-bold mb-1 text-slate-800 dark:text-slate-100">
+        <div className="flex flex-col gap-1 h-1/2">
+          <h2 className="text-xs font-bold text-slate-800 dark:text-slate-100">
             Sessions
           </h2>
           <div
@@ -691,7 +691,7 @@ export default function Home() {
               )}
             </ul>
           </div>
-          <h2 className="text-xs font-bold mb-1 text-slate-800 dark:text-slate-100">
+          <h2 className="text-xs font-bold text-slate-800 dark:text-slate-100">
             Subscribed Sessions
           </h2>
           <div
@@ -789,18 +789,19 @@ export default function Home() {
                     Investigation & Review
                   </h1>
                   <p className="text-lg text-slate-600 dark:text-white mb-4 max-w-2xl mx-auto text-left">
-                    Fast AI-Assisted Investigation & Review (FAIR) is a tool
-                    designed to summarize interviews and extract key case
-                    information.
+                    <strong>
+                      Fast AI-Assisted Investigation & Review (FAIR)
+                    </strong>{" "}
+                    is a tool designed to generate interview summaries and
+                    highlight key case information by leveraging Generative AI
+                    technology.
                   </p>
                   <p className="text-lg text-slate-600 dark:text-white max-w-2xl mx-auto text-left">
-                    Upload your interview transcript and recording along with
-                    any other relevant documentation, then click the{" "}
-                    <span className="inline-block bg-blue-600 text-white font-semibold px-3 py-1 rounded-md shadow-sm text-sm">
-                      Generate Summary
-                    </span>{" "}
-                    button to get started. FAIR will provide a summary and
-                    launch an AI assistant to explore your insights further.
+                    To create a new summary, upload the interview transcript,
+                    audio or video recording, and any supporting documentation.
+                    Alternatively, existing summaries can be added to subscribed
+                    sessions by selecting the corresponding interviewee&rsquo;s
+                    name.
                   </p>
                 </div>
               )}
@@ -896,7 +897,7 @@ export default function Home() {
             >
               {!summary && (
                 <>
-                  <div className="mt-6">
+                  <div className="mt-5">
                     <div className="flex border-b border-slate-300 dark:border-slate-600">
                       <button
                         onClick={() => setTab("field1")}
@@ -1190,7 +1191,7 @@ export default function Home() {
           style={{ top: contextMenu.mouseY, left: contextMenu.mouseX }}
         >
           <button
-            className="text-left px-4 py-1 hover:bg-blue-500 hover:text-white rounded-lg"
+            className="text-left px-4 py-1 hover:bg-blue-500 hover:text-white rounded-md"
             onClick={() => {
               navigator.clipboard.writeText(
                 selectedSessionId
@@ -1206,43 +1207,7 @@ export default function Home() {
             Copy ID
           </button>
           <button
-            className="text-left px-4 py-1 hover:bg-blue-500 hover:text-white rounded-lg"
-            onClick={async () => {
-              if (selectedSessionId !== null) {
-                try {
-                  const response = await fetch(
-                    `http://localhost:8000/delete_session/${selectedSessionId}`,
-                    { method: "DELETE" }
-                  );
-                  if (response.ok) {
-                    if (selectedSessionId === currentSessionId) {
-                      setTranscriptFile(null);
-                      setRecordingFile(null);
-                      setSummary("");
-                      setShowChat(false);
-                      setChatInput("");
-                      setChatMessages([]);
-                      setCurrentSessionId(null);
-                    }
-                    fetchSessions();
-                  } else {
-                    console.error("Failed to delete session");
-                  }
-                } catch (error) {
-                  console.error("Error deleting session:", error);
-                }
-              }
-              setContextMenu(null);
-              setSessionDeleted(true);
-              setTimeout(() => {
-                setSessionDeleted(false);
-              }, 3000);
-            }}
-          >
-            Delete
-          </button>
-          <button
-            className="text-left px-4 py-1 hover:bg-blue-500 hover:text-white rounded-lg"
+            className="text-left px-4 py-1 hover:bg-blue-500 hover:text-white rounded-md"
             onClick={async () => {
               if (selectedSessionId !== null) {
                 try {
@@ -1276,6 +1241,42 @@ export default function Home() {
             }}
           >
             Remove
+          </button>
+          <button
+            className="text-left px-4 py-1 hover:bg-blue-500 hover:text-white rounded-md"
+            onClick={async () => {
+              if (selectedSessionId !== null) {
+                try {
+                  const response = await fetch(
+                    `http://localhost:8000/delete_session/${selectedSessionId}`,
+                    { method: "DELETE" }
+                  );
+                  if (response.ok) {
+                    if (selectedSessionId === currentSessionId) {
+                      setTranscriptFile(null);
+                      setRecordingFile(null);
+                      setSummary("");
+                      setShowChat(false);
+                      setChatInput("");
+                      setChatMessages([]);
+                      setCurrentSessionId(null);
+                    }
+                    fetchSessions();
+                  } else {
+                    console.error("Failed to delete session");
+                  }
+                } catch (error) {
+                  console.error("Error deleting session:", error);
+                }
+              }
+              setContextMenu(null);
+              setSessionDeleted(true);
+              setTimeout(() => {
+                setSessionDeleted(false);
+              }, 3000);
+            }}
+          >
+            Delete
           </button>
         </div>
       )}
