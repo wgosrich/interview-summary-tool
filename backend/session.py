@@ -81,7 +81,7 @@ class Session:
                 "content": f"Can you make these revisions to the summary: {request}",
             }
         )
-
+        self.summary = ""
         for chunk in IS.generate_revision(system_messages):
             # add revision to chat
             self.summary += chunk

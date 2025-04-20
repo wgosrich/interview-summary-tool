@@ -61,25 +61,6 @@ def login():
     return jsonify({"message": "User created", "user_id": new_user.id}), 201
 
 
-# doesn't require user_id or session_id, returns user_id
-@app.route("/add_user", methods=["POST"])
-def add_user():
-    user_data = request.json
-    username = user_data.get("username")
-    if not username:
-        return jsonify({"error": "Missing username"}), 400
-
-    existing_user = UserModel.query.filter_by(username=username).first()
-    if existing_user:
-        return jsonify({"error": "User already exists"}), 400
-
-    new_user = UserModel(username=username)
-    db.session.add(new_user)
-    db.session.commit()
-
-    return jsonify({"message": "User added", "user_id": new_user.id}), 201
-
-
 # requires user_id
 @app.route("/delete_user/<int:user_id>", methods=["DELETE"])
 def delete_user(user_id):
@@ -179,15 +160,15 @@ def revise(session_id):
     if not revision:
         return jsonify({"error": "Missing revision request"}), 400
     
-    current_session = db.session.get(SessionModel, session_id)
-    if not current_session:
+    record = db.session.get(SessionModel, session_id)
+    if not record:
         return jsonify({"error": "Session not found"}), 404
     
     session = Session(
-        name=current_session.name,
-        summary=current_session.summary,
-        transcript=current_session.transcript,
-        messages=list(current_session.messages),
+        name=record.name,
+        summary=record.summary,
+        transcript=record.transcript,
+        messages=list(record.messages),
     )
     
     def generate():
@@ -196,7 +177,7 @@ def revise(session_id):
             for chunk in session.revise(revision):
                 yield chunk
         finally:
-            current_session.summary = session.summary
+            record.summary = session.summary
             db.session.commit()
             
     return Response(stream_with_context(generate()), content_type="text/markdown")

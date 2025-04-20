@@ -203,6 +203,8 @@ export default function Home() {
       return;
     }
 
+    setLoading(true);
+
     const response = await fetch(
       `http://localhost:8000/revise/${currentSessionId}`,
       {
@@ -231,6 +233,8 @@ export default function Home() {
 
       setSummary((prev) => prev + chunk);
     }
+
+    setLoading(false);
   };
 
   const handleSubmit = async () => {
@@ -440,33 +444,6 @@ export default function Home() {
             className="bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 font-bold"
           >
             Login
-          </button>
-          <button
-            onClick={async () => {
-              if (!username.trim()) return;
-              try {
-                const response = await fetch("http://localhost:8000/add_user", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ username }),
-                });
-                if (response.ok) {
-                  const data = await response.json();
-                  localStorage.setItem("user_id", data.user_id);
-                  setCurrentUserId(data.user_id);
-                  setShowPanel(false); // force it to be closed on login
-                  setLoggedIn(true);
-                } else {
-                  alert("Account creation failed.");
-                }
-              } catch (error) {
-                console.error("Account creation error:", error);
-                alert("Account creation error.");
-              }
-            }}
-            className="bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 font-bold"
-          >
-            Create Account
           </button>
         </div>
       </div>
@@ -788,6 +765,8 @@ export default function Home() {
             setChatInput("");
             setChatMessages([]);
             setCurrentSessionId(null);
+            setRevisionWindow(false);
+            setRevisionRequest("");
             localStorage.clear();
           }}
           className="absolute bottom-6 left-6 w-[calc(100%-3rem)] bg-slate-600 text-white py-2 px-3 rounded-lg hover:bg-red-600 font-semibold"
@@ -804,7 +783,7 @@ export default function Home() {
       >
         <div className="lg:w-1/2 h-full">
           <div
-            className={`relative bg-slate-50 dark:bg-slate-800 p-8 shadow rounded-lg transition-all duration-500 flex flex-col h-full ${
+            className={`relative bg-white dark:bg-slate-800 p-8 shadow rounded-lg transition-all duration-500 flex flex-col h-full ${
               loading ? "animate-[pulse-border_2s_infinite]" : ""
             }`}
           >
@@ -1232,11 +1211,11 @@ export default function Home() {
               </button>
             </div>
             {revisionWindow && (
-              <div className="absolute inset-0 bg-black bg-opacity-40 z-10 flex items-center justify-center">
-                <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-lg w-11/12 max-w-md relative z-20">
-                  <h2 className="text-xl font-bold text-slate-800 dark:text-white mb-4">
+              <div className="absolute inset-0 bg-white dark:bg-slate-800 bg-opacity-40 z-10 flex items-center justify-center rounded-lg">
+                <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-lg w-full h-full relative z-20">
+                  <h1 className="font-semibold text-slate-800 dark:text-slate-100 text-2xl text-center py-2 mb-3">
                     Request a Revision
-                  </h2>
+                  </h1>
                   <textarea
                     placeholder="Enter your revision request here..."
                     className="w-full h-32 p-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-800 dark:text-white mb-4"
@@ -1245,7 +1224,7 @@ export default function Home() {
                   />
                   <div className="flex justify-end gap-2">
                     <button
-                      className="px-4 py-2 bg-gray-300 dark:bg-gray-600 text-slate-800 dark:text-white rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500"
+                      className="px-4 py-2 bg-gray-300 dark:bg-gray-600 text-slate-800 dark:text-white rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500 font-semibold"
                       onClick={() => {
                         setRevisionWindow(false);
                         setRevisionRequest("");
