@@ -175,6 +175,8 @@ export default function Home() {
       setCurrentUserId(Number(storedUserId));
       setLoggedIn(true);
     }
+    const savedTab = localStorage.getItem("selectedTab");
+    if (savedTab) setTab(savedTab);
 
     setInitializing(false); // done initializing
   }, []);
@@ -196,6 +198,10 @@ export default function Home() {
   useEffect(() => {
     localStorage.setItem("showChat", JSON.stringify(showChat));
   }, [showChat]);
+
+  useEffect(() => {
+    localStorage.setItem("selectedTab", tab);
+  }, [tab]);
 
   const handleRevise = async (request: string) => {
     if (!summary) {
@@ -730,14 +736,14 @@ export default function Home() {
                       }}
                       className={`flex justify-between items-center truncate group cursor-pointer ${
                         session.id === currentSessionId
-                          ? "bg-gray-300 dark:bg-gray-900 rounded-lg"
+                          ? "bg-gray-300 dark:bg-gray-700 rounded-lg"
                           : ""
                       }`}
                     >
                       <span
                         className={`flex-1 truncate text-sm p-2 rounded-lg ${
                           session.id !== currentSessionId
-                            ? "hover:bg-gray-100 dark:hover:bg-gray-700"
+                            ? "hover:bg-gray-100 dark:hover:bg-gray-900"
                             : ""
                         }`}
                         onClick={() => {
