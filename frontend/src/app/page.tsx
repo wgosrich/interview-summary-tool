@@ -824,21 +824,25 @@ export default function Home() {
                     <br />
                     Investigation & Review
                   </h1>
-                  <p className="text-lg text-slate-600 dark:text-white mb-4 max-w-2xl mx-auto text-left">
-                    <strong>
-                      Fast AI-Assisted Investigation & Review (FAIR)
-                    </strong>{" "}
-                    is a tool designed to generate interview summaries and
-                    highlight key case information by leveraging Generative AI
-                    technology.
-                  </p>
-                  <p className="text-lg text-slate-600 dark:text-white max-w-2xl mx-auto text-left">
-                    To create a new summary, upload the interview transcript,
-                    audio or video recording, and any supporting documentation.
-                    Alternatively, existing summaries can be added to subscribed
-                    sessions by selecting the corresponding interviewee&rsquo;s
-                    name.
-                  </p>
+                  <div className="text-left max-w-2xl mx-auto text-slate-600 dark:text-white text-lg space-y-4">
+                    <p>
+                      <strong>FAIR</strong> makes it easy to get the most out of
+                      your interviews by offering concise but thorough summaries
+                      alongside an AI assistant to identify key case details and
+                      explore them further.
+                    </p>
+                    <ul className="list-disc list-inside space-y-1">
+                      <li>
+                        <strong>Generate a New Summary</strong>: Upload the
+                        interview transcript, audio or video recording, and any
+                        relevant documentation.
+                      </li>
+                      <li>
+                        <strong>Add an Existing Summary</strong>: Subscribe to a
+                        session by selecting the interviewee’s name.
+                      </li>
+                    </ul>
+                  </div>
                 </div>
               )}
               {summary && (
