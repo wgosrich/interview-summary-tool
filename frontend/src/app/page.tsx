@@ -14,6 +14,7 @@ export default function Home() {
   const [chatMessages, setChatMessages] = useState<string[]>([]);
   const [summaryCopied, setSummaryCopied] = useState(false);
   const [summaryDownloaded, setSummaryDownloaded] = useState(false);
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const chatContainerRef = useRef<HTMLDivElement | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
   const [showPanel, setShowPanel] = useState(false);
@@ -130,6 +131,9 @@ export default function Home() {
         ".absolute.top-4.right-\\[-50px\\]"
       );
       const contextMenuEl = document.querySelector(".context-menu");
+      const profileMenuEl = document.querySelector(".profile-menu");
+      const profileButtonEl = document.querySelector(".profile-button");
+      
       if (
         showPanel &&
         panel &&
@@ -141,13 +145,23 @@ export default function Home() {
         setShowPanel(false);
         setContextMenu(null);
       }
+      
+      if (
+        profileMenuOpen &&
+        profileMenuEl &&
+        !profileMenuEl.contains(e.target as Node) &&
+        profileButtonEl &&
+        !profileButtonEl.contains(e.target as Node)
+      ) {
+        setProfileMenuOpen(false);
+      }
     };
 
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [showPanel]);
+  }, [showPanel, profileMenuOpen]);
 
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
@@ -166,6 +180,7 @@ export default function Home() {
     const savedMessages = localStorage.getItem("chatMessages");
     const savedShowChat = localStorage.getItem("showChat");
     const storedUserId = localStorage.getItem("user_id");
+    const storedUsername = localStorage.getItem("username");
 
     if (savedSessionId) setCurrentSessionId(Number(savedSessionId));
     if (savedSummary) setSummary(savedSummary);
@@ -175,6 +190,7 @@ export default function Home() {
       setCurrentUserId(Number(storedUserId));
       setLoggedIn(true);
     }
+    if (storedUsername) setUsername(storedUsername);
     const savedTab = localStorage.getItem("selectedTab");
     if (savedTab) setTab(savedTab);
 
@@ -436,6 +452,7 @@ export default function Home() {
                 if (response.ok) {
                   const data = await response.json();
                   localStorage.setItem("user_id", data.user_id);
+                  localStorage.setItem("username", username);
                   setCurrentUserId(data.user_id);
                   setShowPanel(false); // force it to be closed on login
                   setLoggedIn(true);
@@ -629,7 +646,7 @@ export default function Home() {
             setShowPanel(!showPanel);
             if (!showPanel) fetchSessions();
           }}
-          className="absolute top-4 right-[-50px] bg-blue-600 text-white w-10 h-10 rounded-full shadow-lg hover:bg-blue-700 flex items-center justify-center"
+          className="absolute top-4 right-[-55px] bg-blue-600 text-white w-10 h-10 rounded-full shadow-lg hover:bg-blue-700 flex items-center justify-center"
           title={showPanel ? "Hide Panel" : "Show Panel"}
         >
           <svg
@@ -787,6 +804,76 @@ export default function Home() {
             : "flex-col items-center justify-center"
         }`}
       >
+        {loggedIn && (
+          <div className="absolute top-4 right-6 z-50">
+            <button
+              onClick={() => setProfileMenuOpen(!profileMenuOpen)}
+              className="profile-button w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center hover:bg-blue-700 shadow-md"
+            >
+              <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                fill="none" 
+                viewBox="0 0 24 24" 
+                stroke="currentColor" 
+                className="h-6 w-6"
+              >
+                <path 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round" 
+                  strokeWidth={2} 
+                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" 
+                />
+              </svg>
+            </button>
+            
+            {profileMenuOpen && (
+              <div className="profile-menu absolute right-0 mt-2 w-48 bg-white dark:bg-slate-800 rounded-lg shadow-lg p-2 z-50">
+                <div className="text-center px-4 py-1 text-sm font-semibold text-slate-800 dark:text-white">
+                  {username}
+                </div>
+                <div className="border-t border-slate-200 dark:border-slate-600 my-1"></div>
+                <button
+                  onClick={() => {
+                    setLoggedIn(false);
+                    setCurrentUserId(null);
+                    setUsername("");
+                    setTranscriptFile(null);
+                    setRecordingFile(null);
+                    setSummary("");
+                    setShowChat(false);
+                    setChatInput("");
+                    setChatMessages([]);
+                    setCurrentSessionId(null);
+                    setRevisionWindow(false);
+                    setRevisionRequest("");
+                    localStorage.clear();
+                    setProfileMenuOpen(false);
+                  }}
+                  className="w-full text-left px-4 py-2 text-sm font-semibold text-slate-800 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-700 rounded-md"
+                >
+                  <div className="flex items-center">
+                    <svg 
+                      xmlns="http://www.w3.org/2000/svg" 
+                      fill="none" 
+                      viewBox="0 0 24 24" 
+                      stroke="currentColor" 
+                      className="h-4 w-4 mr-2"
+                    >
+                      <path 
+                        strokeLinecap="round" 
+                        strokeLinejoin="round" 
+                        strokeWidth={2} 
+                        d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" 
+                      />
+                    </svg>
+                    Logout
+                  </div>
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+        
         <div className="lg:w-1/2 h-full">
           <div
             className={`relative bg-white dark:bg-slate-800 p-8 shadow rounded-lg transition-all duration-500 flex flex-col h-full ${
@@ -839,7 +926,7 @@ export default function Home() {
                       </li>
                       <li>
                         <strong>Add an Existing Summary</strong>: Subscribe to a
-                        session by selecting the interviewee’s name.
+                        session by selecting the interviewee's name.
                       </li>
                     </ul>
                   </div>
