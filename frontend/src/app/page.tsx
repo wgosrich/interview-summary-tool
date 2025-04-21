@@ -14,6 +14,7 @@ export default function Home() {
   const [chatMessages, setChatMessages] = useState<string[]>([]);
   const [summaryCopied, setSummaryCopied] = useState(false);
   const [summaryDownloaded, setSummaryDownloaded] = useState(false);
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const chatContainerRef = useRef<HTMLDivElement | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
   const [showPanel, setShowPanel] = useState(false);
@@ -130,6 +131,9 @@ export default function Home() {
         ".absolute.top-4.right-\\[-50px\\]"
       );
       const contextMenuEl = document.querySelector(".context-menu");
+      const profileMenuEl = document.querySelector(".profile-menu");
+      const profileButtonEl = document.querySelector(".profile-button");
+
       if (
         showPanel &&
         panel &&
@@ -141,13 +145,23 @@ export default function Home() {
         setShowPanel(false);
         setContextMenu(null);
       }
+
+      if (
+        profileMenuOpen &&
+        profileMenuEl &&
+        !profileMenuEl.contains(e.target as Node) &&
+        profileButtonEl &&
+        !profileButtonEl.contains(e.target as Node)
+      ) {
+        setProfileMenuOpen(false);
+      }
     };
 
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [showPanel]);
+  }, [showPanel, profileMenuOpen]);
 
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
@@ -166,6 +180,7 @@ export default function Home() {
     const savedMessages = localStorage.getItem("chatMessages");
     const savedShowChat = localStorage.getItem("showChat");
     const storedUserId = localStorage.getItem("user_id");
+    const storedUsername = localStorage.getItem("username");
 
     if (savedSessionId) setCurrentSessionId(Number(savedSessionId));
     if (savedSummary) setSummary(savedSummary);
@@ -175,6 +190,7 @@ export default function Home() {
       setCurrentUserId(Number(storedUserId));
       setLoggedIn(true);
     }
+    if (storedUsername) setUsername(storedUsername);
     const savedTab = localStorage.getItem("selectedTab");
     if (savedTab) setTab(savedTab);
 
@@ -436,6 +452,7 @@ export default function Home() {
                 if (response.ok) {
                   const data = await response.json();
                   localStorage.setItem("user_id", data.user_id);
+                  localStorage.setItem("username", username);
                   setCurrentUserId(data.user_id);
                   setShowPanel(false); // force it to be closed on login
                   setLoggedIn(true);
@@ -459,11 +476,10 @@ export default function Home() {
   return (
     <div className="h-screen font-sans bg-slate-100 dark:bg-slate-600 py-10 px-6 sm:px-8 lg:px-16">
       <div
-        className={`fixed top-0 left-1/2 transform -translate-x-1/2 transition-transform duration-500 ease-in-out z-50 ${
-          subscribed
-            ? "translate-y-6 opacity-100"
-            : "-translate-y-full opacity-0"
-        } bg-green-100 text-green-800 px-5 py-3 rounded-lg shadow-lg text-sm font-semibold flex items-center gap-1`}
+        className={`fixed top-0 left-1/2 transform -translate-x-1/2 transition-transform duration-500 ease-in-out z-50 ${subscribed
+          ? "translate-y-6 opacity-100"
+          : "-translate-y-full opacity-0"
+          } bg-green-100 text-green-800 px-5 py-3 rounded-lg shadow-lg text-sm font-semibold flex items-center gap-1`}
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -482,11 +498,10 @@ export default function Home() {
         Subscribed to Session Successfully!
       </div>
       <div
-        className={`fixed top-0 left-1/2 transform -translate-x-1/2 transition-transform duration-500 ease-in-out z-50 ${
-          sessionRemoved
-            ? "translate-y-6 opacity-100"
-            : "-translate-y-full opacity-0"
-        } bg-green-100 text-green-800 px-5 py-3 rounded-lg shadow-lg text-sm font-semibold flex items-center gap-1`}
+        className={`fixed top-0 left-1/2 transform -translate-x-1/2 transition-transform duration-500 ease-in-out z-50 ${sessionRemoved
+          ? "translate-y-6 opacity-100"
+          : "-translate-y-full opacity-0"
+          } bg-green-100 text-green-800 px-5 py-3 rounded-lg shadow-lg text-sm font-semibold flex items-center gap-1`}
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -505,11 +520,10 @@ export default function Home() {
         Session Removed Successfully!
       </div>
       <div
-        className={`fixed top-0 left-1/2 transform -translate-x-1/2 transition-transform duration-500 ease-in-out z-50 ${
-          sessionDeleted
-            ? "translate-y-6 opacity-100"
-            : "-translate-y-full opacity-0"
-        } bg-green-100 text-green-800 px-5 py-3 rounded-lg shadow-lg text-sm font-semibold flex items-center gap-1`}
+        className={`fixed top-0 left-1/2 transform -translate-x-1/2 transition-transform duration-500 ease-in-out z-50 ${sessionDeleted
+          ? "translate-y-6 opacity-100"
+          : "-translate-y-full opacity-0"
+          } bg-green-100 text-green-800 px-5 py-3 rounded-lg shadow-lg text-sm font-semibold flex items-center gap-1`}
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -528,11 +542,10 @@ export default function Home() {
         Session Deleted Successfully!
       </div>
       <div
-        className={`fixed top-0 left-1/2 transform -translate-x-1/2 transition-transform duration-500 ease-in-out z-50 ${
-          sessionIDCopied
-            ? "translate-y-6 opacity-100"
-            : "-translate-y-full opacity-0"
-        } bg-green-100 text-green-800 px-5 py-3 rounded-lg shadow-lg text-sm font-semibold flex items-center gap-1`}
+        className={`fixed top-0 left-1/2 transform -translate-x-1/2 transition-transform duration-500 ease-in-out z-50 ${sessionIDCopied
+          ? "translate-y-6 opacity-100"
+          : "-translate-y-full opacity-0"
+          } bg-green-100 text-green-800 px-5 py-3 rounded-lg shadow-lg text-sm font-semibold flex items-center gap-1`}
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -551,11 +564,10 @@ export default function Home() {
         Session ID Copied!
       </div>
       <div
-        className={`fixed top-0 left-1/2 transform -translate-x-1/2 transition-transform duration-500 ease-in-out z-50 ${
-          showSuccess
-            ? "translate-y-6 opacity-100"
-            : "-translate-y-full opacity-0"
-        } bg-green-100 text-green-800 px-5 py-3 rounded-lg shadow-lg text-sm font-semibold flex items-center gap-1`}
+        className={`fixed top-0 left-1/2 transform -translate-x-1/2 transition-transform duration-500 ease-in-out z-50 ${showSuccess
+          ? "translate-y-6 opacity-100"
+          : "-translate-y-full opacity-0"
+          } bg-green-100 text-green-800 px-5 py-3 rounded-lg shadow-lg text-sm font-semibold flex items-center gap-1`}
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -574,11 +586,10 @@ export default function Home() {
         Summary generated successfully!
       </div>
       <div
-        className={`fixed top-0 left-1/2 transform -translate-x-1/2 transition-transform duration-500 ease-in-out z-50 ${
-          summaryCopied
-            ? "translate-y-6 opacity-100"
-            : "-translate-y-full opacity-0"
-        } bg-green-100 text-green-800 px-5 py-3 rounded-lg shadow-lg text-sm font-semibold flex items-center gap-1`}
+        className={`fixed top-0 left-1/2 transform -translate-x-1/2 transition-transform duration-500 ease-in-out z-50 ${summaryCopied
+          ? "translate-y-6 opacity-100"
+          : "-translate-y-full opacity-0"
+          } bg-green-100 text-green-800 px-5 py-3 rounded-lg shadow-lg text-sm font-semibold flex items-center gap-1`}
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -597,11 +608,10 @@ export default function Home() {
         Summary copied successfully!
       </div>
       <div
-        className={`fixed top-0 left-1/2 transform -translate-x-1/2 transition-transform duration-500 ease-in-out z-50 ${
-          summaryDownloaded
-            ? "translate-y-6 opacity-100"
-            : "-translate-y-full opacity-0"
-        } bg-green-100 text-green-800 px-5 py-3 rounded-lg shadow-lg text-sm font-semibold flex items-center gap-1`}
+        className={`fixed top-0 left-1/2 transform -translate-x-1/2 transition-transform duration-500 ease-in-out z-50 ${summaryDownloaded
+          ? "translate-y-6 opacity-100"
+          : "-translate-y-full opacity-0"
+          } bg-green-100 text-green-800 px-5 py-3 rounded-lg shadow-lg text-sm font-semibold flex items-center gap-1`}
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -620,16 +630,15 @@ export default function Home() {
         Summary downloaded successfully!
       </div>
       <div
-        className={`fixed top-0 left-0 h-full w-56 bg-white dark:bg-slate-800 shadow-lg p-6 z-40 transform transition-transform duration-300 ${
-          showPanel ? "translate-x-0" : "-translate-x-full"
-        }`}
+        className={`fixed top-0 left-0 h-full w-56 bg-white dark:bg-slate-800 shadow-lg p-6 z-40 transform transition-transform duration-300 ${showPanel ? "translate-x-0" : "-translate-x-full"
+          }`}
       >
         <button
           onClick={() => {
             setShowPanel(!showPanel);
             if (!showPanel) fetchSessions();
           }}
-          className="absolute top-4 right-[-50px] bg-blue-600 text-white w-10 h-10 rounded-full shadow-lg hover:bg-blue-700 flex items-center justify-center"
+          className="absolute top-4 right-[-55px] bg-blue-600 text-white w-10 h-10 rounded-full shadow-lg hover:bg-blue-700 flex items-center justify-center"
           title={showPanel ? "Hide Panel" : "Show Panel"}
         >
           <svg
@@ -689,18 +698,16 @@ export default function Home() {
                           mouseY: e.clientY,
                         });
                       }}
-                      className={`flex justify-between items-center truncate group cursor-pointer ${
-                        session.id === currentSessionId
-                          ? "bg-gray-300 dark:bg-gray-900 rounded-lg"
-                          : ""
-                      }`}
+                      className={`flex justify-between items-center truncate group cursor-pointer ${session.id === currentSessionId
+                        ? "bg-gray-300 dark:bg-gray-900 rounded-lg"
+                        : ""
+                        }`}
                     >
                       <span
-                        className={`flex-1 truncate text-sm p-2 rounded-lg ${
-                          session.id !== currentSessionId
-                            ? "hover:bg-gray-100 dark:hover:bg-gray-700"
-                            : ""
-                        }`}
+                        className={`flex-1 truncate text-sm p-2 rounded-lg ${session.id !== currentSessionId
+                          ? "hover:bg-gray-100 dark:hover:bg-gray-700"
+                          : ""
+                          }`}
                         onClick={() => {
                           loadSession(session.id);
                           setShowPanel(false);
@@ -734,18 +741,16 @@ export default function Home() {
                           mouseY: e.clientY,
                         });
                       }}
-                      className={`flex justify-between items-center truncate group cursor-pointer ${
-                        session.id === currentSessionId
-                          ? "bg-gray-300 dark:bg-gray-700 rounded-lg"
-                          : ""
-                      }`}
+                      className={`flex justify-between items-center truncate group cursor-pointer ${session.id === currentSessionId
+                        ? "bg-gray-300 dark:bg-gray-700 rounded-lg"
+                        : ""
+                        }`}
                     >
                       <span
-                        className={`flex-1 truncate text-sm p-2 rounded-lg ${
-                          session.id !== currentSessionId
-                            ? "hover:bg-gray-100 dark:hover:bg-gray-900"
-                            : ""
-                        }`}
+                        className={`flex-1 truncate text-sm p-2 rounded-lg ${session.id !== currentSessionId
+                          ? "hover:bg-gray-100 dark:hover:bg-gray-900"
+                          : ""
+                          }`}
                         onClick={() => {
                           loadSession(session.id);
                           setShowPanel(false);
@@ -759,39 +764,87 @@ export default function Home() {
             </ul>
           </div>
         </div>
-        <button
-          onClick={() => {
-            setLoggedIn(false);
-            setCurrentUserId(null);
-            setUsername("");
-            setTranscriptFile(null);
-            setRecordingFile(null);
-            setSummary("");
-            setShowChat(false);
-            setChatInput("");
-            setChatMessages([]);
-            setCurrentSessionId(null);
-            setRevisionWindow(false);
-            setRevisionRequest("");
-            localStorage.clear();
-          }}
-          className="absolute bottom-6 left-6 w-[calc(100%-3rem)] bg-slate-600 text-white py-2 px-3 rounded-lg hover:bg-red-600 font-semibold"
-        >
-          Logout
-        </button>
       </div>
       <div
-        className={`max-w-screen-xl mx-auto flex gap-10 py-1 h-full transition-all duration-700 ease-in-out ${
-          showChat
-            ? "flex-col lg:flex-row"
-            : "flex-col items-center justify-center"
-        }`}
+        className={`max-w-screen-xl mx-auto flex gap-10 py-1 h-full transition-all duration-700 ease-in-out ${showChat
+          ? "flex-col lg:flex-row"
+          : "flex-col items-center justify-center"
+          }`}
       >
+        {loggedIn && (
+          <div className="absolute top-4 right-6 z-50">
+            <button
+              onClick={() => setProfileMenuOpen(!profileMenuOpen)}
+              className="profile-button w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center hover:bg-blue-700 shadow-md"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                className="h-6 w-6"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                />
+              </svg>
+            </button>
+
+            {profileMenuOpen && (
+              <div className="profile-menu absolute right-0 mt-2 w-48 bg-white dark:bg-slate-800 rounded-lg shadow-lg p-2 z-50">
+                <div className="text-center px-4 py-1 text-sm font-semibold text-slate-800 dark:text-white">
+                  {username}
+                </div>
+                <div className="border-t border-slate-200 dark:border-slate-600 my-1"></div>
+                <button
+                  onClick={() => {
+                    setLoggedIn(false);
+                    setCurrentUserId(null);
+                    setUsername("");
+                    setTranscriptFile(null);
+                    setRecordingFile(null);
+                    setSummary("");
+                    setShowChat(false);
+                    setChatInput("");
+                    setChatMessages([]);
+                    setCurrentSessionId(null);
+                    setRevisionWindow(false);
+                    setRevisionRequest("");
+                    localStorage.clear();
+                    setProfileMenuOpen(false);
+                  }}
+                  className="w-full text-left px-4 py-2 text-sm font-semibold text-slate-800 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-700 rounded-md"
+                >
+                  <div className="flex items-center">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      className="h-4 w-4 mr-2"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                      />
+                    </svg>
+                    Logout
+                  </div>
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
         <div className="lg:w-1/2 h-full">
           <div
-            className={`relative bg-white dark:bg-slate-800 p-8 shadow rounded-lg transition-all duration-500 flex flex-col h-full ${
-              loading ? "animate-[pulse-border_2s_infinite]" : ""
-            }`}
+            className={`relative bg-white dark:bg-slate-800 p-8 shadow rounded-lg transition-all duration-500 flex flex-col h-full ${loading ? "animate-[pulse-border_2s_infinite]" : ""
+              }`}
           >
             <div
               className={`relative flex justify-between items-center w-full mb-6`}
@@ -839,7 +892,7 @@ export default function Home() {
                       </li>
                       <li>
                         <strong>Add an Existing Summary</strong>: Subscribe to a
-                        session by selecting the interviewee’s name.
+                        session by selecting the interviewee's name.
                       </li>
                     </ul>
                   </div>
@@ -851,7 +904,7 @@ export default function Home() {
                     onClick={() => {
                       navigator.clipboard.writeText(
                         "The following summary was generated with AI:\n\n" +
-                          summary
+                        summary
                       );
                       setSummaryCopied(true);
                       setTimeout(() => {
@@ -939,21 +992,19 @@ export default function Home() {
                     <div className="flex border-b border-slate-300 dark:border-slate-600">
                       <button
                         onClick={() => setTab("field1")}
-                        className={`flex-1 px-4 py-2 font-semibold ${
-                          tab === "field1"
-                            ? "border-b-2 border-blue-600 text-blue-600"
-                            : "text-slate-600 dark:text-slate-100"
-                        }`}
+                        className={`flex-1 px-4 py-2 font-semibold ${tab === "field1"
+                          ? "border-b-2 border-blue-600 text-blue-600"
+                          : "text-slate-600 dark:text-slate-100"
+                          }`}
                       >
                         Generate New Summary
                       </button>
                       <button
                         onClick={() => setTab("field2")}
-                        className={`flex-1 px-4 py-2 font-semibold ${
-                          tab === "field2"
-                            ? "border-b-2 border-blue-600 text-blue-600"
-                            : "text-slate-600 dark:text-slate-100"
-                        }`}
+                        className={`flex-1 px-4 py-2 font-semibold ${tab === "field2"
+                          ? "border-b-2 border-blue-600 text-blue-600"
+                          : "text-slate-600 dark:text-slate-100"
+                          }`}
                       >
                         Add Existing Summary
                       </button>
@@ -1117,11 +1168,10 @@ export default function Home() {
               )}
               {summary && (
                 <div
-                  className={`transition-all duration-700 ease-in-out ${
-                    summary
-                      ? "opacity-100 max-h-[1000px]"
-                      : "opacity-0 max-h-0 overflow-hidden"
-                  }`}
+                  className={`transition-all duration-700 ease-in-out ${summary
+                    ? "opacity-100 max-h-[1000px]"
+                    : "opacity-0 max-h-0 overflow-hidden"
+                    }`}
                 >
                   <div className="bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100 rounded-lg px-6 py-3">
                     <MarkdownPreview
@@ -1157,16 +1207,14 @@ export default function Home() {
                 return (
                   <div
                     key={idx}
-                    className={`flex ${
-                      isUser ? "justify-end" : "justify-start"
-                    }`}
+                    className={`flex ${isUser ? "justify-end" : "justify-start"
+                      }`}
                   >
                     <div
-                      className={`inline-block px-4 py-2 rounded-lg text-sm max-w-[90%] ${
-                        isUser
-                          ? "bg-blue-600 text-white"
-                          : "bg-gray-200 dark:bg-slate-600 text-gray-900 dark:text-white"
-                      }`}
+                      className={`inline-block px-4 py-2 rounded-lg text-sm max-w-[90%] ${isUser
+                        ? "bg-blue-600 text-white"
+                        : "bg-gray-200 dark:bg-slate-600 text-gray-900 dark:text-white"
+                        }`}
                     >
                       {isUser ? (
                         messageText
