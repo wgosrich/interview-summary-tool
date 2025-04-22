@@ -816,7 +816,7 @@ export default function Home() {
                           setShowPanel(false);
                         }}
                       >
-                        {session.name}
+                        {session.name.split(":")[1]?.trim() || session.name}
                       </span>
                     </li>
                   )
@@ -863,7 +863,7 @@ export default function Home() {
                           setShowPanel(false);
                         }}
                       >
-                        {session.name}
+                        {session.name.split(":")[1]?.trim() || session.name}
                       </span>
                     </li>
                   )

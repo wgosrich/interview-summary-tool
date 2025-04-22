@@ -15,7 +15,7 @@ class InterviewSummarizer:
     @staticmethod
     def summarize(transcript_path: str, recording_path: str):
         # confirm file types
-        assert transcript_path.lower().endswith(
+        assert transcript_path.lower().tendswith(
             ".docx"
         ), "Transcript file must be a .docx file."
         assert recording_path.lower().endswith(
@@ -196,11 +196,15 @@ class InterviewSummarizer:
     def generate_title(summary: str):
         prompt = f"""
         You are an AI assistant helping to summarize interview transcripts for a civil rights investigation.
-        Your task is to generate a title for the following summary:
+        Your task is to generate a title detailing the name of the interviewee for the following summary:
         {summary}
-        The title should be a plain string without any formatting or special characters.
-        It should be concise and accurately reflect the content of the summary.
-        If the name of ther interviewee is known, make that the title with no other information.
+        The title should be a string that is formatted with the [Docket Number]: ["Interviewee Name"] like the following example:
+        "Z1982-098127: John Doe"
+        If the docket number is not known, use the following format:
+        "UNKNOWN: John Doe"
+        If the name of the interviewee is not known, use the following format:
+        "Z1982-098127: UNKNOWN"
+        Do not include any other names mentioned apart from the interviewee's name. Do not include any quotation marks in the title.
         """
 
         # Call the GPT-4 model to generate the title
