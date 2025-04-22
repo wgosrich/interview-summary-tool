@@ -41,6 +41,11 @@ class Session:
         if additional_context:
             print("Parsing additional context...")
             additional_context_concat = IS.parse_additional_context(additional_context)
+            
+            # add additional context to chat
+            self.messages.append(
+                {"role": "system", "content": f"Additional Context: {additional_context_concat}"}
+            )
 
         # generate summary
         print("Generating summary...")
@@ -71,8 +76,8 @@ class Session:
         self.messages.append({"role": "assistant", "content": response})
 
     def revise(self, request: str):
-        # initial system prompt, transcript, and summary
-        system_messages = self.messages[:3]
+        # initial system prompt, transcript, additional context, and summary
+        system_messages = self.messages[:4]
         # most recent summary
         system_messages.append(
             {"role": "system", "content": f"Most Recent Summary: {self.summary}"}
