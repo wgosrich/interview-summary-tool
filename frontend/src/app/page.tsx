@@ -47,6 +47,7 @@ export default function Home() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [revisionWindow, setRevisionWindow] = useState(false);
   const [revisionRequest, setRevisionRequest] = useState("");
+  const [infoPopupOpen, setInfoPopupOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement | null>(null);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
 
@@ -879,7 +880,7 @@ export default function Home() {
                     onClick={() => {
                       setRevisionWindow(!revisionWindow);
                     }}
-                    className="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-sm font-semibold"
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-sm font-semibold"
                   >
                     Revise
                   </button>
@@ -935,7 +936,7 @@ export default function Home() {
                         setSummaryCopied(false);
                       }, 3000);
                     }}
-                    className="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded"
+                    className="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded"
                     title="Copy"
                   >
                     <svg
@@ -985,7 +986,7 @@ export default function Home() {
                         setSummaryDownloaded(false);
                       }, 3000);
                     }}
-                    className="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded"
+                    className="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded"
                     title="Download"
                   >
                     <svg
@@ -1348,9 +1349,31 @@ export default function Home() {
             {revisionWindow && (
               <div className="absolute inset-0 bg-white dark:bg-slate-800 bg-opacity-40 z-10 flex items-center justify-center rounded-lg">
                 <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-lg w-full h-full relative z-20">
-                  <h1 className="font-semibold text-slate-800 dark:text-slate-100 text-2xl text-center py-2 mb-3">
-                    Request a Revision
-                  </h1>
+                  <div className="relative mb-3">
+                    <button
+                      onClick={() => setInfoPopupOpen(true)}
+                      className="absolute right-0 top-1/2 -translate-y-1/2 text-blue-600 hover:text-blue-700"
+                      title="Prompt Writing Tips"
+                    >
+                      <svg 
+                        xmlns="http://www.w3.org/2000/svg" 
+                        fill="none" 
+                        viewBox="0 0 24 24" 
+                        stroke="currentColor" 
+                        className="h-6 w-6"
+                      >
+                        <path 
+                          strokeLinecap="round" 
+                          strokeLinejoin="round" 
+                          strokeWidth={2} 
+                          d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" 
+                        />
+                      </svg>
+                    </button>
+                    <h1 className="font-semibold text-slate-800 dark:text-slate-100 text-2xl text-center py-2">
+                      Request a Revision
+                    </h1>
+                  </div>
                   <textarea
                     placeholder="Enter your revision request here..."
                     className="w-full h-32 p-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-800 dark:text-white mb-4"
@@ -1456,7 +1479,7 @@ export default function Home() {
       )}
       
       {deleteConfirmOpen && (
-        <div className="fixed inset-0 backdrop-blur-lg bg-white/30 dark:bg-slate-900/30 flex items-center justify-center z-50">
+        <div className="fixed inset-0 backdrop-blur-xl bg-white/30 dark:bg-slate-900/30 flex items-center justify-center z-50">
           <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-lg max-w-md w-full">
             <h2 className="text-xl font-bold text-slate-800 dark:text-white mb-4">Confirm Deletion</h2>
             <p className="text-slate-600 dark:text-slate-300 mb-6">
@@ -1508,6 +1531,95 @@ export default function Home() {
                 }}
               >
                 Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {infoPopupOpen && (
+        <div className="fixed inset-0 backdrop-blur-xl bg-white/30 dark:bg-slate-900/30 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-lg max-w-2xl w-full">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold text-slate-800 dark:text-white">How to Write Effective Revision Prompts</h2>
+              <button
+                onClick={() => setInfoPopupOpen(false)}
+                className="text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+              >
+                <svg 
+                  xmlns="http://www.w3.org/2000/svg" 
+                  fill="none" 
+                  viewBox="0 0 24 24" 
+                  stroke="currentColor" 
+                  className="h-6 w-6"
+                >
+                  <path 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round" 
+                    strokeWidth={2} 
+                    d="M6 18L18 6M6 6l12 12" 
+                  />
+                </svg>
+              </button>
+            </div>
+            
+            <div className="text-slate-700 dark:text-slate-300 space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+              <p className="font-semibold">Writing effective prompts will yield better summaries. Here are some guidelines:</p>
+              
+              <div>
+                <h3 className="font-bold text-slate-800 dark:text-white mb-1">Be Specific</h3>
+                <p>Clearly state what aspects of the interview you want to focus on or improve in the summary.</p>
+                <p className="text-sm bg-slate-100 dark:bg-slate-700 p-2 rounded mt-1 italic">
+                  "Please revise the summary to highlight the interviewee's statements about their work experience in healthcare."
+                </p>
+              </div>
+              
+              <div>
+                <h3 className="font-bold text-slate-800 dark:text-white mb-1">Specify Format</h3>
+                <p>If you need a particular format, mention it explicitly.</p>
+                <p className="text-sm bg-slate-100 dark:bg-slate-700 p-2 rounded mt-1 italic">
+                  "Restructure the summary as bullet points organized by topic area."
+                </p>
+              </div>
+              
+              <div>
+                <h3 className="font-bold text-slate-800 dark:text-white mb-1">Indicate Length</h3>
+                <p>Mention if you need a shorter or more detailed summary.</p>
+                <p className="text-sm bg-slate-100 dark:bg-slate-700 p-2 rounded mt-1 italic">
+                  "Please provide a more concise summary, around 250 words."
+                </p>
+              </div>
+              
+              <div>
+                <h3 className="font-bold text-slate-800 dark:text-white mb-1">Highlight Important Elements</h3>
+                <p>Specify if certain parts of the interview need emphasis.</p>
+                <p className="text-sm bg-slate-100 dark:bg-slate-700 p-2 rounded mt-1 italic">
+                  "Focus more on the timeline of events described between 15:30-20:45 in the recording."
+                </p>
+              </div>
+              
+              <div>
+                <h3 className="font-bold text-slate-800 dark:text-white mb-1">Express Tone Preferences</h3>
+                <p>Indicate if you need a particular tone in the summary.</p>
+                <p className="text-sm bg-slate-100 dark:bg-slate-700 p-2 rounded mt-1 italic">
+                  "Please use more objective language in describing the witness's account."
+                </p>
+              </div>
+              
+              <div>
+                <h3 className="font-bold text-slate-800 dark:text-white mb-1">Sample Complete Prompt</h3>
+                <p className="text-sm bg-slate-100 dark:bg-slate-700 p-2 rounded mt-1 italic">
+                  "Please revise the summary to create a chronological timeline of events described by the interviewee. Focus particularly on any discrepancies in their account of what happened on March 12th. Include direct quotes where relevant and keep the summary around 400-500 words."
+                </p>
+              </div>
+            </div>
+            
+            <div className="mt-6 flex justify-end">
+              <button
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold"
+                onClick={() => setInfoPopupOpen(false)}
+              >
+                Got it!
               </button>
             </div>
           </div>

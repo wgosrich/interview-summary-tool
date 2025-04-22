@@ -65,7 +65,7 @@ class Session:
         system_messages = self.messages[:3]
         # most recent summary
         system_messages.append(
-            {"role": "system", "content": f"Current Summary: {self.summary}"}
+            {"role": "system", "content": f"Most Recent Summary: {self.summary}"}
         )
         # revision system prompt
         system_messages.append(
@@ -74,6 +74,8 @@ class Session:
                 "content": "Do not include any leading text. Just provide the revised summary.",
             }
         )
+
+
         # revision request
         system_messages.append(
             {
