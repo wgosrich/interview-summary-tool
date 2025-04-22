@@ -130,26 +130,29 @@ export default function Home() {
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      const panel = document.querySelector(".fixed.top-0.left-0.h-full.w-56");
-      const button = document.querySelector(
-        ".absolute.top-4.right-\\[-50px\\]"
-      );
+      // Side panel elements
+      const sidePanel = document.getElementById("side-panel");
+      const sidePanelButton = document.querySelector(".absolute.top-4.right-\\[-55px\\]");
       const contextMenuEl = document.querySelector(".context-menu");
+      
+      // Profile menu elements
       const profileMenuEl = document.querySelector(".profile-menu");
       const profileButtonEl = document.querySelector(".profile-button");
 
+      // Check if click is outside side panel and its button
       if (
-        showPanel &&
-        panel &&
-        !panel.contains(e.target as Node) &&
-        button &&
-        !button.contains(e.target as Node) &&
+        showPanel && 
+        sidePanel && 
+        !sidePanel.contains(e.target as Node) && 
+        sidePanelButton && 
+        !sidePanelButton.contains(e.target as Node) &&
         (!contextMenuEl || !contextMenuEl.contains(e.target as Node))
       ) {
         setShowPanel(false);
         setContextMenu(null);
       }
 
+      // Check if click is outside profile menu and its button
       if (
         profileMenuOpen &&
         profileMenuEl &&
@@ -160,6 +163,7 @@ export default function Home() {
         setProfileMenuOpen(false);
       }
       
+      // Check if click is outside dropdown
       if (
         dropdownOpen &&
         dropdownRef.current &&
@@ -643,6 +647,7 @@ export default function Home() {
         Summary downloaded successfully!
       </div>
       <div
+        id="side-panel"
         className={`fixed top-0 left-0 h-full w-56 bg-white dark:bg-slate-800 shadow-lg p-6 z-40 transform transition-transform duration-300 ${showPanel ? "translate-x-0" : "-translate-x-full"
           }`}
       >
