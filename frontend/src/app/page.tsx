@@ -28,7 +28,7 @@ export default function Home() {
     mouseX: number;
     mouseY: number;
   } | null>(null);
-  const [selectedSessionId, setSelectedSessionId] = useState<number | null>(
+  const [selectedSessionInfo, setSelectedSessionInfo] = useState<{ id: number; creator_id: number } | null>(
     null
   );
   const [isDarkMode, setIsDarkMode] = useState(false);
@@ -48,6 +48,7 @@ export default function Home() {
   const [revisionWindow, setRevisionWindow] = useState(false);
   const [revisionRequest, setRevisionRequest] = useState("");
   const dropdownRef = useRef<HTMLDivElement | null>(null);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
 
   const fetchSessions = async () => {
     if (!currentUserId) {
@@ -179,6 +180,7 @@ export default function Home() {
       const contextMenuEl = document.querySelector(".context-menu");
       if (contextMenuEl && !contextMenuEl.contains(e.target as Node)) {
         setContextMenu(null);
+        setSelectedSessionInfo(null);
       }
     };
     window.addEventListener("click", handleClick);
@@ -703,7 +705,10 @@ export default function Home() {
                       key={session.id}
                       onContextMenu={(e) => {
                         e.preventDefault();
-                        setSelectedSessionId(session.id);
+                        setSelectedSessionInfo({
+                          id: session.id,
+                          creator_id: session.creator_id
+                        });
                         setContextMenu({
                           mouseX: e.clientX,
                           mouseY: e.clientY,
@@ -746,7 +751,10 @@ export default function Home() {
                       key={session.id}
                       onContextMenu={(e) => {
                         e.preventDefault();
-                        setSelectedSessionId(session.id);
+                        setSelectedSessionInfo({
+                          id: session.id,
+                          creator_id: session.creator_id
+                        });
                         setContextMenu({
                           mouseX: e.clientX,
                           mouseY: e.clientY,
@@ -1380,8 +1388,8 @@ export default function Home() {
             className="text-left px-4 py-1 hover:bg-blue-500 hover:text-white rounded-md"
             onClick={() => {
               navigator.clipboard.writeText(
-                selectedSessionId
-                  ? selectedSessionId.toString()
+                selectedSessionInfo
+                  ? selectedSessionInfo.id.toString()
                   : "No Session ID"
               );
               setSessionIDCopied(true);
@@ -1395,14 +1403,14 @@ export default function Home() {
           <button
             className="text-left px-4 py-1 hover:bg-blue-500 hover:text-white rounded-md"
             onClick={async () => {
-              if (selectedSessionId !== null) {
+              if (selectedSessionInfo !== null) {
                 try {
                   const response = await fetch(
-                    `http://localhost:8000/unsubscribe/${currentUserId}/${selectedSessionId}`,
+                    `http://localhost:8000/unsubscribe/${currentUserId}/${selectedSessionInfo.id}`,
                     { method: "DELETE" }
                   );
                   if (response.ok) {
-                    if (selectedSessionId === currentSessionId) {
+                    if (selectedSessionInfo.id === currentSessionId) {
                       setTranscriptFile(null);
                       setRecordingFile(null);
                       setSummary("");
@@ -1428,42 +1436,76 @@ export default function Home() {
           >
             Remove
           </button>
-          <button
-            className="text-left px-4 py-1 hover:bg-blue-500 hover:text-white rounded-md"
-            onClick={async () => {
-              if (selectedSessionId !== null) {
-                try {
-                  const response = await fetch(
-                    `http://localhost:8000/delete_session/${selectedSessionId}`,
-                    { method: "DELETE" }
-                  );
-                  if (response.ok) {
-                    if (selectedSessionId === currentSessionId) {
-                      setTranscriptFile(null);
-                      setRecordingFile(null);
-                      setSummary("");
-                      setShowChat(false);
-                      setChatInput("");
-                      setChatMessages([]);
-                      setCurrentSessionId(null);
+          {selectedSessionInfo && selectedSessionInfo.creator_id === currentUserId && (
+            <button
+              className="text-left px-4 py-1 hover:bg-blue-500 hover:text-white rounded-md"
+              onClick={() => {
+                setDeleteConfirmOpen(true);
+                setContextMenu(null);
+              }}
+            >
+              Delete
+            </button>
+          )}
+        </div>
+      )}
+      
+      {deleteConfirmOpen && (
+        <div className="fixed inset-0 backdrop-blur-lg bg-white/30 dark:bg-slate-900/30 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-lg max-w-md w-full">
+            <h2 className="text-xl font-bold text-slate-800 dark:text-white mb-4">Confirm Deletion</h2>
+            <p className="text-slate-600 dark:text-slate-300 mb-6">
+              Are you sure you want to delete this session? This action cannot be undone.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                className="font-semibold px-4 py-2 bg-gray-300 dark:bg-gray-600 text-slate-800 dark:text-white rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500"
+                onClick={() => {
+                  setDeleteConfirmOpen(false);
+                  setSelectedSessionInfo(null);
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                className="font-semibold px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                onClick={async () => {
+                  if (selectedSessionInfo !== null) {
+                    try {
+                      const response = await fetch(
+                        `http://localhost:8000/delete_session/${selectedSessionInfo.id}`,
+                        { method: "DELETE" }
+                      );
+                      if (response.ok) {
+                        if (selectedSessionInfo.id === currentSessionId) {
+                          setTranscriptFile(null);
+                          setRecordingFile(null);
+                          setSummary("");
+                          setShowChat(false);
+                          setChatInput("");
+                          setChatMessages([]);
+                          setCurrentSessionId(null);
+                        }
+                        fetchSessions();
+                      } else {
+                        console.error("Failed to delete session");
+                      }
+                    } catch (error) {
+                      console.error("Error deleting session:", error);
                     }
-                    fetchSessions();
-                  } else {
-                    console.error("Failed to delete session");
                   }
-                } catch (error) {
-                  console.error("Error deleting session:", error);
-                }
-              }
-              setContextMenu(null);
-              setSessionDeleted(true);
-              setTimeout(() => {
-                setSessionDeleted(false);
-              }, 3000);
-            }}
-          >
-            Delete
-          </button>
+                  setDeleteConfirmOpen(false);
+                  setSelectedSessionInfo(null);
+                  setSessionDeleted(true);
+                  setTimeout(() => {
+                    setSessionDeleted(false);
+                  }, 3000);
+                }}
+              >
+                Delete
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
