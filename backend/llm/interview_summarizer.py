@@ -4,6 +4,7 @@ from docx import Document
 from pydub import AudioSegment
 from pydub.utils import make_chunks
 from .llm_clients import gpt4o_client, whisper_client
+import PyPDF2
 
 load_dotenv()
 
@@ -157,7 +158,7 @@ class InterviewSummarizer:
         - Separate sections with an extra newline for clarity, DO NOT ADD DIVIDERS.
         - The summary should capture **everything that transpired according to the interviewee**, providing a full account of their perspective and experiences.
         - Present only the **facts and details learned during the interview**, omitting any mention of the interviewee.
-        - Do **not** include phrases like “the interviewee said,” “reported,” “affirmed,” “described,” or any variation of those. Simply state the facts as directly as possible.
+        - Do **not** include phrases like "the interviewee said," "reported," "affirmed," "described," or any variation of those. Simply state the facts as directly as possible.
         - Do **not** mention the investigator or interviewer.
         - There is no need to specify that the interviewee is the one saying the words; just present the information as detached events with no storyteller.
         - Avoid all first-person and third-person attribution. The summary must read as an objective report of discovered facts.
@@ -171,7 +172,7 @@ class InterviewSummarizer:
         {aligned_transcript}
         
         Additional Context:
-        {additional_context}
+        {additional_context if additional_context != "" else "None provided."}
         """
 
         # Call the GPT-4 model to generate the summary in a streaming manner
@@ -244,3 +245,47 @@ class InterviewSummarizer:
 
             delta = getattr(chunk.choices[0].delta, "content", "") or ""
             yield delta
+
+    @staticmethod
+    def parse_additional_pdfs(pdf_filepaths: list[str]) -> str:
+        """
+        Extract text from a list of PDF files and concatenate the content into a single string.
+        
+        Args:
+            pdf_filepaths (list[str]): List of paths to PDF files
+            
+        Returns:
+            str: Concatenated text content from all PDFs
+        """
+        all_content = []
+        
+        for filepath in pdf_filepaths:
+            if not filepath.lower().endswith('.pdf'):
+                print(f"Warning: {filepath} is not a PDF file. Skipping.")
+                continue
+                
+            try:
+                content = []
+                with open(filepath, 'rb') as file:
+                    pdf_reader = PyPDF2.PdfReader(file)
+                    
+                    # Add filename as a header for context
+                    filename = os.path.basename(filepath)
+                    content.append(f"Content from {filename}:")
+                    
+                    # Extract text from each page
+                    for page_num in range(len(pdf_reader.pages)):
+                        page = pdf_reader.pages[page_num]
+                        text = page.extract_text()
+                        if text:
+                            content.append(f"[Page {page_num + 1}] {text}")
+                
+                all_content.append("\n".join(content))
+                
+            except Exception as e:
+                print(f"Error processing {filepath}: {str(e)}")
+                
+        # Combine all content with clear separators
+        combined_content = "\n\n" + "-" * 40 + "\n\n".join(all_content)
+        
+        return combined_content
