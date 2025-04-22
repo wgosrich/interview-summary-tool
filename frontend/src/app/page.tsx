@@ -50,6 +50,7 @@ export default function Home() {
   const [infoPopupOpen, setInfoPopupOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement | null>(null);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const infoPopupRef = useRef<HTMLDivElement | null>(null);
 
   const fetchSessions = async () => {
     if (!currentUserId) {
@@ -172,13 +173,22 @@ export default function Home() {
       ) {
         setDropdownOpen(false);
       }
+      
+      // Check if click is outside info popup
+      if (
+        infoPopupOpen &&
+        infoPopupRef.current &&
+        !infoPopupRef.current.contains(e.target as Node)
+      ) {
+        setInfoPopupOpen(false);
+      }
     };
 
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [showPanel, profileMenuOpen, dropdownOpen]);
+  }, [showPanel, profileMenuOpen, dropdownOpen, infoPopupOpen]);
 
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
@@ -1539,7 +1549,7 @@ export default function Home() {
 
       {infoPopupOpen && (
         <div className="fixed inset-0 backdrop-blur-xl bg-white/30 dark:bg-slate-900/30 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-lg max-w-2xl w-full">
+          <div ref={infoPopupRef} className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-lg max-w-2xl w-full">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-bold text-slate-800 dark:text-white">How to Write Effective Revision Prompts</h2>
               <button
