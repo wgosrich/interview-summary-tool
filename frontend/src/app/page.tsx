@@ -29,7 +29,7 @@ export default function Home() {
     mouseX: number;
     mouseY: number;
   } | null>(null);
-  const [selectedSessionInfo, setSelectedSessionInfo] = useState<{ id: number; creator_id: number } | null>(
+  const [selectedSessionInfo, setSelectedSessionInfo] = useState<{ id: number; creator_id: number, name: string } | null>(
     null
   );
   const [isDarkMode, setIsDarkMode] = useState(false);
@@ -779,7 +779,8 @@ export default function Home() {
                         e.preventDefault();
                         setSelectedSessionInfo({
                           id: session.id,
-                          creator_id: session.creator_id
+                          creator_id: session.creator_id,
+                          name: session.name
                         });
                         setContextMenu({
                           mouseX: e.clientX,
@@ -825,7 +826,8 @@ export default function Home() {
                         e.preventDefault();
                         setSelectedSessionInfo({
                           id: session.id,
-                          creator_id: session.creator_id
+                          creator_id: session.creator_id,
+                          name: session.name
                         });
                         setContextMenu({
                           mouseX: e.clientX,
@@ -1814,7 +1816,7 @@ export default function Home() {
             
             <input
               type="text"
-              placeholder="Enter new session name"
+              placeholder={selectedSessionInfo?.name}
               value={newSessionName}
               onChange={(e) => setNewSessionName(e.target.value)}
               className="w-full p-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-800 dark:text-white mb-4"
