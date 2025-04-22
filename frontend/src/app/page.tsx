@@ -57,6 +57,9 @@ export default function Home() {
   const [newSessionName, setNewSessionName] = useState("");
   const [sessionRenamed, setSessionRenamed] = useState(false);
   const renamePopupRef = useRef<HTMLDivElement | null>(null);
+  const [textContextPopupOpen, setTextContextPopupOpen] = useState(false);
+  const [additionalTextContext, setAdditionalTextContext] = useState("");
+  const textContextPopupRef = useRef<HTMLDivElement | null>(null);
 
   const fetchSessions = async () => {
     if (!currentUserId) {
@@ -142,17 +145,17 @@ export default function Home() {
       const sidePanel = document.getElementById("side-panel");
       const sidePanelButton = document.querySelector(".absolute.top-4.right-\\[-55px\\]");
       const contextMenuEl = document.querySelector(".context-menu");
-      
+
       // Profile menu elements
       const profileMenuEl = document.querySelector(".profile-menu");
       const profileButtonEl = document.querySelector(".profile-button");
 
       // Check if click is outside side panel and its button
       if (
-        showPanel && 
-        sidePanel && 
-        !sidePanel.contains(e.target as Node) && 
-        sidePanelButton && 
+        showPanel &&
+        sidePanel &&
+        !sidePanel.contains(e.target as Node) &&
+        sidePanelButton &&
         !sidePanelButton.contains(e.target as Node) &&
         (!contextMenuEl || !contextMenuEl.contains(e.target as Node)) &&
         (!renamePopupRef.current || !renamePopupRef.current.contains(e.target as Node))
@@ -171,7 +174,7 @@ export default function Home() {
       ) {
         setProfileMenuOpen(false);
       }
-      
+
       // Check if click is outside dropdown
       if (
         dropdownOpen &&
@@ -180,7 +183,7 @@ export default function Home() {
       ) {
         setDropdownOpen(false);
       }
-      
+
       // Check if click is outside info popup
       if (
         infoPopupOpen &&
@@ -189,7 +192,7 @@ export default function Home() {
       ) {
         setInfoPopupOpen(false);
       }
-      
+
       // Check if click is outside delete confirmation popup
       if (
         deleteConfirmOpen &&
@@ -199,7 +202,7 @@ export default function Home() {
         setDeleteConfirmOpen(false);
         setSelectedSessionInfo(null);
       }
-      
+
       // Check if click is outside rename popup
       if (
         renamePopupOpen &&
@@ -322,11 +325,22 @@ export default function Home() {
     const formData = new FormData();
     formData.append("transcript", transcriptFile);
     formData.append("recording", recordingFile);
-    
+
     // Add additional context files if any
     additionalContextFiles.forEach(file => {
       formData.append("additional_context", file);
     });
+    
+    // Add the text context if provided
+    if (additionalTextContext.trim()) {
+      // Create a Blob from the text content with PDF MIME type
+      const textBlob = new Blob([additionalTextContext], { type: 'application/pdf' });
+      // Append it as a PDF file
+      formData.append("additional_context", textBlob, "additional_context.pdf");
+
+      // clear the text context
+      setAdditionalTextContext("");
+    }
 
     try {
       setSummary("");
@@ -1111,7 +1125,7 @@ export default function Home() {
                         <div className="flex justify-center gap-6 flex-wrap">
                           <div className="flex-1 min-w-[220px]">
                             <label className="block text-md font-semibold text-slate-800 dark:text-slate-100 mb-1">
-                              Transcript (.docx)
+                              Transcript (.docx) <span className="text-red-500">*</span>
                             </label>
                             <div className="flex items-center gap-3">
                               <input
@@ -1139,7 +1153,7 @@ export default function Home() {
 
                           <div className="flex-1 min-w-[220px]">
                             <label className="block text-md font-semibold text-slate-800 dark:text-slate-100 mb-1">
-                              Recording (.mp4)
+                              Recording (.mp4) <span className="text-red-500">*</span>
                             </label>
                             <div className="flex items-center gap-3">
                               <input
@@ -1164,55 +1178,67 @@ export default function Home() {
                               </span>
                             </div>
                           </div>
-                          
+
                           <div className="flex-1 min-w-[220px]">
                             <label className="block text-md font-semibold text-slate-800 dark:text-slate-100 mb-1">
                               Additional Context (.pdf) - Optional
                             </label>
-                            <div 
-                              className="border-2 border-dashed border-blue-300 dark:border-blue-600 rounded-lg p-2 text-center cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 transition"
-                              onClick={() => document.getElementById("contextUpload")?.click()}
-                              onDragOver={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                              }}
-                              onDrop={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                const files = e.dataTransfer.files;
-                                if (files && files.length > 0) {
-                                  const pdfFiles = Array.from(files).filter(file => file.name.toLowerCase().endsWith('.pdf'));
-                                  if (pdfFiles.length > 0) {
-                                    setAdditionalContextFiles(prev => [...prev, ...pdfFiles]);
-                                    console.log("Files added via drop:", pdfFiles.map(f => f.name));
-                                  }
-                                }
-                              }}
-                            >
-                              <input
-                                type="file"
-                                accept=".pdf"
-                                id="contextUpload"
-                                className="hidden"
-                                onChange={(e) => {
-                                  const files = e.target.files;
+                            <div className="flex gap-2 mb-2">
+                              <div
+                                className="border-2 border-dashed border-blue-300 dark:border-blue-600 rounded-lg p-2 text-center cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 transition flex-1"
+                                onClick={() => document.getElementById("contextUpload")?.click()}
+                                onDragOver={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                }}
+                                onDrop={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  const files = e.dataTransfer.files;
                                   if (files && files.length > 0) {
-                                    const newFile = files[0];
-                                    console.log("File selected:", newFile.name);
-                                    setAdditionalContextFiles(prev => [...prev, newFile]);
-                                    // Reset the input so the same file can be selected again
-                                    e.target.value = '';
+                                    const pdfFiles = Array.from(files).filter(file => file.name.toLowerCase().endsWith('.pdf'));
+                                    if (pdfFiles.length > 0) {
+                                      setAdditionalContextFiles(prev => [...prev, ...pdfFiles]);
+                                      console.log("Files added via drop:", pdfFiles.map(f => f.name));
+                                    }
                                   }
                                 }}
-                              />
-                              <div className="flex flex-col items-center justify-center text-blue-600 dark:text-blue-400">
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                                </svg>
-                                <p className="text-sm">Drag & drop PDF files here or click to browse</p>
+                              >
+                                <input
+                                  type="file"
+                                  accept=".pdf"
+                                  id="contextUpload"
+                                  className="hidden"
+                                  onChange={(e) => {
+                                    const files = e.target.files;
+                                    if (files && files.length > 0) {
+                                      const newFile = files[0];
+                                      console.log("File selected:", newFile.name);
+                                      setAdditionalContextFiles(prev => [...prev, newFile]);
+                                      // Reset the input so the same file can be selected again
+                                      e.target.value = '';
+                                    }
+                                  }}
+                                />
+                                <div className="flex flex-col items-center justify-center text-blue-600 dark:text-blue-400">
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                                  </svg>
+                                  <p className="text-sm">Drag & drop PDF files here or click to browse</p>
+                                </div>
                               </div>
+                              
+                              <button
+                                onClick={() => setTextContextPopupOpen(true)}
+                                className="bg-blue-100 text-blue-600 hover:bg-blue-200 font-bold py-2 px-4 rounded-lg flex items-center"
+                                title="Add text context"
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                </svg>
+                              </button>
                             </div>
-                            
+
                             {additionalContextFiles.length > 0 && (
                               <div className="mt-2 space-y-2 max-h-40 overflow-y-auto p-1 bg-slate-50 dark:bg-slate-700 rounded-lg">
                                 {additionalContextFiles.map((file, index) => {
@@ -1244,7 +1270,7 @@ export default function Home() {
                               </div>
                             )}
                           </div>
-                          
+
                           <button
                             onClick={handleSubmit}
                             disabled={loading}
@@ -1266,9 +1292,9 @@ export default function Home() {
                             }
                             className="px-2 py-1 rounded-lg border border-slate-300 dark:border-slate-600 text-sm bg-white dark:bg-slate-700 text-slate-800 dark:text-white"
                           />
-                          
+
                           <div className="relative" ref={dropdownRef}>
-                            <div 
+                            <div
                               onClick={() => setDropdownOpen(!dropdownOpen)}
                               className="px-2 py-1 rounded-lg border border-slate-300 dark:border-slate-600 text-sm bg-white dark:bg-slate-700 text-slate-800 dark:text-white cursor-pointer flex justify-between items-center"
                             >
@@ -1286,22 +1312,22 @@ export default function Home() {
                                 }}
                                 className="bg-transparent border-none outline-none w-full text-slate-800 dark:text-white"
                               />
-                              <svg 
-                                xmlns="http://www.w3.org/2000/svg" 
-                                fill="none" 
-                                viewBox="0 0 24 24" 
-                                stroke="currentColor" 
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
                                 className="h-4 w-4"
                               >
-                                <path 
-                                  strokeLinecap="round" 
-                                  strokeLinejoin="round" 
-                                  strokeWidth={2} 
-                                  d={dropdownOpen ? "M5 15l7-7 7 7" : "M19 9l-7 7-7-7"} 
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d={dropdownOpen ? "M5 15l7-7 7 7" : "M19 9l-7 7-7-7"}
                                 />
                               </svg>
                             </div>
-                            
+
                             {dropdownOpen && (
                               <div className="absolute z-10 mt-1 w-full bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg shadow-lg max-h-48 overflow-y-auto">
                                 {allSessions
@@ -1325,13 +1351,13 @@ export default function Home() {
                                       {session.name}
                                     </div>
                                   ))}
-                                  {allSessions.filter(
-                                    (session) =>
-                                      !sessions.some(
-                                        (userSession) => userSession.id === session.id
-                                      ) &&
-                                      session.name.toLowerCase().includes(searchSessionInput.toLowerCase())
-                                  ).length === 0 && (
+                                {allSessions.filter(
+                                  (session) =>
+                                    !sessions.some(
+                                      (userSession) => userSession.id === session.id
+                                    ) &&
+                                    session.name.toLowerCase().includes(searchSessionInput.toLowerCase())
+                                ).length === 0 && (
                                     <div className="px-2 py-1 text-slate-500 dark:text-slate-400">
                                       No matching sessions
                                     </div>
@@ -1339,7 +1365,7 @@ export default function Home() {
                               </div>
                             )}
                           </div>
-                          
+
                           <button
                             onClick={async () => {
                               if (!subscribeSessionId || !currentUserId) return;
@@ -1508,18 +1534,18 @@ export default function Home() {
                       className="absolute right-0 top-1/2 -translate-y-1/2 text-blue-600 hover:text-blue-700"
                       title="Prompt Writing Tips"
                     >
-                      <svg 
-                        xmlns="http://www.w3.org/2000/svg" 
-                        fill="none" 
-                        viewBox="0 0 24 24" 
-                        stroke="currentColor" 
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
                         className="h-6 w-6"
                       >
-                        <path 
-                          strokeLinecap="round" 
-                          strokeLinejoin="round" 
-                          strokeWidth={2} 
-                          d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" 
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                         />
                       </svg>
                     </button>
@@ -1640,7 +1666,7 @@ export default function Home() {
           )}
         </div>
       )}
-      
+
       {deleteConfirmOpen && (
         <div className="fixed inset-0 backdrop-blur-xl bg-white/30 dark:bg-slate-900/30 flex items-center justify-center z-50">
           <div ref={deleteConfirmRef} className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-lg max-w-md w-full">
@@ -1710,26 +1736,26 @@ export default function Home() {
                 onClick={() => setInfoPopupOpen(false)}
                 className="text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
               >
-                <svg 
-                  xmlns="http://www.w3.org/2000/svg" 
-                  fill="none" 
-                  viewBox="0 0 24 24" 
-                  stroke="currentColor" 
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
                   className="h-6 w-6"
                 >
-                  <path 
-                    strokeLinecap="round" 
-                    strokeLinejoin="round" 
-                    strokeWidth={2} 
-                    d="M6 18L18 6M6 6l12 12" 
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
                   />
                 </svg>
               </button>
             </div>
-            
+
             <div className="text-slate-700 dark:text-slate-300 space-y-4 max-h-[60vh] overflow-y-auto pr-2">
               <p className="font-semibold">Writing effective prompts will yield better summaries. Here are some guidelines:</p>
-              
+
               <div>
                 <h3 className="font-bold text-slate-800 dark:text-white mb-1">Be Specific</h3>
                 <p>Clearly state what aspects of the interview you want to focus on or improve in the summary.</p>
@@ -1737,7 +1763,7 @@ export default function Home() {
                   "Please revise the summary to highlight the interviewee's statements about their work experience in healthcare."
                 </p>
               </div>
-              
+
               <div>
                 <h3 className="font-bold text-slate-800 dark:text-white mb-1">Specify Format</h3>
                 <p>If you need a particular format, mention it explicitly.</p>
@@ -1745,7 +1771,7 @@ export default function Home() {
                   "Restructure the summary as bullet points organized by topic area."
                 </p>
               </div>
-              
+
               <div>
                 <h3 className="font-bold text-slate-800 dark:text-white mb-1">Indicate Length</h3>
                 <p>Mention if you need a shorter or more detailed summary.</p>
@@ -1753,7 +1779,7 @@ export default function Home() {
                   "Please provide a more concise summary, around 250 words."
                 </p>
               </div>
-              
+
               <div>
                 <h3 className="font-bold text-slate-800 dark:text-white mb-1">Highlight Important Elements</h3>
                 <p>Specify if certain parts of the interview need emphasis.</p>
@@ -1761,7 +1787,7 @@ export default function Home() {
                   "Focus more on the timeline of events described between 15:30-20:45 in the recording."
                 </p>
               </div>
-              
+
               <div>
                 <h3 className="font-bold text-slate-800 dark:text-white mb-1">Express Tone Preferences</h3>
                 <p>Indicate if you need a particular tone in the summary.</p>
@@ -1769,7 +1795,7 @@ export default function Home() {
                   "Please use more objective language in describing the witness's account."
                 </p>
               </div>
-              
+
               <div>
                 <h3 className="font-bold text-slate-800 dark:text-white mb-1">Sample Complete Prompt</h3>
                 <p className="text-sm bg-slate-100 dark:bg-slate-700 p-2 rounded mt-1 italic">
@@ -1777,7 +1803,7 @@ export default function Home() {
                 </p>
               </div>
             </div>
-            
+
             <div className="mt-6 flex justify-end">
               <button
                 className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold"
@@ -1799,23 +1825,23 @@ export default function Home() {
                 onClick={() => setRenamePopupOpen(false)}
                 className="text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
               >
-                <svg 
-                  xmlns="http://www.w3.org/2000/svg" 
-                  fill="none" 
-                  viewBox="0 0 24 24" 
-                  stroke="currentColor" 
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
                   className="h-6 w-6"
                 >
-                  <path 
-                    strokeLinecap="round" 
-                    strokeLinejoin="round" 
-                    strokeWidth={2} 
-                    d="M6 18L18 6M6 6l12 12" 
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
                   />
                 </svg>
               </button>
             </div>
-            
+
             <input
               type="text"
               placeholder={selectedSessionInfo?.name}
@@ -1823,7 +1849,7 @@ export default function Home() {
               onChange={(e) => setNewSessionName(e.target.value)}
               className="w-full p-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-800 dark:text-white mb-4"
             />
-            
+
             <div className="flex justify-end">
               <button
                 className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold"
@@ -1835,27 +1861,90 @@ export default function Home() {
                       headers: { "Content-Type": "application/json" },
                       body: JSON.stringify({ name: newSessionName.trim() })
                     })
-                    .then(response => {
-                      if (response.ok) {
-                        fetchSessions();
-                        setSessionRenamed(true);
-                        setTimeout(() => {
-                          setSessionRenamed(false);
-                        }, 3000);
-                      } else {
-                        console.error("Failed to rename session");
-                      }
-                    })
-                    .catch(error => {
-                      console.error("Error renaming session:", error);
-                    });
-                    
+                      .then(response => {
+                        if (response.ok) {
+                          fetchSessions();
+                          setSessionRenamed(true);
+                          setTimeout(() => {
+                            setSessionRenamed(false);
+                          }, 3000);
+                        } else {
+                          console.error("Failed to rename session");
+                        }
+                      })
+                      .catch(error => {
+                        console.error("Error renaming session:", error);
+                      });
+
                     setRenamePopupOpen(false);
                     setNewSessionName("");
                   }
                 }}
               >
                 Rename
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {textContextPopupOpen && (
+        <div 
+          className="fixed inset-0 backdrop-blur-xl bg-white/30 dark:bg-slate-900/30 flex items-center justify-center z-50"
+          onClick={() => setTextContextPopupOpen(false)}
+        >
+          <div 
+            ref={textContextPopupRef} 
+            className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-lg max-w-2xl w-full"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold text-slate-800 dark:text-white">Add Text Context</h2>
+              <button
+                onClick={() => setTextContextPopupOpen(false)}
+                className="text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  className="h-6 w-6"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+
+            <div className="mb-4">
+              <p className="text-slate-600 dark:text-slate-300 mb-2">
+                Enter any additional context or notes that may be relevant to the interview:
+              </p>
+              <textarea
+                value={additionalTextContext}
+                onChange={(e) => setAdditionalTextContext(e.target.value)}
+                className="w-full h-64 p-3 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-800 dark:text-white"
+                placeholder="Enter additional context, notes, or background information here..."
+              />
+            </div>
+
+            <div className="flex justify-end gap-3">
+              <button
+                className="px-4 py-2 bg-gray-300 dark:bg-gray-600 text-slate-800 dark:text-white rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500 font-semibold"
+                onClick={() => setTextContextPopupOpen(false)}
+              >
+                Cancel
+              </button>
+              <button
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold"
+                onClick={() => setTextContextPopupOpen(false)}
+              >
+                Save
               </button>
             </div>
           </div>
