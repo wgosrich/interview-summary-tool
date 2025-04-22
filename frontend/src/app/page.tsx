@@ -39,7 +39,7 @@ export default function Home() {
   const [sessionRemoved, setSessionRemoved] = useState(false);
   const [sessionDeleted, setSessionDeleted] = useState(false);
   const [subscribed, setSubscribed] = useState(false);
-  const [tab, setTab] = useState("field1");
+  const [tab, setTab] = useState("newSummary");
   const [allSessions, setAllSessions] = useState<
     { id: number; name: string }[]
   >([]);
@@ -709,7 +709,7 @@ export default function Home() {
             setChatInput("");
             setChatMessages([]);
             setCurrentSessionId(null);
-            setTab("field1");
+            setTab("newSummary");
             localStorage.clear();
           }}
           className="w-full bg-blue-600 text-white py-2 px-3 rounded-lg hover:bg-blue-700 mb-4 font-semibold"
@@ -859,7 +859,7 @@ export default function Home() {
                     setCurrentSessionId(null);
                     setRevisionWindow(false);
                     setRevisionRequest("");
-                    setTab("field1");
+                    setTab("newSummary");
                     localStorage.clear();
                     setProfileMenuOpen(false);
                   }}
@@ -1038,8 +1038,8 @@ export default function Home() {
                   <div className="mt-5">
                     <div className="flex border-b border-slate-300 dark:border-slate-600">
                       <button
-                        onClick={() => setTab("field1")}
-                        className={`flex-1 px-4 py-2 font-semibold ${tab === "field1"
+                        onClick={() => setTab("newSummary")}
+                        className={`flex-1 px-4 py-2 font-semibold ${tab === "newSummary"
                           ? "border-b-2 border-blue-600 text-blue-600"
                           : "text-slate-600 dark:text-slate-100"
                           }`}
@@ -1047,8 +1047,8 @@ export default function Home() {
                         Generate New Summary
                       </button>
                       <button
-                        onClick={() => setTab("field2")}
-                        className={`flex-1 px-4 py-2 font-semibold ${tab === "field2"
+                        onClick={() => setTab("existingSummary")}
+                        className={`flex-1 px-4 py-2 font-semibold ${tab === "existingSummary"
                           ? "border-b-2 border-blue-600 text-blue-600"
                           : "text-slate-600 dark:text-slate-100"
                           }`}
@@ -1057,7 +1057,7 @@ export default function Home() {
                       </button>
                     </div>
                     <div className="mt-4 bg-slate-100 dark:bg-slate-700 p-4 rounded-lg text-slate-800 dark:text-slate-100">
-                      {tab === "field1" ? (
+                      {tab === "newSummary" ? (
                         <div className="flex justify-center gap-6 flex-wrap mt-3">
                           <div className="flex-1 min-w-[220px]">
                             <label className="block text-md font-semibold text-slate-800 dark:text-slate-100 mb-1">
