@@ -710,6 +710,7 @@ export default function Home() {
             setShowPanel(false);
             setTranscriptFile(null);
             setRecordingFile(null);
+            setAdditionalContextFiles([]);
             setSummary("");
             setShowChat(false);
             setChatInput("");
@@ -858,6 +859,7 @@ export default function Home() {
                     setUsername("");
                     setTranscriptFile(null);
                     setRecordingFile(null);
+                    setAdditionalContextFiles([]);
                     setSummary("");
                     setShowChat(false);
                     setChatInput("");
@@ -1550,6 +1552,7 @@ export default function Home() {
                     if (selectedSessionInfo.id === currentSessionId) {
                       setTranscriptFile(null);
                       setRecordingFile(null);
+                      setAdditionalContextFiles([]);
                       setSummary("");
                       setShowChat(false);
                       setChatInput("");
@@ -1617,6 +1620,7 @@ export default function Home() {
                         if (selectedSessionInfo.id === currentSessionId) {
                           setTranscriptFile(null);
                           setRecordingFile(null);
+                          setAdditionalContextFiles([]);
                           setSummary("");
                           setShowChat(false);
                           setChatInput("");
