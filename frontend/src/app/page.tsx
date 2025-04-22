@@ -344,7 +344,7 @@ export default function Home() {
           const meta = JSON.parse(metaMatch[1]);
           setCurrentSessionId(meta.id);
           const formattedMessages = meta.messages
-            .slice(3)
+            .filter((msg: { role: string; content: string }) => msg.role !== "system")
             .map((msg: { role: string; content: string }) =>
               msg.role === "user"
                 ? `You: ${msg.content}`
@@ -717,6 +717,8 @@ export default function Home() {
             setChatMessages([]);
             setCurrentSessionId(null);
             setTab("newSummary");
+            setRevisionWindow(false);
+            setRevisionRequest("");
             localStorage.clear();
           }}
           className="w-full bg-blue-600 text-white py-2 px-3 rounded-lg hover:bg-blue-700 mb-4 font-semibold"
