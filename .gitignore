@@ -53,3 +53,7 @@ venv
 /backend/llm/__pycache__/
 
 .DS_Store
+
+
+# Instance directory
+/instance/
