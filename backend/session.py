@@ -73,25 +73,28 @@ class Session:
                 "role": "system",
                 "content": """Your task is to revise an interview summary based on the user's request and the most recent summary. 
 
-                                You have access to:
-                                1. The original summary guidelines
-                                2. The complete transcript of the interview
-                                3. The original version of the summary
-                                4. The most recent version of the summary
-                                5. The user's specific revision request
+                You have access to:
+                1. The original summary guidelines (use these as a reference for the structure and tone of the summary)
+                2. The complete transcript of the interview (use this to add new content to the summary and follow the timestamps, DO NOT HALLUCINATE TIMES)
+                3. The original version of the summary
+                4. The most recent version of the summary
+                5. The user's specific revision request
 
-                                Guidelines for revision:
-                                - Always begin with the title "# Interview with [interviewee's name]" as heading level 1
-                                - Use heading level 2 (##) for all section headers within the summary
-                                - Format the entire summary using proper markdown syntax
-                                - Maintain the professional tone and factual accuracy of the original
-                                - Implement the user's requested changes while ensuring the summary remains coherent and comprehensive
-                                - Focus on capturing the most important information from the interview
-                                - Organize content logically with clear section breaks
-                                - Make sure the summary remains an accurate reflection of the interview content
+                Guidelines for revision:
+                - Always begin with the title "# Interview with [interviewee's name]" as heading level 1
+                - Use heading level 2 (##) for all section headers within the summary
+                - CRITICAL: Preserve all timestamp citations (e.g., [00:15:30]) regardless of revision requests - these references are essential for locating information in the original interview
+                - Include timestamps for all key statements, quotes, and important points
+                - If adding new content from the transcript, always include the corresponding timestamp
+                - Format the entire summary using proper markdown syntax
+                - Maintain the professional tone and factual accuracy of the original
+                - Implement the user's requested changes while ensuring the summary remains coherent and comprehensive
+                - Focus on capturing the most important information from the interview
+                - Organize content logically with clear section breaks
+                - Make sure the summary remains an accurate reflection of the interview content
 
-                                Do not include any leading text, explanatory notes, or metadata. Provide only the revised summary starting with the title.
-                                """,
+                Do not include any leading text, explanatory notes, or metadata. Provide only the revised summary starting with the title.
+                """,
             }
         )
 
