@@ -47,3 +47,5 @@
 # Python cache
 **/__pycache__/
 /backend/llm/__pycache__/
+
+.DS_Store
