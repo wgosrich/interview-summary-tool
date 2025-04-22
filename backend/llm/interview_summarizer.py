@@ -144,11 +144,11 @@ class InterviewSummarizer:
         return content
 
     @staticmethod
-    def generate_summary(aligned_transcript: str):
+    def generate_summary(aligned_transcript: str, additional_context: str = ""):
         prompt = f"""
         You are an AI assistant helping to summarize interview transcripts for a civil rights investigation.
 
-        Your task is to generate a comprehensive, detailed, and structured third-person narrative summary of the transcript below, following these guidelines:
+        Your task is to generate a comprehensive, detailed, and structured third-person narrative summary of the transcript below alongside any additional context provided, following these guidelines:
 
         - The summary should begin with a **title** that includes the interviewee's name (e.g., "Interview with [Interviewee's Name]"). This should be in heading level 1 format.
         - Use a **standard format** for each summary, starting with the title, followed by a brief introductory sentence, and then the detailed narrative.
@@ -169,6 +169,9 @@ class InterviewSummarizer:
 
         Transcript:
         {aligned_transcript}
+        
+        Additional Context:
+        {additional_context}
         """
 
         # Call the GPT-4 model to generate the summary in a streaming manner
