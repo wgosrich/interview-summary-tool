@@ -275,6 +275,22 @@ def delete_session(session_id):
     return jsonify({"message": "Session deleted"}), 200
 
 
+@app.route("/rename_session/<int:session_id>", methods=["PUT"])
+def rename_session(session_id):
+    data = request.json
+    new_name = data.get("name")
+    if not new_name:
+        return jsonify({"error": "Missing new name"}), 400
+    
+    session = db.session.get(SessionModel, session_id)
+    if not session:
+        return jsonify({"error": "Session not found"}), 404
+    
+    session.name = new_name
+    db.session.commit()
+    return jsonify({"message": "Session renamed"}), 200
+
+
 with app.app_context():
     db.create_all()
 

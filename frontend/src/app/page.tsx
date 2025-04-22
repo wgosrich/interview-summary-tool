@@ -53,6 +53,10 @@ export default function Home() {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const infoPopupRef = useRef<HTMLDivElement | null>(null);
   const deleteConfirmRef = useRef<HTMLDivElement | null>(null);
+  const [renamePopupOpen, setRenamePopupOpen] = useState(false);
+  const [newSessionName, setNewSessionName] = useState("");
+  const [sessionRenamed, setSessionRenamed] = useState(false);
+  const renamePopupRef = useRef<HTMLDivElement | null>(null);
 
   const fetchSessions = async () => {
     if (!currentUserId) {
@@ -75,21 +79,21 @@ export default function Home() {
     }
   };
 
-  useEffect(() => {
-    const fetchAllSessions = async () => {
-      try {
-        const response = await fetch("http://localhost:8000/get_all_sessions");
-        if (response.ok) {
-          const data = await response.json();
-          setAllSessions(data);
-        } else {
-          console.error("Failed to fetch all sessions");
-        }
-      } catch (error) {
-        console.error("Error fetching all sessions:", error);
+  const fetchAllSessions = async () => {
+    try {
+      const response = await fetch("http://localhost:8000/get_all_sessions");
+      if (response.ok) {
+        const data = await response.json();
+        setAllSessions(data);
+      } else {
+        console.error("Failed to fetch all sessions");
       }
-    };
+    } catch (error) {
+      console.error("Error fetching all sessions:", error);
+    }
+  };
 
+  useEffect(() => {
     fetchAllSessions();
   }, []);
 
@@ -150,7 +154,8 @@ export default function Home() {
         !sidePanel.contains(e.target as Node) && 
         sidePanelButton && 
         !sidePanelButton.contains(e.target as Node) &&
-        (!contextMenuEl || !contextMenuEl.contains(e.target as Node))
+        (!contextMenuEl || !contextMenuEl.contains(e.target as Node)) &&
+        (!renamePopupRef.current || !renamePopupRef.current.contains(e.target as Node))
       ) {
         setShowPanel(false);
         setContextMenu(null);
@@ -194,13 +199,22 @@ export default function Home() {
         setDeleteConfirmOpen(false);
         setSelectedSessionInfo(null);
       }
+      
+      // Check if click is outside rename popup
+      if (
+        renamePopupOpen &&
+        renamePopupRef.current &&
+        !renamePopupRef.current.contains(e.target as Node)
+      ) {
+        setRenamePopupOpen(false);
+      }
     };
 
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [showPanel, profileMenuOpen, dropdownOpen, infoPopupOpen, deleteConfirmOpen]);
+  }, [showPanel, profileMenuOpen, dropdownOpen, infoPopupOpen, deleteConfirmOpen, renamePopupOpen]);
 
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
@@ -607,6 +621,28 @@ export default function Home() {
           />
         </svg>
         Session ID Copied!
+      </div>
+      <div
+        className={`fixed top-0 left-1/2 transform -translate-x-1/2 transition-transform duration-500 ease-in-out z-50 ${sessionRenamed
+          ? "translate-y-6 opacity-100"
+          : "-translate-y-full opacity-0"
+          } bg-green-100 text-green-800 px-5 py-3 rounded-lg shadow-lg text-sm font-semibold flex items-center gap-1`}
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={4}
+          className="h-5 w-5 text-green-800"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M5 13l4 4L19 7"
+          />
+        </svg>
+        Session Renamed Successfully!
       </div>
       <div
         className={`fixed top-0 left-1/2 transform -translate-x-1/2 transition-transform duration-500 ease-in-out z-50 ${showSuccess
@@ -1495,7 +1531,7 @@ export default function Home() {
                   />
                   <div className="flex justify-end gap-2">
                     <button
-                      className="px-4 py-2 bg-gray-300 dark:bg-gray-600 text-slate-800 dark:text-white rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500 font-semibold"
+                      className="px-4 py-2 bg-gray-300 dark:bg-gray-600 text-slate-800 dark:text-white rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500"
                       onClick={() => {
                         setRevisionWindow(false);
                         setRevisionRequest("");
@@ -1541,6 +1577,15 @@ export default function Home() {
           >
             Copy ID
           </button>
+          {selectedSessionInfo && selectedSessionInfo.creator_id === currentUserId && (
+            <button className="text-left px-4 py-1 hover:bg-blue-500 hover:text-white rounded-md"
+              onClick={() => {
+                setRenamePopupOpen(true);
+                setContextMenu(null);
+              }}>
+              Rename
+            </button>
+          )}
           <button
             className="text-left px-4 py-1 hover:bg-blue-500 hover:text-white rounded-md"
             onClick={async () => {
@@ -1735,6 +1780,78 @@ export default function Home() {
                 onClick={() => setInfoPopupOpen(false)}
               >
                 Got it!
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {renamePopupOpen && (
+        <div className="fixed inset-0 backdrop-blur-xl bg-white/30 dark:bg-slate-900/30 flex items-center justify-center z-50">
+          <div ref={renamePopupRef} className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-lg max-w-2xl w-full">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold text-slate-800 dark:text-white">Rename Session</h2>
+              <button
+                onClick={() => setRenamePopupOpen(false)}
+                className="text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+              >
+                <svg 
+                  xmlns="http://www.w3.org/2000/svg" 
+                  fill="none" 
+                  viewBox="0 0 24 24" 
+                  stroke="currentColor" 
+                  className="h-6 w-6"
+                >
+                  <path 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round" 
+                    strokeWidth={2} 
+                    d="M6 18L18 6M6 6l12 12" 
+                  />
+                </svg>
+              </button>
+            </div>
+            
+            <input
+              type="text"
+              placeholder="Enter new session name"
+              value={newSessionName}
+              onChange={(e) => setNewSessionName(e.target.value)}
+              className="w-full p-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-800 dark:text-white mb-4"
+            />
+            
+            <div className="flex justify-end">
+              <button
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold"
+                onClick={() => {
+                  if (selectedSessionInfo !== null && newSessionName.trim()) {
+                    // Implement the logic to rename the session
+                    fetch(`http://localhost:8000/rename_session/${selectedSessionInfo.id}`, {
+                      method: "PUT",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ name: newSessionName.trim() })
+                    })
+                    .then(response => {
+                      if (response.ok) {
+                        fetchSessions();
+                        setSessionRenamed(true);
+                        setTimeout(() => {
+                          setSessionRenamed(false);
+                        }, 3000);
+                      } else {
+                        console.error("Failed to rename session");
+                      }
+                    })
+                    .catch(error => {
+                      console.error("Error renaming session:", error);
+                    });
+                    
+                    setRenamePopupOpen(false);
+                    setNewSessionName("");
+                  }
+                }}
+              >
+                Rename
               </button>
             </div>
           </div>
