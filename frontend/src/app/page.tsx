@@ -928,8 +928,8 @@ export default function Home() {
                 </div>
               )}
               {!summary && (
-                <div className="text-center px-6 py-12 bg-slate-100 dark:bg-slate-700 rounded-lg">
-                  <h1 className="text-3xl font-extrabold text-slate-800 dark:text-white mb-6">
+                <div className="text-center px-6 py-4 bg-slate-100 dark:bg-slate-700 rounded-lg">
+                  <h1 className="text-3xl font-extrabold text-slate-800 dark:text-white mb-4">
                     Fast AI-Assisted
                     <br />
                     Investigation & Review
@@ -1045,7 +1045,7 @@ export default function Home() {
             >
               {!summary && (
                 <>
-                  <div className="mt-5">
+                  <div className="">
                     <div className="flex border-b border-slate-300 dark:border-slate-600">
                       <button
                         onClick={() => setTab("newSummary")}
@@ -1066,9 +1066,9 @@ export default function Home() {
                         Add Existing Summary
                       </button>
                     </div>
-                    <div className="mt-4 bg-slate-100 dark:bg-slate-700 p-4 rounded-lg text-slate-800 dark:text-slate-100">
+                    <div className="mt-2 bg-slate-100 dark:bg-slate-700 p-4 rounded-lg text-slate-800 dark:text-slate-100 flex-1 overflow-y-auto">
                       {tab === "newSummary" ? (
-                        <div className="flex justify-center gap-6 flex-wrap mt-3">
+                        <div className="flex justify-center gap-6 flex-wrap">
                           <div className="flex-1 min-w-[220px]">
                             <label className="block text-md font-semibold text-slate-800 dark:text-slate-100 mb-1">
                               Transcript (.docx)
@@ -1130,7 +1130,7 @@ export default function Home() {
                               Additional Context (.pdf) - Optional
                             </label>
                             <div 
-                              className="border-2 border-dashed border-blue-300 dark:border-blue-600 rounded-lg p-4 mb-2 text-center cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 transition"
+                              className="border-2 border-dashed border-blue-300 dark:border-blue-600 rounded-lg p-2 text-center cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 transition"
                               onClick={() => document.getElementById("contextUpload")?.click()}
                               onDragOver={(e) => {
                                 e.preventDefault();
@@ -1208,7 +1208,7 @@ export default function Home() {
                           <button
                             onClick={handleSubmit}
                             disabled={loading}
-                            className="w-full py-2 px-4 mt-6 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50 font-bold"
+                            className="w-full py-2 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50 font-bold"
                           >
                             {loading
                               ? "Generating summary..."
