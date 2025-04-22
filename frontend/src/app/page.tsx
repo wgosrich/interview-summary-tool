@@ -154,7 +154,8 @@ export default function Home() {
         !sidePanel.contains(e.target as Node) && 
         sidePanelButton && 
         !sidePanelButton.contains(e.target as Node) &&
-        (!contextMenuEl || !contextMenuEl.contains(e.target as Node))
+        (!contextMenuEl || !contextMenuEl.contains(e.target as Node)) &&
+        (!renamePopupRef.current || !renamePopupRef.current.contains(e.target as Node))
       ) {
         setShowPanel(false);
         setContextMenu(null);
