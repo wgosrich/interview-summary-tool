@@ -124,14 +124,27 @@ def summarize(user_id):
 
     transcript_file.save(transcript_path)
     recording_file.save(recording_path)
+    
+    # Handle additional context files
+    additional_context_paths = []
+    if 'additional_context' in request.files:
+        additional_context_files = request.files.getlist('additional_context')
+        for context_file in additional_context_files:
+            context_path = secure_filename(context_file.filename)
+            context_file.save(context_path)
+            additional_context_paths.append(context_path)
 
     def generate():
         try:
-            for chunk in session.summarize(transcript_path, recording_path):
+            for chunk in session.summarize(transcript_path, recording_path, additional_context_paths):
                 yield chunk
         finally:
             os.remove(transcript_path)
             os.remove(recording_path)
+            # Clean up additional context files
+            for context_path in additional_context_paths:
+                if os.path.exists(context_path):
+                    os.remove(context_path)
             new_session = SessionModel(
                 creator_id=user_id,
                 name=session.name,

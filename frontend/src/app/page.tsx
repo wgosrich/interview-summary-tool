@@ -7,6 +7,7 @@ import { Document, Packer, Paragraph, TextRun } from "docx";
 export default function Home() {
   const [transcriptFile, setTranscriptFile] = useState<File | null>(null);
   const [recordingFile, setRecordingFile] = useState<File | null>(null);
+  const [additionalContextFiles, setAdditionalContextFiles] = useState<File[]>([]);
   const [summary, setSummary] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [showChat, setShowChat] = useState(false);
@@ -307,6 +308,11 @@ export default function Home() {
     const formData = new FormData();
     formData.append("transcript", transcriptFile);
     formData.append("recording", recordingFile);
+    
+    // Add additional context files if any
+    additionalContextFiles.forEach(file => {
+      formData.append("additional_context", file);
+    });
 
     try {
       setSummary("");
@@ -338,7 +344,7 @@ export default function Home() {
           const meta = JSON.parse(metaMatch[1]);
           setCurrentSessionId(meta.id);
           const formattedMessages = meta.messages
-            .slice(3)
+            .filter((msg: { role: string; content: string }) => msg.role !== "system")
             .map((msg: { role: string; content: string }) =>
               msg.role === "user"
                 ? `You: ${msg.content}`
@@ -704,12 +710,15 @@ export default function Home() {
             setShowPanel(false);
             setTranscriptFile(null);
             setRecordingFile(null);
+            setAdditionalContextFiles([]);
             setSummary("");
             setShowChat(false);
             setChatInput("");
             setChatMessages([]);
             setCurrentSessionId(null);
             setTab("newSummary");
+            setRevisionWindow(false);
+            setRevisionRequest("");
             localStorage.clear();
           }}
           className="w-full bg-blue-600 text-white py-2 px-3 rounded-lg hover:bg-blue-700 mb-4 font-semibold"
@@ -852,6 +861,7 @@ export default function Home() {
                     setUsername("");
                     setTranscriptFile(null);
                     setRecordingFile(null);
+                    setAdditionalContextFiles([]);
                     setSummary("");
                     setShowChat(false);
                     setChatInput("");
@@ -1114,6 +1124,87 @@ export default function Home() {
                               </span>
                             </div>
                           </div>
+                          
+                          <div className="flex-1 min-w-[220px]">
+                            <label className="block text-md font-semibold text-slate-800 dark:text-slate-100 mb-1">
+                              Additional Context (.pdf) - Optional
+                            </label>
+                            <div 
+                              className="border-2 border-dashed border-blue-300 dark:border-blue-600 rounded-lg p-4 mb-2 text-center cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 transition"
+                              onClick={() => document.getElementById("contextUpload")?.click()}
+                              onDragOver={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                              }}
+                              onDrop={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                const files = e.dataTransfer.files;
+                                if (files && files.length > 0) {
+                                  const pdfFiles = Array.from(files).filter(file => file.name.toLowerCase().endsWith('.pdf'));
+                                  if (pdfFiles.length > 0) {
+                                    setAdditionalContextFiles(prev => [...prev, ...pdfFiles]);
+                                    console.log("Files added via drop:", pdfFiles.map(f => f.name));
+                                  }
+                                }
+                              }}
+                            >
+                              <input
+                                type="file"
+                                accept=".pdf"
+                                id="contextUpload"
+                                className="hidden"
+                                onChange={(e) => {
+                                  const files = e.target.files;
+                                  if (files && files.length > 0) {
+                                    const newFile = files[0];
+                                    console.log("File selected:", newFile.name);
+                                    setAdditionalContextFiles(prev => [...prev, newFile]);
+                                    // Reset the input so the same file can be selected again
+                                    e.target.value = '';
+                                  }
+                                }}
+                              />
+                              <div className="flex flex-col items-center justify-center text-blue-600 dark:text-blue-400">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                                </svg>
+                                <p className="text-sm">Drag & drop PDF files here or click to browse</p>
+                              </div>
+                            </div>
+                            
+                            {additionalContextFiles.length > 0 && (
+                              <div className="mt-2 space-y-2 max-h-40 overflow-y-auto p-1 bg-slate-50 dark:bg-slate-700 rounded-lg">
+                                {additionalContextFiles.map((file, index) => {
+                                  console.log(`Rendering file ${index}:`, file?.name);
+                                  return (
+                                    <div key={index} className="flex items-center justify-between p-2 bg-white dark:bg-slate-600 rounded shadow-sm">
+                                      <div className="flex items-center">
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                        </svg>
+                                        <span className="text-xs truncate max-w-[150px]" title={file?.name || ""}>
+                                          {file?.name || "Unknown file"}
+                                        </span>
+                                      </div>
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setAdditionalContextFiles(prev => prev.filter((_, i) => i !== index));
+                                        }}
+                                        className="text-gray-500 hover:text-red-600 dark:text-gray-300 dark:hover:text-red-400"
+                                      >
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                      </button>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
+                          
                           <button
                             onClick={handleSubmit}
                             disabled={loading}
@@ -1463,6 +1554,7 @@ export default function Home() {
                     if (selectedSessionInfo.id === currentSessionId) {
                       setTranscriptFile(null);
                       setRecordingFile(null);
+                      setAdditionalContextFiles([]);
                       setSummary("");
                       setShowChat(false);
                       setChatInput("");
@@ -1530,6 +1622,7 @@ export default function Home() {
                         if (selectedSessionInfo.id === currentSessionId) {
                           setTranscriptFile(null);
                           setRecordingFile(null);
+                          setAdditionalContextFiles([]);
                           setSummary("");
                           setShowChat(false);
                           setChatInput("");

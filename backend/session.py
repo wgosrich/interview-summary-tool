@@ -10,12 +10,16 @@ class Session:
         self.transcript = transcript
         self.messages = list(messages) if messages else []
 
-    def summarize(self, transcript: str, recording: str):
+    def summarize(self, transcript: str, recording: str, additional_context: list[str] = []):
         assert transcript.lower().endswith(
             ".docx"
         ), "Transcript file must be a .docx file."
         assert recording.lower().endswith(".mp4"), "Recording file must be a .mp4 file."
-
+        assert isinstance(additional_context, list), "Additional context must be a list."
+        if additional_context:  # Only check files if list is not empty
+            for context_file in additional_context:
+                assert context_file.lower().endswith('.pdf'), "Additional context files must be .pdf files."
+        
         # parse transcript and recording
         print("Parsing transcript...")
         og_transcript = IS.parse_transcript(transcript)
@@ -31,10 +35,21 @@ class Session:
         self.messages.append(
             {"role": "system", "content": f"Transcript: {aligned_transcript}"}
         )
+        
+        # parse additional context
+        additional_context_concat = ""
+        if additional_context:
+            print("Parsing additional context...")
+            additional_context_concat = IS.parse_additional_context(additional_context)
+            
+            # add additional context to chat
+            self.messages.append(
+                {"role": "system", "content": f"Additional Context: {additional_context_concat}"}
+            )
 
         # generate summary
         print("Generating summary...")
-        for chunk in IS.generate_summary(aligned_transcript):
+        for chunk in IS.generate_summary(aligned_transcript, additional_context_concat):
             # add summary to chat
             self.summary += chunk
             yield chunk
@@ -61,8 +76,8 @@ class Session:
         self.messages.append({"role": "assistant", "content": response})
 
     def revise(self, request: str):
-        # initial system prompt, summary, and transcript
-        system_messages = self.messages[:3]
+        # initial system prompt, transcript, additional context, and summary
+        system_messages = self.messages[:4]
         # most recent summary
         system_messages.append(
             {"role": "system", "content": f"Most Recent Summary: {self.summary}"}
