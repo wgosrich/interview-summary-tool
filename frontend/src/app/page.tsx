@@ -859,6 +859,7 @@ export default function Home() {
                     setCurrentSessionId(null);
                     setRevisionWindow(false);
                     setRevisionRequest("");
+                    setTab("field1");
                     localStorage.clear();
                     setProfileMenuOpen(false);
                   }}
