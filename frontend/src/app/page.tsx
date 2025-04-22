@@ -1533,7 +1533,7 @@ export default function Home() {
                   />
                   <div className="flex justify-end gap-2">
                     <button
-                      className="px-4 py-2 bg-gray-300 dark:bg-gray-600 text-slate-800 dark:text-white rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500"
+                      className="font-semibold px-4 py-2 bg-gray-300 dark:bg-gray-600 text-slate-800 dark:text-white rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500"
                       onClick={() => {
                         setRevisionWindow(false);
                         setRevisionRequest("");
