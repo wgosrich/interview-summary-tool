@@ -999,6 +999,7 @@ export default function Home() {
                     onClick={() => {
                       navigator.clipboard.writeText(
                         "The following summary was generated with AI:\n\n" +
+                        "Session ID: " + currentSessionId + "\n\n" +
                         summary
                       );
                       setSummaryCopied(true);
@@ -1028,6 +1029,7 @@ export default function Home() {
                             properties: {},
                             children: (
                               "The following summary was generated with AI:\n\n" +
+                              "Session ID: " + currentSessionId + "\n\n" +
                               summary
                             )
                               .split("\n")
