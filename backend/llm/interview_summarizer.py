@@ -247,7 +247,7 @@ class InterviewSummarizer:
             yield delta
 
     @staticmethod
-    def parse_additional_pdfs(pdf_filepaths: list[str]) -> str:
+    def parse_additional_context(pdf_filepaths: list[str]) -> str:
         """
         Extract text from a list of PDF files and concatenate the content into a single string.
         
