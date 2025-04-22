@@ -216,7 +216,8 @@ class InterviewSummarizer:
         You are an AI assistant helping to summarize interview transcripts 
         and assist investigators in identifying key insights for a civil rights
         investigation. Your task is to generate a greeting message for the user.
-        The message should be concise and welcoming, setting the tone for the conversation.
+        The message should be concise and welcoming, setting the tone for the conversation. 
+        Try to limit the message to 1 sentence as it shouldn't be too much for the user to read.
         """
 
         # Call the GPT-4 model to generate the greeting
