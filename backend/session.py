@@ -36,7 +36,6 @@ class Session:
             {"role": "system", "content": f"Transcript: {aligned_transcript}"}
         )
         
-        
         # parse additional context
         additional_context_concat = ""
         if additional_context:

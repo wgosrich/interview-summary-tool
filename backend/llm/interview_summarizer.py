@@ -178,7 +178,7 @@ class InterviewSummarizer:
         # Call the GPT-4 model to generate the summary in a streaming manner
         response = gpt4o_client.chat.completions.create(
             model="gpt-4o",
-            messages=[{"role": "user", "content": prompt}],
+            messages=[{"role": "system", "content": prompt}],
             stream=True,  # Enable streaming
         )
 
