@@ -43,8 +43,11 @@ export default function Home() {
   const [allSessions, setAllSessions] = useState<
     { id: number; name: string }[]
   >([]);
+  const [searchSessionInput, setSearchSessionInput] = useState("");
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   const [revisionWindow, setRevisionWindow] = useState(false);
   const [revisionRequest, setRevisionRequest] = useState("");
+  const dropdownRef = useRef<HTMLDivElement | null>(null);
 
   const fetchSessions = async () => {
     if (!currentUserId) {
@@ -155,13 +158,21 @@ export default function Home() {
       ) {
         setProfileMenuOpen(false);
       }
+      
+      if (
+        dropdownOpen &&
+        dropdownRef.current &&
+        !dropdownRef.current.contains(e.target as Node)
+      ) {
+        setDropdownOpen(false);
+      }
     };
 
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [showPanel, profileMenuOpen]);
+  }, [showPanel, profileMenuOpen, dropdownOpen]);
 
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
@@ -1088,28 +1099,80 @@ export default function Home() {
                             }
                             className="px-2 py-1 rounded-lg border border-slate-300 dark:border-slate-600 text-sm bg-white dark:bg-slate-700 text-slate-800 dark:text-white"
                           />
-                          <select
-                            onChange={(e) =>
-                              setSubscribeSessionId(e.target.value)
-                            }
-                            value={subscribeSessionId}
-                            className="px-2 py-1 rounded-lg border border-slate-300 dark:border-slate-600 text-sm bg-white dark:bg-slate-700 text-slate-800 dark:text-white"
-                          >
-                            <option value="">Select a session</option>
-                            {allSessions
-                              .filter(
-                                (session) =>
-                                  !sessions.some(
-                                    (userSession) =>
-                                      userSession.id === session.id
+                          
+                          <div className="relative" ref={dropdownRef}>
+                            <div 
+                              onClick={() => setDropdownOpen(!dropdownOpen)}
+                              className="px-2 py-1 rounded-lg border border-slate-300 dark:border-slate-600 text-sm bg-white dark:bg-slate-700 text-slate-800 dark:text-white cursor-pointer flex justify-between items-center"
+                            >
+                              <input
+                                type="text"
+                                placeholder="Search or select a session"
+                                value={searchSessionInput}
+                                onChange={(e) => {
+                                  setSearchSessionInput(e.target.value);
+                                  if (!dropdownOpen) setDropdownOpen(true);
+                                }}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setDropdownOpen(true);
+                                }}
+                                className="bg-transparent border-none outline-none w-full text-slate-800 dark:text-white"
+                              />
+                              <svg 
+                                xmlns="http://www.w3.org/2000/svg" 
+                                fill="none" 
+                                viewBox="0 0 24 24" 
+                                stroke="currentColor" 
+                                className="h-4 w-4"
+                              >
+                                <path 
+                                  strokeLinecap="round" 
+                                  strokeLinejoin="round" 
+                                  strokeWidth={2} 
+                                  d={dropdownOpen ? "M5 15l7-7 7 7" : "M19 9l-7 7-7-7"} 
+                                />
+                              </svg>
+                            </div>
+                            
+                            {dropdownOpen && (
+                              <div className="absolute z-10 mt-1 w-full bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                                {allSessions
+                                  .filter(
+                                    (session) =>
+                                      !sessions.some(
+                                        (userSession) => userSession.id === session.id
+                                      ) &&
+                                      session.name.toLowerCase().includes(searchSessionInput.toLowerCase())
                                   )
-                              )
-                              .map((session) => (
-                                <option key={session.id} value={session.id}>
-                                  {session.name}
-                                </option>
-                              ))}
-                          </select>
+                                  .map((session) => (
+                                    <div
+                                      key={session.id}
+                                      className="px-2 py-1 hover:bg-slate-100 dark:hover:bg-slate-600 cursor-pointer text-slate-800 dark:text-white"
+                                      onClick={() => {
+                                        setSubscribeSessionId(session.id.toString());
+                                        setSearchSessionInput(session.name);
+                                        setDropdownOpen(false);
+                                      }}
+                                    >
+                                      {session.name}
+                                    </div>
+                                  ))}
+                                  {allSessions.filter(
+                                    (session) =>
+                                      !sessions.some(
+                                        (userSession) => userSession.id === session.id
+                                      ) &&
+                                      session.name.toLowerCase().includes(searchSessionInput.toLowerCase())
+                                  ).length === 0 && (
+                                    <div className="px-2 py-1 text-slate-500 dark:text-slate-400">
+                                      No matching sessions
+                                    </div>
+                                  )}
+                              </div>
+                            )}
+                          </div>
+                          
                           <button
                             onClick={async () => {
                               if (!subscribeSessionId || !currentUserId) return;
@@ -1150,6 +1213,7 @@ export default function Home() {
                                 );
                               } finally {
                                 setSubscribeSessionId("");
+                                setSearchSessionInput("");
                                 setSubscribed(true);
                                 setTimeout(() => {
                                   setSubscribed(false);
