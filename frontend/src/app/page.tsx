@@ -51,6 +51,7 @@ export default function Home() {
   const dropdownRef = useRef<HTMLDivElement | null>(null);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const infoPopupRef = useRef<HTMLDivElement | null>(null);
+  const deleteConfirmRef = useRef<HTMLDivElement | null>(null);
 
   const fetchSessions = async () => {
     if (!currentUserId) {
@@ -182,13 +183,23 @@ export default function Home() {
       ) {
         setInfoPopupOpen(false);
       }
+      
+      // Check if click is outside delete confirmation popup
+      if (
+        deleteConfirmOpen &&
+        deleteConfirmRef.current &&
+        !deleteConfirmRef.current.contains(e.target as Node)
+      ) {
+        setDeleteConfirmOpen(false);
+        setSelectedSessionInfo(null);
+      }
     };
 
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [showPanel, profileMenuOpen, dropdownOpen, infoPopupOpen]);
+  }, [showPanel, profileMenuOpen, dropdownOpen, infoPopupOpen, deleteConfirmOpen]);
 
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
@@ -1490,7 +1501,7 @@ export default function Home() {
       
       {deleteConfirmOpen && (
         <div className="fixed inset-0 backdrop-blur-xl bg-white/30 dark:bg-slate-900/30 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-lg max-w-md w-full">
+          <div ref={deleteConfirmRef} className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-lg max-w-md w-full">
             <h2 className="text-xl font-bold text-slate-800 dark:text-white mb-4">Confirm Deletion</h2>
             <p className="text-slate-600 dark:text-slate-300 mb-6">
               Are you sure you want to delete this session? This action cannot be undone.
