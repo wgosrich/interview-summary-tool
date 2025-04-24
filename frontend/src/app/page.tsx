@@ -25,6 +25,13 @@ export default function Home() {
   const [currentSessionId, setCurrentSessionId] = useState<number | null>(null);
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
   const [subscribeSessionId, setSubscribeSessionId] = useState<string>("");
+  const [chats, setChats] = useState<{ id: number; name: string }[]>([]);
+  const [currentChatId, setCurrentChatId] = useState<number | null>(null);
+  const [newChatName, setNewChatName] = useState("");
+  const [createChatOpen, setCreateChatOpen] = useState(false);
+  const [chatDropdownOpen, setChatDropdownOpen] = useState(false);
+  const chatDropdownRef = useRef<HTMLDivElement | null>(null);
+  const createChatRef = useRef<HTMLDivElement | null>(null);
   const [contextMenu, setContextMenu] = useState<{
     mouseX: number;
     mouseY: number;
@@ -60,6 +67,12 @@ export default function Home() {
   const [textContextPopupOpen, setTextContextPopupOpen] = useState(false);
   const [additionalTextContext, setAdditionalTextContext] = useState("");
   const textContextPopupRef = useRef<HTMLDivElement | null>(null);
+  const [chatContextMenu, setChatContextMenu] = useState<{ mouseX: number; mouseY: number } | null>(null);
+  const [selectedChatInfo, setSelectedChatInfo] = useState<{ id: number, name: string } | null>(null);
+  const [renameChatPopupOpen, setRenameChatPopupOpen] = useState(false);
+  const [chatRenamed, setChatRenamed] = useState(false);
+  const [chatDeleted, setChatDeleted] = useState(false);
+  const renameChatPopupRef = useRef<HTMLDivElement | null>(null);
 
   const fetchSessions = async () => {
     if (!currentUserId) {
@@ -211,13 +224,42 @@ export default function Home() {
       ) {
         setRenamePopupOpen(false);
       }
+
+      // Check if click is outside chat dropdown
+      if (
+        chatDropdownOpen &&
+        chatDropdownRef.current &&
+        !chatDropdownRef.current.contains(e.target as Node)
+      ) {
+        setChatDropdownOpen(false);
+      }
+
+      // Check if click is outside create chat popup
+      if (
+        createChatOpen &&
+        createChatRef.current &&
+        !createChatRef.current.contains(e.target as Node)
+      ) {
+        setCreateChatOpen(false);
+        setNewChatName("");
+      }
+
+      // Check if click is outside rename chat popup
+      if (
+        renameChatPopupOpen &&
+        renameChatPopupRef.current &&
+        !renameChatPopupRef.current.contains(e.target as Node)
+      ) {
+        setRenameChatPopupOpen(false);
+        setNewChatName("");
+      }
     };
 
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [showPanel, profileMenuOpen, dropdownOpen, infoPopupOpen, deleteConfirmOpen, renamePopupOpen]);
+  }, [showPanel, profileMenuOpen, dropdownOpen, infoPopupOpen, deleteConfirmOpen, renamePopupOpen, chatDropdownOpen, createChatOpen, renameChatPopupOpen]);
 
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
@@ -225,6 +267,12 @@ export default function Home() {
       if (contextMenuEl && !contextMenuEl.contains(e.target as Node)) {
         setContextMenu(null);
         setSelectedSessionInfo(null);
+      }
+      
+      const chatContextMenuEl = document.querySelector(".chat-context-menu");
+      if (chatContextMenuEl && !chatContextMenuEl.contains(e.target as Node)) {
+        setChatContextMenu(null);
+        setSelectedChatInfo(null);
       }
     };
     window.addEventListener("click", handleClick);
@@ -238,6 +286,7 @@ export default function Home() {
     const savedShowChat = localStorage.getItem("showChat");
     const storedUserId = localStorage.getItem("user_id");
     const storedUsername = localStorage.getItem("username");
+    const savedChatId = localStorage.getItem("currentChatId");
 
     if (savedSessionId) setCurrentSessionId(Number(savedSessionId));
     if (savedSummary) setSummary(savedSummary);
@@ -248,6 +297,7 @@ export default function Home() {
       setLoggedIn(true);
     }
     if (storedUsername) setUsername(storedUsername);
+    if (savedChatId) setCurrentChatId(Number(savedChatId));
     const savedTab = localStorage.getItem("selectedTab");
     if (savedTab) setTab(savedTab);
 
@@ -259,6 +309,12 @@ export default function Home() {
       localStorage.setItem("currentSessionId", currentSessionId.toString());
     }
   }, [currentSessionId]);
+
+  useEffect(() => {
+    if (currentChatId !== null) {
+      localStorage.setItem("currentChatId", currentChatId.toString());
+    }
+  }, [currentChatId]);
 
   useEffect(() => {
     localStorage.setItem("summary", summary);
@@ -275,6 +331,37 @@ export default function Home() {
   useEffect(() => {
     localStorage.setItem("selectedTab", tab);
   }, [tab]);
+
+  useEffect(() => {
+    if (currentSessionId) {
+      fetchChats(currentSessionId);
+    }
+  }, [currentSessionId]);
+
+  const fetchChats = async (sessionId: number) => {
+    try {
+      const response = await fetch(`http://localhost:8000/get_chats/${sessionId}`);
+      if (response.ok) {
+        const data = await response.json();
+        setChats(data);
+        // If we don't have a current chat ID, set it to the first chat (likely the default)
+        if (!currentChatId && data.length > 0) {
+          setCurrentChatId(data[0].id);
+        } else if (currentChatId) {
+          // Check if the currentChatId exists in the returned chats
+          const chatExists = data.some((chat: { id: number }) => chat.id === currentChatId);
+          if (!chatExists && data.length > 0) {
+            // If not, reset to the first available chat
+            setCurrentChatId(data[0].id);
+          }
+        }
+      } else {
+        console.error("Failed to fetch chats");
+      }
+    } catch (error) {
+      console.error("Error fetching chats:", error);
+    }
+  };
 
   const handleRevise = async (request: string) => {
     if (!summary) {
@@ -371,6 +458,7 @@ export default function Home() {
         if (metaMatch) {
           const meta = JSON.parse(metaMatch[1]);
           setCurrentSessionId(meta.id);
+          setCurrentChatId(meta.chat_id);
           const formattedMessages = meta.messages
             .filter((msg: { role: string; content: string }) => msg.role !== "system")
             .map((msg: { role: string; content: string }) =>
@@ -399,7 +487,7 @@ export default function Home() {
   };
 
   const handleChatSubmit = async () => {
-    if (!chatInput.trim()) return;
+    if (!chatInput.trim() || !currentChatId) return;
     const userMessage = `You: ${chatInput}`;
     setChatMessages((prev) => [...prev, userMessage]);
     const currentInput = chatInput;
@@ -413,6 +501,7 @@ export default function Home() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             message: currentInput,
+            chat_id: currentChatId
           }),
         }
       );
@@ -451,6 +540,49 @@ export default function Home() {
         const data = await response.json();
         setCurrentSessionId(data.session_id);
         setSummary(data.summary);
+        
+        // Set the current chat to the default chat or first available
+        if (data.chats && data.chats.length > 0) {
+          setChats(data.chats);
+          const defaultChat = data.chats.find((c: { name: string }) => c.name === "default");
+          if (defaultChat) {
+            setCurrentChatId(defaultChat.id);
+          } else {
+            setCurrentChatId(data.chats[0].id);
+          }
+          
+          // Load the messages for the selected chat
+          const loadedMessages = data.messages || [];
+          const formattedMessages = loadedMessages
+            .filter(
+              (msg: { role: string; content: string }) => msg.role !== "system"
+            )
+            .map((msg: { role: string; content: string }) => {
+              return msg.role === "user"
+                ? `You: ${msg.content}`
+                : `Assistant: ${msg.content}`;
+            });
+          setChatMessages(formattedMessages);
+        } else {
+          setChatMessages([]);
+          setCurrentChatId(null);
+        }
+        
+        setShowChat(true);
+      } else {
+        console.error("Failed to load session");
+      }
+    } catch (error) {
+      console.error("Error loading session:", error);
+    }
+  };
+
+  const loadChat = async (chatId: number) => {
+    try {
+      const response = await fetch(`http://localhost:8000/load_chat/${chatId}`);
+      if (response.ok) {
+        const data = await response.json();
+        setCurrentChatId(data.chat_id);
         const loadedMessages = data.messages || [];
         const formattedMessages = loadedMessages
           .filter(
@@ -462,12 +594,121 @@ export default function Home() {
               : `Assistant: ${msg.content}`;
           });
         setChatMessages(formattedMessages);
-        setShowChat(true);
       } else {
-        console.error("Failed to load session");
+        console.error("Failed to load chat");
       }
     } catch (error) {
-      console.error("Error loading session:", error);
+      console.error("Error loading chat:", error);
+    }
+  };
+
+  const createNewChat = async () => {
+    if (!currentSessionId || !newChatName.trim()) return;
+    
+    try {
+      const response = await fetch(`http://localhost:8000/create_chat/${currentSessionId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: newChatName.trim() })
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        fetchChats(currentSessionId);
+        setCurrentChatId(data.chat_id);
+        
+        // Load the new chat's messages
+        const chatResponse = await fetch(`http://localhost:8000/load_chat/${data.chat_id}`);
+        if (chatResponse.ok) {
+          const chatData = await chatResponse.json();
+          const loadedMessages = chatData.messages || [];
+          const formattedMessages = loadedMessages
+            .filter(
+              (msg: { role: string; content: string }) => msg.role !== "system"
+            )
+            .map((msg: { role: string; content: string }) => {
+              return msg.role === "user"
+                ? `You: ${msg.content}`
+                : `Assistant: ${msg.content}`;
+            });
+          setChatMessages(formattedMessages);
+        } else {
+          // If loading fails, just set empty messages
+          setChatMessages([]);
+        }
+        
+        setCreateChatOpen(false);
+        setNewChatName("");
+      } else {
+        console.error("Failed to create new chat");
+      }
+    } catch (error) {
+      console.error("Error creating new chat:", error);
+    }
+  };
+
+  const deleteChat = async (chatId: number) => {
+    if (!chatId || !currentSessionId) return;
+    
+    try {
+      const response = await fetch(`http://localhost:8000/delete_chat/${chatId}`, {
+        method: "DELETE"
+      });
+      
+      if (response.ok) {
+        // Refresh the chat list
+        fetchChats(currentSessionId);
+        
+        // Show success message
+        setChatDeleted(true);
+        setTimeout(() => {
+          setChatDeleted(false);
+        }, 3000);
+        
+        // If we deleted the current chat, load the default chat
+        if (chatId === currentChatId) {
+          // Find the default chat or the first available chat
+          const defaultChat = chats.find(c => c.name === "default");
+          if (defaultChat) {
+            loadChat(defaultChat.id);
+          } else if (chats.length > 0 && chats[0].id !== chatId) {
+            loadChat(chats[0].id);
+          } else {
+            setChatMessages([]);
+          }
+        }
+      } else {
+        console.error("Failed to delete chat");
+      }
+    } catch (error) {
+      console.error("Error deleting chat:", error);
+    }
+  };
+
+  const renameChat = async (chatId: number, newName: string) => {
+    if (!chatId || !newName.trim()) return;
+    
+    try {
+      const response = await fetch(`http://localhost:8000/rename_chat/${chatId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: newName.trim() })
+      });
+      
+      if (response.ok) {
+        // Refresh the chat list
+        fetchChats(currentSessionId!);
+        
+        // Show success message
+        setChatRenamed(true);
+        setTimeout(() => {
+          setChatRenamed(false);
+        }, 3000);
+      } else {
+        console.error("Failed to rename chat");
+      }
+    } catch (error) {
+      console.error("Error renaming chat:", error);
     }
   };
 
@@ -723,6 +964,50 @@ export default function Home() {
           />
         </svg>
         Summary downloaded successfully!
+      </div>
+      <div
+        className={`fixed top-0 left-1/2 transform -translate-x-1/2 transition-transform duration-500 ease-in-out z-50 ${chatRenamed
+          ? "translate-y-6 opacity-100"
+          : "-translate-y-full opacity-0"
+          } bg-green-100 text-green-800 px-5 py-3 rounded-lg shadow-lg text-sm font-semibold flex items-center gap-1`}
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={4}
+          className="h-5 w-5 text-green-800"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M5 13l4 4L19 7"
+          />
+        </svg>
+        Chat Renamed Successfully!
+      </div>
+      <div
+        className={`fixed top-0 left-1/2 transform -translate-x-1/2 transition-transform duration-500 ease-in-out z-50 ${chatDeleted
+          ? "translate-y-6 opacity-100"
+          : "-translate-y-full opacity-0"
+          } bg-green-100 text-green-800 px-5 py-3 rounded-lg shadow-lg text-sm font-semibold flex items-center gap-1`}
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={4}
+          className="h-5 w-5 text-green-800"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M5 13l4 4L19 7"
+          />
+        </svg>
+        Chat Deleted Successfully!
       </div>
       <div
         id="side-panel"
@@ -1447,10 +1732,110 @@ export default function Home() {
 
         {showChat && (
           <div className="lg:w-1/2 h-full overflow-hidden bg-white dark:bg-slate-800 p-8 rounded-lg shadow flex flex-col relative">
-            <h2 className="text-2xl font-semibold mb-5 text-slate-800 dark:text-slate-100 text-center">
-              Chat with Assistant
-            </h2>
+            <div className="relative flex mb-5">
+              {/* Absolute positioned chat dropdown */}
+              <div className="absolute left-0 top-1/2 -translate-y-1/2 z-10" ref={chatDropdownRef}>
+                <button
+                  onClick={() => setChatDropdownOpen(!chatDropdownOpen)}
+                  className="flex items-center gap-1 px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-200 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-800 text-sm"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-4 w-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path
+                      strokeWidth={1.5}
+                      d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.862 9.862 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                    />
+                  </svg>
+                  <span className="max-w-[120px] truncate">
+                    {chats.find(chat => chat.id === currentChatId)?.name || "Chat"}
+                  </span>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-3 w-3"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d={chatDropdownOpen ? "M5 15l7-7 7 7" : "M19 9l-7 7-7-7"}
+                    />
+                  </svg>
+                </button>
+                
+                {chatDropdownOpen && (
+                  <div className="absolute z-50 left-0 mt-1 w-48 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                    {chats.map(chat => (
+                      <button
+                        key={chat.id}
+                        className={`w-full text-left px-3 py-2 hover:bg-blue-50 dark:hover:bg-slate-600 ${
+                          chat.id === currentChatId ? "bg-blue-50 dark:bg-slate-600" : ""
+                        }`}
+                        onClick={() => {
+                          loadChat(chat.id);
+                          setChatDropdownOpen(false);
+                        }}
+                        onContextMenu={(e) => {
+                          e.preventDefault();
+                          setSelectedChatInfo({
+                            id: chat.id,
+                            name: chat.name
+                          });
+                          setChatContextMenu({
+                            mouseX: e.clientX,
+                            mouseY: e.clientY,
+                          });
+                        }}
+                      >
+                        <span className="truncate font-medium text-slate-800 dark:text-white">
+                          {chat.name}
+                        </span>
+                      </button>
+                    ))}
+                    <div className="border-t border-slate-200 dark:border-slate-600 my-1"></div>
+                    <button
+                      className="w-full text-left px-3 py-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-slate-600 flex items-center"
+                      onClick={() => {
+                        setChatDropdownOpen(false);
+                        setCreateChatOpen(true);
+                      }}
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-4 w-4 mr-2"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12 4v16m8-8H4"
+                        />
+                      </svg>
+                      New Chat
+                    </button>
+                  </div>
+                )}
+              </div>
+              
+              {/* Centered title */}
+              <h2 className="text-2xl font-semibold text-slate-800 dark:text-slate-100 w-full text-center">
+                Chat with Assistant
+              </h2>
+            </div>
 
+            {/* Rest of the chat UI remains the same */}
             <div
               ref={chatContainerRef}
               className="flex-1 overflow-y-auto scrollbar-none mb-4 bg-slate-100 dark:bg-slate-700 p-4 rounded-lg flex flex-col-reverse gap-2"
@@ -1945,6 +2330,129 @@ export default function Home() {
                 onClick={() => setTextContextPopupOpen(false)}
               >
                 Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Create New Chat Popup */}
+      {createChatOpen && (
+        <div className="fixed inset-0 backdrop-blur-xl bg-white/30 dark:bg-slate-900/30 flex items-center justify-center z-50">
+          <div ref={createChatRef} className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-lg w-80">
+            <h2 className="text-lg font-bold text-slate-800 dark:text-white mb-4">Create New Chat</h2>
+            <input
+              type="text"
+              placeholder="Enter chat name"
+              value={newChatName}
+              onChange={(e) => setNewChatName(e.target.value)}
+              className="w-full p-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-800 dark:text-white mb-4"
+            />
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => {
+                  setCreateChatOpen(false);
+                  setNewChatName("");
+                }}
+                className="font-semibold px-3 py-1 bg-gray-300 dark:bg-gray-600 text-slate-800 dark:text-white rounded hover:bg-gray-400 dark:hover:bg-gray-500"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={createNewChat}
+                className="font-semibold px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
+              >
+                Create
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Chat Context Menu */}
+      {chatContextMenu && (
+        <div
+          className="chat-context-menu absolute z-50 bg-white dark:bg-slate-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg text-xs font-semibold flex flex-col space-y-0.5 p-1"
+          style={{ top: chatContextMenu.mouseY, left: chatContextMenu.mouseX }}
+        >
+          <button
+            className="text-left px-4 py-1 hover:bg-blue-500 hover:text-white rounded-md"
+            onClick={() => {
+              setRenameChatPopupOpen(true);
+              setChatContextMenu(null);
+            }}
+          >
+            Rename
+          </button>
+          <button
+            className="text-left px-4 py-1 hover:bg-blue-500 hover:text-white rounded-md"
+            onClick={() => {
+              if (selectedChatInfo) {
+                // Don't allow deleting the default chat if it's the only one
+                if (selectedChatInfo.name === "default" && chats.length === 1) {
+                  alert("Cannot delete the default chat when it's the only one.");
+                  setChatContextMenu(null);
+                  setSelectedChatInfo(null);
+                  return;
+                }
+                deleteChat(selectedChatInfo.id);
+              }
+              setChatContextMenu(null);
+              setSelectedChatInfo(null);
+            }}
+          >
+            Delete
+          </button>
+        </div>
+      )}
+
+      {/* Rename Chat Popup */}
+      {renameChatPopupOpen && (
+        <div className="fixed inset-0 backdrop-blur-xl bg-white/30 dark:bg-slate-900/30 flex items-center justify-center z-50">
+          <div ref={renameChatPopupRef} className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-lg max-w-2xl w-full">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold text-slate-800 dark:text-white">Rename Chat</h2>
+              <button
+                onClick={() => setRenameChatPopupOpen(false)}
+                className="text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  className="h-6 w-6"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+
+            <input
+              type="text"
+              placeholder={selectedChatInfo?.name}
+              value={newChatName}
+              onChange={(e) => setNewChatName(e.target.value)}
+              className="w-full p-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-800 dark:text-white mb-4"
+            />
+
+            <div className="flex justify-end">
+              <button
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold"
+                onClick={() => {
+                  if (selectedChatInfo !== null && newChatName.trim()) {
+                    renameChat(selectedChatInfo.id, newChatName.trim());
+                    setRenameChatPopupOpen(false);
+                    setNewChatName("");
+                  }
+                }}
+              >
+                Rename
               </button>
             </div>
           </div>
