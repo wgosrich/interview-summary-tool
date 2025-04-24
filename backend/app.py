@@ -20,14 +20,38 @@ class UserModel(db.Model):
         "SessionModel", secondary="user_sessions", backref="users"
     )
 
-
 class SessionModel(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     creator_id = db.Column(db.Integer, db.ForeignKey("user_model.id"), nullable=False)
     name = db.Column(db.String(100), default="Untitled")
     summary = db.Column(db.Text, default="")
     transcript = db.Column(db.Text, default="")
+    chats = db.relationship("ChatModel", backref="session", cascade="all, delete-orphan")
+    
+    @property
+    def messages(self):
+        # For backward compatibility, return messages from the default chat
+        default_chat = ChatModel.query.filter_by(session_id=self.id, name="default").first()
+        if default_chat:
+            return default_chat.messages
+        return []
+    
+    @messages.setter
+    def messages(self, value):
+        # For backward compatibility, set messages on the default chat
+        default_chat = ChatModel.query.filter_by(session_id=self.id, name="default").first()
+        if not default_chat:
+            default_chat = ChatModel(session_id=self.id, name="default")
+            db.session.add(default_chat)
+        default_chat.messages = value
+
+
+class ChatModel(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    session_id = db.Column(db.Integer, db.ForeignKey("session_model.id"), nullable=False)
+    name = db.Column(db.String(100), default="default")
     messages = db.Column(db.JSON, default=list)
+    created_at = db.Column(db.DateTime, server_default=db.func.now())
 
 
 user_sessions = db.Table(
@@ -150,9 +174,17 @@ def summarize(user_id):
                 name=session.name,
                 summary=session.summary,
                 transcript=session.transcript,
-                messages=session.messages,
             )
             db.session.add(new_session)
+            db.session.flush()  # Get the session ID before committing
+            
+            # Create a default chat for the session
+            default_chat = ChatModel(
+                session_id=new_session.id,
+                name="default",
+                messages=session.messages
+            )
+            db.session.add(default_chat)
 
             # Associate the session with the user who created it
             user = db.session.get(UserModel, user_id)
@@ -161,7 +193,7 @@ def summarize(user_id):
 
             db.session.commit()
             yield "\n[SESSION_META::" + json.dumps(
-                {"id": new_session.id, "messages": new_session.messages}
+                {"id": new_session.id, "messages": session.messages, "chat_id": default_chat.id}
             ) + "]"
 
     return Response(stream_with_context(generate()), content_type="text/markdown")
@@ -199,19 +231,35 @@ def revise(session_id):
 # requires session_id, does not require user_id, returns chat response
 @app.route("/chat/<int:session_id>", methods=["POST"])
 def chat(session_id):
-    prompt = request.json.get("message")
+    data = request.json
+    prompt = data.get("message")
+    chat_id = data.get("chat_id")
+    
     if not prompt:
         return jsonify({"error": "Missing prompt"}), 400
 
     record = db.session.get(SessionModel, session_id)
     if not record:
         return jsonify({"error": "Session not found"}), 404
+        
+    # Get the specified chat or use the default chat
+    if chat_id:
+        chat_record = db.session.get(ChatModel, chat_id)
+        if not chat_record or chat_record.session_id != session_id:
+            return jsonify({"error": "Chat not found or doesn't belong to this session"}), 404
+    else:
+        # Use default chat or create it if it doesn't exist
+        chat_record = ChatModel.query.filter_by(session_id=session_id, name="default").first()
+        if not chat_record:
+            chat_record = ChatModel(session_id=session_id, name="default")
+            db.session.add(chat_record)
+            db.session.commit()
 
     session = Session(
         name=record.name,
         summary=record.summary,
         transcript=record.transcript,
-        messages=list(record.messages),
+        messages=list(chat_record.messages),
     )
 
     def generate():
@@ -219,7 +267,7 @@ def chat(session_id):
             for chunk in session.prompt_chat(prompt):
                 yield chunk
         finally:
-            record.messages = session.messages
+            chat_record.messages = session.messages
             db.session.commit()
 
     return Response(stream_with_context(generate()), content_type="text/markdown")
@@ -232,6 +280,13 @@ def load_session(session_id):
     if not record:
         return jsonify({"error": "Session not found"}), 404
 
+    chats = ChatModel.query.filter_by(session_id=session_id).all()
+    chat_list = [{"id": chat.id, "name": chat.name} for chat in chats]
+    
+    # Get default chat messages for backward compatibility
+    default_chat = ChatModel.query.filter_by(session_id=session_id, name="default").first()
+    messages = default_chat.messages if default_chat else []
+
     return jsonify(
         {
             "message": "Session loaded",
@@ -239,7 +294,8 @@ def load_session(session_id):
             "name": record.name,
             "summary": record.summary,
             "transcript": record.transcript,
-            "messages": record.messages,
+            "messages": messages,
+            "chats": chat_list
         }
     )
 
@@ -290,6 +346,84 @@ def rename_session(session_id):
     db.session.commit()
     return jsonify({"message": "Session renamed"}), 200
 
+
+# Add new endpoints for managing chats
+@app.route("/create_chat/<int:session_id>", methods=["POST"])
+def create_chat(session_id):
+    data = request.json
+    chat_name = data.get("name", "New Chat")
+    
+    session = db.session.get(SessionModel, session_id)
+    if not session:
+        return jsonify({"error": "Session not found"}), 404
+    
+    default_chat = ChatModel.query.filter_by(session_id=session_id, name="default").first()
+    first_four_messages = default_chat.messages[:4] if default_chat else []
+        
+    new_chat = ChatModel(session_id=session_id, name=chat_name, messages=first_four_messages)
+    db.session.add(new_chat)
+    db.session.commit()
+    
+    return jsonify({
+        "message": "Chat created",
+        "chat_id": new_chat.id,
+        "name": new_chat.name
+    }), 201
+
+@app.route("/get_chats/<int:session_id>", methods=["GET"])
+def get_chats(session_id):
+    session = db.session.get(SessionModel, session_id)
+    if not session:
+        return jsonify({"error": "Session not found"}), 404
+        
+    chats = ChatModel.query.filter_by(session_id=session_id).all()
+    chat_list = [{"id": chat.id, "name": chat.name} for chat in chats]
+    
+    return jsonify(chat_list)
+
+@app.route("/rename_chat/<int:chat_id>", methods=["PUT"])
+def rename_chat(chat_id):
+    data = request.json
+    new_name = data.get("name")
+    
+    if not new_name:
+        return jsonify({"error": "Missing new name"}), 400
+    
+    chat = db.session.get(ChatModel, chat_id)
+    if not chat:
+        return jsonify({"error": "Chat not found"}), 404
+    
+    chat.name = new_name
+    db.session.commit()
+    
+    return jsonify({"message": "Chat renamed"}), 200
+
+@app.route("/delete_chat/<int:chat_id>", methods=["DELETE"])
+def delete_chat(chat_id):
+    chat = db.session.get(ChatModel, chat_id)
+    if not chat:
+        return jsonify({"error": "Chat not found"}), 404
+    
+    db.session.delete(chat)
+    db.session.commit()
+    
+    return jsonify({"message": "Chat deleted"}), 200
+
+@app.route("/load_chat/<int:chat_id>", methods=["GET"])
+def load_chat(chat_id):
+    chat = db.session.get(ChatModel, chat_id)
+    if not chat:
+        return jsonify({"error": "Chat not found"}), 404
+    
+    session = db.session.get(SessionModel, chat.session_id)
+    
+    return jsonify({
+        "chat_id": chat.id,
+        "name": chat.name,
+        "session_id": chat.session_id,
+        "session_name": session.name,
+        "messages": chat.messages
+    })
 
 with app.app_context():
     db.create_all()
