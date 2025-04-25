@@ -46,6 +46,10 @@ class Session:
             self.messages.append(
                 {"role": "system", "content": f"Additional Context: {additional_context_concat}"}
             )
+        else:
+            self.messages.append(
+                {"role": "system", "content": f"No additional context provided."}
+            )
 
         # generate summary
         print("Generating summary...")

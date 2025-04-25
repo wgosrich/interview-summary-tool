@@ -358,9 +358,9 @@ def create_chat(session_id):
         return jsonify({"error": "Session not found"}), 404
     
     default_chat = ChatModel.query.filter_by(session_id=session_id, name="default").first()
-    first_four_messages = default_chat.messages[:4] if default_chat else []
+    first_five_messages = default_chat.messages[:5] if default_chat else []
         
-    new_chat = ChatModel(session_id=session_id, name=chat_name, messages=first_four_messages)
+    new_chat = ChatModel(session_id=session_id, name=chat_name, messages=first_five_messages)
     db.session.add(new_chat)
     db.session.commit()
     
