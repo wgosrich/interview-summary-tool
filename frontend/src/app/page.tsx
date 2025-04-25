@@ -223,6 +223,7 @@ export default function Home() {
         !renamePopupRef.current.contains(e.target as Node)
       ) {
         setRenamePopupOpen(false);
+        setNewSessionName("");
       }
 
       // Check if click is outside chat dropdown
