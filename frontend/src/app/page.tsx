@@ -789,7 +789,7 @@ export default function Home() {
   }
 
   return (
-    <div className="h-screen font-sans bg-slate-100 dark:bg-slate-600 py-10 px-6 sm:px-8 lg:px-16">
+    <div className="h-screen font-sans bg-slate-100 dark:bg-slate-600 py-5 px-6 sm:px-8 lg:px-16">
       <div
         className={`fixed top-0 left-1/2 transform -translate-x-1/2 transition-transform duration-500 ease-in-out z-50 ${subscribed
           ? "translate-y-6 opacity-100"
