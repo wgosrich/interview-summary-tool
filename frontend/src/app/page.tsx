@@ -1059,7 +1059,23 @@ export default function Home() {
           }}
           className="w-full bg-blue-600 text-white py-2 px-3 rounded-lg hover:bg-blue-700 mb-4 font-semibold"
         >
-          + New Session
+          <span className="flex items-center justify-center">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-4 w-4 mr-1"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 4v16m8-8H4"
+              />
+            </svg>
+            New Session
+          </span>
         </button>
         <div className="flex flex-col gap-1 h-1/2">
           <h2 className="text-xs font-bold text-slate-800 dark:text-slate-100">
@@ -1806,7 +1822,7 @@ export default function Home() {
                     ))}
                     <div className="border-t border-slate-200 dark:border-slate-600 my-1"></div>
                     <button
-                      className="w-full text-left px-3 py-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-slate-600 flex items-center"
+                      className="w-full text-left px-3 py-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-slate-600 flex items-center font-semibold"
                       onClick={() => {
                         setChatDropdownOpen(false);
                         setCreateChatOpen(true);
@@ -1814,7 +1830,7 @@ export default function Home() {
                     >
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
-                        className="h-4 w-4 mr-2"
+                        className="h-4 w-4 mr-1"
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor"
