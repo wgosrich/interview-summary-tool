@@ -268,7 +268,7 @@ export default function Home() {
         setContextMenu(null);
         setSelectedSessionInfo(null);
       }
-      
+
       const chatContextMenuEl = document.querySelector(".chat-context-menu");
       if (chatContextMenuEl && !chatContextMenuEl.contains(e.target as Node)) {
         setChatContextMenu(null);
@@ -417,7 +417,7 @@ export default function Home() {
     additionalContextFiles.forEach(file => {
       formData.append("additional_context", file);
     });
-    
+
     // Add the text context if provided
     if (additionalTextContext.trim()) {
       // Create a Blob from the text content with PDF MIME type
@@ -540,7 +540,7 @@ export default function Home() {
         const data = await response.json();
         setCurrentSessionId(data.session_id);
         setSummary(data.summary);
-        
+
         // Set the current chat to the default chat or first available
         if (data.chats && data.chats.length > 0) {
           setChats(data.chats);
@@ -550,7 +550,7 @@ export default function Home() {
           } else {
             setCurrentChatId(data.chats[0].id);
           }
-          
+
           // Load the messages for the selected chat
           const loadedMessages = data.messages || [];
           const formattedMessages = loadedMessages
@@ -567,7 +567,7 @@ export default function Home() {
           setChatMessages([]);
           setCurrentChatId(null);
         }
-        
+
         setShowChat(true);
       } else {
         console.error("Failed to load session");
@@ -604,19 +604,19 @@ export default function Home() {
 
   const createNewChat = async () => {
     if (!currentSessionId || !newChatName.trim()) return;
-    
+
     try {
       const response = await fetch(`http://localhost:8000/create_chat/${currentSessionId}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: newChatName.trim() })
       });
-      
+
       if (response.ok) {
         const data = await response.json();
         fetchChats(currentSessionId);
         setCurrentChatId(data.chat_id);
-        
+
         // Load the new chat's messages
         const chatResponse = await fetch(`http://localhost:8000/load_chat/${data.chat_id}`);
         if (chatResponse.ok) {
@@ -636,7 +636,7 @@ export default function Home() {
           // If loading fails, just set empty messages
           setChatMessages([]);
         }
-        
+
         setCreateChatOpen(false);
         setNewChatName("");
       } else {
@@ -649,22 +649,22 @@ export default function Home() {
 
   const deleteChat = async (chatId: number) => {
     if (!chatId || !currentSessionId) return;
-    
+
     try {
       const response = await fetch(`http://localhost:8000/delete_chat/${chatId}`, {
         method: "DELETE"
       });
-      
+
       if (response.ok) {
         // Refresh the chat list
         fetchChats(currentSessionId);
-        
+
         // Show success message
         setChatDeleted(true);
         setTimeout(() => {
           setChatDeleted(false);
         }, 3000);
-        
+
         // If we deleted the current chat, load the default chat
         if (chatId === currentChatId) {
           // Find the default chat or the first available chat
@@ -687,18 +687,18 @@ export default function Home() {
 
   const renameChat = async (chatId: number, newName: string) => {
     if (!chatId || !newName.trim()) return;
-    
+
     try {
       const response = await fetch(`http://localhost:8000/rename_chat/${chatId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: newName.trim() })
       });
-      
+
       if (response.ok) {
         // Refresh the chat list
         fetchChats(currentSessionId!);
-        
+
         // Show success message
         setChatRenamed(true);
         setTimeout(() => {
@@ -1158,7 +1158,7 @@ export default function Home() {
         </div>
       </div>
       <div
-        className={`max-w-screen-xl mx-auto flex gap-10 py-1 h-full transition-all duration-700 ease-in-out ${showChat
+        className={`max-w-screen-xl mx-auto flex gap-10 h-full transition-all duration-700 ease-in-out ${showChat
           ? "flex-col lg:flex-row"
           : "flex-col items-center justify-center"
           }`}
@@ -1207,8 +1207,8 @@ export default function Home() {
                     setRevisionWindow(false);
                     setRevisionRequest("");
                     setTab("newSummary");
-                    localStorage.clear();
                     setProfileMenuOpen(false);
+                    localStorage.clear();
                   }}
                   className="w-full text-left px-4 py-2 text-sm font-semibold text-slate-800 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-700 rounded-md"
                 >
@@ -1396,7 +1396,10 @@ export default function Home() {
                         Generate New Summary
                       </button>
                       <button
-                        onClick={() => setTab("existingSummary")}
+                        onClick={() => {
+                          setTab("existingSummary");
+                          fetchAllSessions(); // make sure dropdown will be up to date
+                        }}
                         className={`flex-1 px-4 py-2 font-semibold ${tab === "existingSummary"
                           ? "border-b-2 border-blue-600 text-blue-600"
                           : "text-slate-600 dark:text-slate-100"
@@ -1512,7 +1515,7 @@ export default function Home() {
                                   <p className="text-sm">Drag & drop PDF files here or click to browse</p>
                                 </div>
                               </div>
-                              
+
                               <button
                                 onClick={() => setTextContextPopupOpen(true)}
                                 className="bg-blue-100 text-blue-600 hover:bg-blue-200 font-bold py-2 px-4 rounded-lg flex items-center"
@@ -1737,11 +1740,11 @@ export default function Home() {
               <div className="absolute left-0 top-1/2 -translate-y-1/2 z-10" ref={chatDropdownRef}>
                 <button
                   onClick={() => setChatDropdownOpen(!chatDropdownOpen)}
-                  className="flex items-center gap-1 px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-200 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-800 text-sm"
+                  className="flex items-center gap-1 px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm"
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    className="h-4 w-4"
+                    className="h-4 w-4 font-semibold"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -1753,7 +1756,7 @@ export default function Home() {
                       d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.862 9.862 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
                     />
                   </svg>
-                  <span className="max-w-[120px] truncate">
+                  <span className="max-w-[120px] truncate font-semibold">
                     {chats.find(chat => chat.id === currentChatId)?.name || "Chat"}
                   </span>
                   <svg
@@ -1771,15 +1774,14 @@ export default function Home() {
                     />
                   </svg>
                 </button>
-                
+
                 {chatDropdownOpen && (
                   <div className="absolute z-50 left-0 mt-1 w-48 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg shadow-lg max-h-60 overflow-y-auto">
                     {chats.map(chat => (
                       <button
                         key={chat.id}
-                        className={`w-full text-left px-3 py-2 hover:bg-blue-50 dark:hover:bg-slate-600 ${
-                          chat.id === currentChatId ? "bg-blue-50 dark:bg-slate-600" : ""
-                        }`}
+                        className={`w-full text-left px-3 py-2 hover:bg-blue-50 dark:hover:bg-slate-600 ${chat.id === currentChatId ? "bg-blue-50 dark:bg-slate-600" : ""
+                          }`}
                         onClick={() => {
                           loadChat(chat.id);
                           setChatDropdownOpen(false);
@@ -1828,7 +1830,7 @@ export default function Home() {
                   </div>
                 )}
               </div>
-              
+
               {/* Centered title */}
               <h2 className="text-2xl font-semibold text-slate-800 dark:text-slate-100 w-full text-center">
                 Chat with Assistant
@@ -2274,12 +2276,12 @@ export default function Home() {
       )}
 
       {textContextPopupOpen && (
-        <div 
+        <div
           className="fixed inset-0 backdrop-blur-xl bg-white/30 dark:bg-slate-900/30 flex items-center justify-center z-50"
           onClick={() => setTextContextPopupOpen(false)}
         >
-          <div 
-            ref={textContextPopupRef} 
+          <div
+            ref={textContextPopupRef}
             className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-lg max-w-2xl w-full"
             onClick={(e) => e.stopPropagation()}
           >
