@@ -4,7 +4,7 @@ export async function GET(
   request: Request,
   { params }: { params: { sessionId: string } }
 ) {
-  const sessionId = params.sessionId;
+  const { sessionId } = await params;
   
   try {
     const response = await fetch(`http://localhost:8000/get_chats/${sessionId}`);

@@ -4,7 +4,7 @@ export async function PATCH(
   request: Request,
   { params }: { params: { sessionId: string } }
 ) {
-  const sessionId = params.sessionId;
+  const { sessionId } = await params;
   
   try {
     const body = await request.json();

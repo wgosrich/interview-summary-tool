@@ -4,7 +4,7 @@ export async function GET(
   request: Request,
   { params }: { params: { chatId: string } }
 ) {
-  const chatId = params.chatId;
+  const { chatId } = await params;
   
   try {
     const response = await fetch(`http://localhost:8000/load_chat/${chatId}`);
@@ -17,6 +17,34 @@ export async function GET(
     }
     
     const data = await response.json();
+    
+    // Ensure messages are in the correct format with role and content properties
+    if (data.messages) {
+      data.messages = data.messages.map((msg: any) => {
+        // If it's a string like "You: message" or "Assistant: message", convert it
+        if (typeof msg === 'string') {
+          if (msg.startsWith('You:')) {
+            return { role: 'user', content: msg.replace(/^You:\s*/, '') };
+          } else if (msg.startsWith('Assistant:')) {
+            return { role: 'assistant', content: msg.replace(/^Assistant:\s*/, '') };
+          } else {
+            return { role: 'unknown', content: msg };
+          }
+        }
+        
+        // If it's already an object with role/content, use it as is
+        if (typeof msg === 'object' && msg && msg.role && msg.content) {
+          return msg;
+        }
+        
+        // Default fallback for other formats
+        return { 
+          role: 'unknown', 
+          content: typeof msg === 'object' ? JSON.stringify(msg) : String(msg || '') 
+        };
+      });
+    }
+    
     return NextResponse.json(data);
   } catch (error) {
     console.error('Error in load chat API route:', error);
@@ -31,7 +59,7 @@ export async function DELETE(
   request: Request,
   { params }: { params: { chatId: string } }
 ) {
-  const chatId = params.chatId;
+  const { chatId } = await params;
   
   try {
     const response = await fetch(`http://localhost:8000/delete_chat/${chatId}`, {
@@ -60,7 +88,7 @@ export async function PATCH(
   request: Request,
   { params }: { params: { chatId: string } }
 ) {
-  const chatId = params.chatId;
+  const { chatId } = await params;
   
   try {
     const body = await request.json();

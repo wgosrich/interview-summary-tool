@@ -12,7 +12,7 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [showChat, setShowChat] = useState(false);
   const [chatInput, setChatInput] = useState("");
-  const [chatMessages, setChatMessages] = useState<string[]>([]);
+  const [chatMessages, setChatMessages] = useState<{ role: string; content: string }[]>([]);
   const [summaryCopied, setSummaryCopied] = useState(false);
   const [summaryDownloaded, setSummaryDownloaded] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
@@ -101,7 +101,7 @@ export default function Home() {
       if (response.ok) {
         const data = await response.json();
         setSessions(data);
-        
+
         // If we have sessions but no current session, set the first one
         if (data.length > 0 && !currentSessionId) {
           setCurrentSessionId(data[0].id);
@@ -467,11 +467,10 @@ export default function Home() {
           setCurrentChatId(meta.chat_id);
           const formattedMessages = meta.messages
             .filter((msg: { role: string; content: string }) => msg.role !== "system")
-            .map((msg: { role: string; content: string }) =>
-              msg.role === "user"
-                ? `You: ${msg.content}`
-                : `Assistant: ${msg.content}`
-            );
+            .map((msg: { role: string; content: string }) => ({
+              role: msg.role,
+              content: msg.content
+            }));
           setChatMessages(formattedMessages);
           continue;
         }
@@ -494,8 +493,11 @@ export default function Home() {
 
   const handleChatSubmit = async () => {
     if (!chatInput.trim() || !currentChatId) return;
-    const userMessage = `You: ${chatInput}`;
+
+    // Add user message to chat in a consistent format
+    const userMessage = { role: "user", content: chatInput };
     setChatMessages((prev) => [...prev, userMessage]);
+
     const currentInput = chatInput;
     setChatInput("");
 
@@ -519,17 +521,22 @@ export default function Home() {
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let done = false;
-      let assistantMessage = "Assistant: ";
+      let accumulatedContent = "";
 
-      // Add a placeholder message to avoid UI jump
-      setChatMessages((prev) => [...prev, assistantMessage]);
+      // Add a placeholder message that will be updated with streaming content
+      setChatMessages((prev) => [...prev, { role: "assistant", content: "" }]);
 
       while (!done) {
         const { value, done: readerDone } = await reader.read();
         done = readerDone;
         const chunk = decoder.decode(value, { stream: true });
-        assistantMessage += chunk;
-        setChatMessages((prev) => [...prev.slice(0, -1), assistantMessage]);
+        accumulatedContent += chunk;
+
+        // Update the assistant message with new content
+        setChatMessages((prev) => [
+          ...prev.slice(0, -1),
+          { role: "assistant", content: accumulatedContent }
+        ]);
       }
     } catch (error) {
       console.error("Chat streaming error:", error);
@@ -557,18 +564,25 @@ export default function Home() {
             setCurrentChatId(data.chats[0].id);
           }
 
-          // Load the messages for the selected chat
-          const loadedMessages = data.messages || [];
-          const formattedMessages = loadedMessages
-            .filter(
-              (msg: { role: string; content: string }) => msg.role !== "system"
-            )
-            .map((msg: { role: string; content: string }) => {
-              return msg.role === "user"
-                ? `You: ${msg.content}`
-                : `Assistant: ${msg.content}`;
-            });
-          setChatMessages(formattedMessages);
+          // Load the messages for the selected chat, ensuring they're in object format
+          if (data.messages && Array.isArray(data.messages)) {
+            const formattedMessages = data.messages
+              .filter((msg: any) => msg.role !== "system")
+              .map((msg: any) => {
+                // Ensure proper object format
+                if (typeof msg === 'object' && msg.role && typeof msg.content === 'string') {
+                  return { role: msg.role, content: msg.content };
+                }
+                // Convert any non-conforming messages to a standard format
+                return {
+                  role: 'unknown',
+                  content: typeof msg === 'object' ? JSON.stringify(msg) : String(msg || '')
+                };
+              });
+            setChatMessages(formattedMessages);
+          } else {
+            setChatMessages([]);
+          }
         } else {
           setChatMessages([]);
           setCurrentChatId(null);
@@ -589,8 +603,23 @@ export default function Home() {
       if (response.ok) {
         const data = await response.json();
         if (data && data.messages) {
-          setChatMessages(data.messages);
-          setSummary(data.summary || "");
+          // Ensure all messages have role and content properties
+          const formattedMessages = data.messages.map((msg: any) => {
+            // If it's already a properly formatted object, use it as is
+            if (typeof msg === 'object' && msg.role && typeof msg.content === 'string') {
+              return msg;
+            }
+
+            // For any other format, create a default structure
+            // This is a fallback that should rarely be needed if API returns proper format
+            return {
+              role: 'unknown',
+              content: typeof msg === 'object' ? JSON.stringify(msg) : String(msg || '')
+            };
+          });
+
+          // Filter out system messages before setting
+          setChatMessages(formattedMessages.filter((msg: { role: string; content: string }) => msg.role !== "system"));
           setCurrentChatId(chatId);
           setShowChat(true);
         }
@@ -603,8 +632,8 @@ export default function Home() {
   };
 
   const createNewChat = async () => {
-    if (!currentSessionId) return;
-    
+    if (!currentSessionId || !newChatName.trim()) return;
+
     try {
       const response = await fetch(`/api/chat/create/${currentSessionId}`, {
         method: "POST",
@@ -612,22 +641,36 @@ export default function Home() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          name: "New Chat",
+          name: newChatName.trim(),
         }),
       });
 
       if (response.ok) {
         const data = await response.json();
+
+        // Close the create chat popup and reset the input
+        setCreateChatOpen(false);
+        setNewChatName("");
+
         // Fetch the new chat data
         const chatResponse = await fetch(`/api/chat/${data.chat_id}`);
         if (chatResponse.ok) {
           const chatData = await chatResponse.json();
+
           // Update the chats list
           fetchChats(currentSessionId);
+
           // Set the current chat to the new one
           setCurrentChatId(data.chat_id);
-          // Clear messages for the new chat
-          setChatMessages([]);
+
+          // Set chat messages and show the chat
+          setChatMessages((chatData.messages || [])
+            .filter((msg: { role: string; content: any }) => msg.role !== 'system')
+            .map((msg: { role: string; content: any }) => ({
+              role: msg.role,
+              content: typeof msg.content === 'object' ? JSON.stringify(msg.content) : String(msg.content || '')
+            })));
+          setShowChat(true);
         }
       } else {
         console.error("Failed to create new chat");
@@ -639,7 +682,7 @@ export default function Home() {
 
   const deleteChat = async (chatId: number) => {
     if (!currentSessionId) return;
-    
+
     try {
       const response = await fetch(`/api/chat/${chatId}`, {
         method: "DELETE",
@@ -652,10 +695,10 @@ export default function Home() {
           setChatMessages([]);
           setShowChat(false);
         }
-        
+
         // Refresh the chat list
         fetchChats(currentSessionId);
-        
+
         // Show success message
         setChatDeleted(true);
         setTimeout(() => {
@@ -671,7 +714,7 @@ export default function Home() {
 
   const renameChat = async (chatId: number, newName: string) => {
     if (!newName.trim() || !currentSessionId) return;
-    
+
     try {
       const response = await fetch(`/api/chat/${chatId}`, {
         method: "PATCH",
@@ -684,7 +727,7 @@ export default function Home() {
       if (response.ok) {
         // Refresh the chat list
         fetchChats(currentSessionId);
-        
+
         // Show success message
         setChatRenamed(true);
         setTimeout(() => {
@@ -1846,20 +1889,18 @@ export default function Home() {
               style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
             >
               {[...chatMessages].reverse().map((msg, idx) => {
-                const isUser = msg.startsWith("You:");
-                const messageText = msg
-                  .replace(/^You:\s*/, "")
-                  .replace(/^Assistant:\s*/, "");
+                const isUser = msg.role === 'user';
+                const messageText = msg.content || '';
+
                 return (
                   <div
                     key={idx}
-                    className={`flex ${isUser ? "justify-end" : "justify-start"
-                      }`}
+                    className={`flex ${isUser ? "justify-end" : "justify-start"}`}
                   >
                     <div
                       className={`inline-block px-4 py-2 rounded-lg text-sm max-w-[90%] ${isUser
-                        ? "bg-blue-600 text-white"
-                        : "bg-gray-200 dark:bg-slate-600 text-gray-900 dark:text-white"
+                          ? "bg-blue-600 text-white"
+                          : "bg-gray-200 dark:bg-slate-600 text-gray-900 dark:text-white"
                         }`}
                     >
                       {isUser ? (
