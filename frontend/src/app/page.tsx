@@ -97,10 +97,15 @@ export default function Home() {
 
   const fetchAllSessions = async () => {
     try {
-      const response = await fetch("http://localhost:8000/get_all_sessions");
+      const response = await fetch("/api/sessions");
       if (response.ok) {
         const data = await response.json();
-        setAllSessions(data);
+        setSessions(data);
+        
+        // If we have sessions but no current session, set the first one
+        if (data.length > 0 && !currentSessionId) {
+          setCurrentSessionId(data[0].id);
+        }
       } else {
         console.error("Failed to fetch all sessions");
       }
@@ -341,7 +346,7 @@ export default function Home() {
 
   const fetchChats = async (sessionId: number) => {
     try {
-      const response = await fetch(`http://localhost:8000/get_chats/${sessionId}`);
+      const response = await fetch(`/api/chats/${sessionId}`);
       if (response.ok) {
         const data = await response.json();
         setChats(data);
@@ -580,21 +585,15 @@ export default function Home() {
 
   const loadChat = async (chatId: number) => {
     try {
-      const response = await fetch(`http://localhost:8000/load_chat/${chatId}`);
+      const response = await fetch(`/api/chat/${chatId}`);
       if (response.ok) {
         const data = await response.json();
-        setCurrentChatId(data.chat_id);
-        const loadedMessages = data.messages || [];
-        const formattedMessages = loadedMessages
-          .filter(
-            (msg: { role: string; content: string }) => msg.role !== "system"
-          )
-          .map((msg: { role: string; content: string }) => {
-            return msg.role === "user"
-              ? `You: ${msg.content}`
-              : `Assistant: ${msg.content}`;
-          });
-        setChatMessages(formattedMessages);
+        if (data && data.messages) {
+          setChatMessages(data.messages);
+          setSummary(data.summary || "");
+          setCurrentChatId(chatId);
+          setShowChat(true);
+        }
       } else {
         console.error("Failed to load chat");
       }
@@ -604,42 +603,32 @@ export default function Home() {
   };
 
   const createNewChat = async () => {
-    if (!currentSessionId || !newChatName.trim()) return;
-
+    if (!currentSessionId) return;
+    
     try {
-      const response = await fetch(`http://localhost:8000/create_chat/${currentSessionId}`, {
+      const response = await fetch(`/api/chat/create/${currentSessionId}`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: newChatName.trim() })
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: "New Chat",
+        }),
       });
 
       if (response.ok) {
         const data = await response.json();
-        fetchChats(currentSessionId);
-        setCurrentChatId(data.chat_id);
-
-        // Load the new chat's messages
-        const chatResponse = await fetch(`http://localhost:8000/load_chat/${data.chat_id}`);
+        // Fetch the new chat data
+        const chatResponse = await fetch(`/api/chat/${data.chat_id}`);
         if (chatResponse.ok) {
           const chatData = await chatResponse.json();
-          const loadedMessages = chatData.messages || [];
-          const formattedMessages = loadedMessages
-            .filter(
-              (msg: { role: string; content: string }) => msg.role !== "system"
-            )
-            .map((msg: { role: string; content: string }) => {
-              return msg.role === "user"
-                ? `You: ${msg.content}`
-                : `Assistant: ${msg.content}`;
-            });
-          setChatMessages(formattedMessages);
-        } else {
-          // If loading fails, just set empty messages
+          // Update the chats list
+          fetchChats(currentSessionId);
+          // Set the current chat to the new one
+          setCurrentChatId(data.chat_id);
+          // Clear messages for the new chat
           setChatMessages([]);
         }
-
-        setCreateChatOpen(false);
-        setNewChatName("");
       } else {
         console.error("Failed to create new chat");
       }
@@ -649,35 +638,23 @@ export default function Home() {
   };
 
   const deleteChat = async (chatId: number) => {
-    if (!chatId || !currentSessionId) return;
-
+    if (!currentSessionId) return;
+    
     try {
-      const response = await fetch(`http://localhost:8000/delete_chat/${chatId}`, {
-        method: "DELETE"
+      const response = await fetch(`/api/chat/${chatId}`, {
+        method: "DELETE",
       });
 
       if (response.ok) {
+        // If the deleted chat is the current one, clear the UI
+        if (chatId === currentChatId) {
+          setCurrentChatId(null);
+          setChatMessages([]);
+          setShowChat(false);
+        }
+        
         // Refresh the chat list
         fetchChats(currentSessionId);
-
-        // Show success message
-        setChatDeleted(true);
-        setTimeout(() => {
-          setChatDeleted(false);
-        }, 3000);
-
-        // If we deleted the current chat, load the default chat
-        if (chatId === currentChatId) {
-          // Find the default chat or the first available chat
-          const defaultChat = chats.find(c => c.name === "default");
-          if (defaultChat) {
-            loadChat(defaultChat.id);
-          } else if (chats.length > 0 && chats[0].id !== chatId) {
-            loadChat(chats[0].id);
-          } else {
-            setChatMessages([]);
-          }
-        }
       } else {
         console.error("Failed to delete chat");
       }
@@ -687,24 +664,20 @@ export default function Home() {
   };
 
   const renameChat = async (chatId: number, newName: string) => {
-    if (!chatId || !newName.trim()) return;
-
+    if (!newName.trim() || !currentSessionId) return;
+    
     try {
-      const response = await fetch(`http://localhost:8000/rename_chat/${chatId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: newName.trim() })
+      const response = await fetch(`/api/chat/${chatId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ name: newName.trim() }),
       });
 
       if (response.ok) {
         // Refresh the chat list
-        fetchChats(currentSessionId!);
-
-        // Show success message
-        setChatRenamed(true);
-        setTimeout(() => {
-          setChatRenamed(false);
-        }, 3000);
+        fetchChats(currentSessionId);
       } else {
         console.error("Failed to rename chat");
       }
@@ -759,7 +732,7 @@ export default function Home() {
             onClick={async () => {
               if (!username.trim()) return;
               try {
-                const response = await fetch("http://localhost:8000/login", {
+                const response = await fetch("/api/login", {
                   method: "POST",
                   headers: { "Content-Type": "application/json" },
                   body: JSON.stringify({ username }),
@@ -1034,8 +1007,7 @@ export default function Home() {
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
-              d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"
-              transform="rotate(90, 12, 12)"
+              d="M4 6h16M4 12h16M4 18h16"
             />
           </svg>
         </button>
@@ -2285,8 +2257,8 @@ export default function Home() {
                 onClick={() => {
                   if (selectedSessionInfo !== null && newSessionName.trim()) {
                     // Implement the logic to rename the session
-                    fetch(`http://localhost:8000/rename_session/${selectedSessionInfo.id}`, {
-                      method: "PUT",
+                    fetch(`/api/session/${selectedSessionInfo.id}`, {
+                      method: "PATCH",
                       headers: { "Content-Type": "application/json" },
                       body: JSON.stringify({ name: newSessionName.trim() })
                     })

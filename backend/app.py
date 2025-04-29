@@ -331,7 +331,7 @@ def delete_session(session_id):
     return jsonify({"message": "Session deleted"}), 200
 
 
-@app.route("/rename_session/<int:session_id>", methods=["PUT"])
+@app.route("/rename_session/<int:session_id>", methods=["PATCH"])
 def rename_session(session_id):
     data = request.json
     new_name = data.get("name")
@@ -381,7 +381,7 @@ def get_chats(session_id):
     
     return jsonify(chat_list)
 
-@app.route("/rename_chat/<int:chat_id>", methods=["PUT"])
+@app.route("/rename_chat/<int:chat_id>", methods=["PATCH"])
 def rename_chat(chat_id):
     data = request.json
     new_name = data.get("name")
