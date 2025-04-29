@@ -1029,12 +1029,13 @@ export default function Home() {
             viewBox="0 0 24 24"
             stroke="currentColor"
             strokeWidth={2}
-            className="h-5 w-5"
+            className="h-6 w-6"
           >
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
-              d={showPanel ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"}
+              d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"
+              transform="rotate(90, 12, 12)"
             />
           </svg>
         </button>
@@ -1933,6 +1934,30 @@ export default function Home() {
               <div className="absolute inset-0 bg-white dark:bg-slate-800 bg-opacity-40 z-10 flex items-center justify-center rounded-lg">
                 <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-lg w-full h-full relative z-20">
                   <div className="relative mb-3">
+                    <button
+                      onClick={() => {
+                        handleRevise("revert to original summary");
+                        setRevisionWindow(false);
+                        setRevisionRequest("");
+                      }}
+                      className="absolute left-0 top-1/2 -translate-y-1/2 text-red-600 hover:text-red-700"
+                      title="Revert to Original"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
+                        stroke="currentColor"
+                        className="h-6 w-6"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z"
+                        />
+                      </svg>
+                    </button>
                     <button
                       onClick={() => setInfoPopupOpen(true)}
                       className="absolute right-0 top-1/2 -translate-y-1/2 text-blue-600 hover:text-blue-700"
