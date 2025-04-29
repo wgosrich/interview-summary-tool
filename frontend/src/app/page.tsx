@@ -1304,7 +1304,7 @@ export default function Home() {
                       </li>
                       <li>
                         <strong>Add an Existing Summary</strong>: Subscribe to a
-                        session by selecting the interviewee's name.
+                        session by selecting the interviewee&apos;s name.
                       </li>
                     </ul>
                   </div>
@@ -2189,7 +2189,7 @@ export default function Home() {
                 <h3 className="font-bold text-slate-800 dark:text-white mb-1">Be Specific</h3>
                 <p>Clearly state what aspects of the interview you want to focus on or improve in the summary.</p>
                 <p className="text-sm bg-slate-100 dark:bg-slate-700 p-2 rounded mt-1 italic">
-                  "Please revise the summary to highlight the interviewee's statements about their work experience in healthcare."
+                  &quot;Please revise the summary to highlight the interviewee&apos;s statements about their work experience in healthcare.&quot;
                 </p>
               </div>
 
@@ -2197,7 +2197,7 @@ export default function Home() {
                 <h3 className="font-bold text-slate-800 dark:text-white mb-1">Specify Format</h3>
                 <p>If you need a particular format, mention it explicitly.</p>
                 <p className="text-sm bg-slate-100 dark:bg-slate-700 p-2 rounded mt-1 italic">
-                  "Restructure the summary as bullet points organized by topic area."
+                  &quot;Restructure the summary as bullet points organized by topic area.&quot;
                 </p>
               </div>
 
@@ -2205,7 +2205,7 @@ export default function Home() {
                 <h3 className="font-bold text-slate-800 dark:text-white mb-1">Indicate Length</h3>
                 <p>Mention if you need a shorter or more detailed summary.</p>
                 <p className="text-sm bg-slate-100 dark:bg-slate-700 p-2 rounded mt-1 italic">
-                  "Please provide a more concise summary, around 250 words."
+                  &quot;Please provide a more concise summary, around 250 words.&quot;
                 </p>
               </div>
 
@@ -2213,7 +2213,7 @@ export default function Home() {
                 <h3 className="font-bold text-slate-800 dark:text-white mb-1">Highlight Important Elements</h3>
                 <p>Specify if certain parts of the interview need emphasis.</p>
                 <p className="text-sm bg-slate-100 dark:bg-slate-700 p-2 rounded mt-1 italic">
-                  "Focus more on the timeline of events described between 15:30-20:45 in the recording."
+                  &quot;Focus more on the timeline of events described between 15:30-20:45 in the recording.&quot;
                 </p>
               </div>
 
@@ -2221,14 +2221,14 @@ export default function Home() {
                 <h3 className="font-bold text-slate-800 dark:text-white mb-1">Express Tone Preferences</h3>
                 <p>Indicate if you need a particular tone in the summary.</p>
                 <p className="text-sm bg-slate-100 dark:bg-slate-700 p-2 rounded mt-1 italic">
-                  "Please use more objective language in describing the witness's account."
+                  &quot;Please use more objective language in describing the witness&apos;s account.&quot;
                 </p>
               </div>
 
               <div>
                 <h3 className="font-bold text-slate-800 dark:text-white mb-1">Sample Complete Prompt</h3>
                 <p className="text-sm bg-slate-100 dark:bg-slate-700 p-2 rounded mt-1 italic">
-                  "Please revise the summary to create a chronological timeline of events described by the interviewee. Focus particularly on any discrepancies in their account of what happened on March 12th. Include direct quotes where relevant and keep the summary around 400-500 words."
+                  &quot;Please revise the summary to create a chronological timeline of events described by the interviewee. Focus particularly on any discrepancies in their account of what happened on March 12th. Include direct quotes where relevant and keep the summary around 400-500 words.&quot;
                 </p>
               </div>
             </div>
