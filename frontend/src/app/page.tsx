@@ -100,7 +100,7 @@ export default function Home() {
       const response = await fetch("/api/sessions");
       if (response.ok) {
         const data = await response.json();
-        setSessions(data);
+        setAllSessions(data);
 
         // If we have sessions but no current session, set the first one
         if (data.length > 0 && !currentSessionId) {
