@@ -682,6 +682,11 @@ export default function Home() {
 
   const deleteChat = async (chatId: number) => {
     if (!currentSessionId) return;
+    // Don't allow deleting the last chat in a session
+    if (chats.length <= 1) {
+      alert("Cannot delete the last chat in a session. Please create a new chat first.");
+      return;
+    }
 
     try {
       const response = await fetch(`/api/chat/${chatId}`, {
@@ -691,9 +696,16 @@ export default function Home() {
       if (response.ok) {
         // If the deleted chat is the current one, clear the UI
         if (chatId === currentChatId) {
-          setCurrentChatId(null);
-          setChatMessages([]);
-          setShowChat(false);
+          // Find the first available chat ID from the list, or set to null if none exist
+          const firstAvailableChat = chats.find(chat => chat.id !== chatId);
+          setCurrentChatId(firstAvailableChat ? firstAvailableChat.id : null);
+          if (firstAvailableChat) {
+            loadChat(firstAvailableChat.id);
+          } else {
+            // If no chats remain, clear the UI
+            setChatMessages([]);
+            setShowChat(false);
+          }
         }
 
         // Refresh the chat list
