@@ -116,12 +116,14 @@ export default function Home() {
 
   useEffect(() => {
     fetchAllSessions();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     if (currentUserId) {
       fetchSessions();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUserId]);
 
   useEffect(() => {
@@ -155,7 +157,8 @@ export default function Home() {
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [showPanel, fetchSessions]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showPanel]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -338,6 +341,12 @@ export default function Home() {
     localStorage.setItem("selectedTab", tab);
   }, [tab]);
 
+  useEffect(() => {
+    if (currentSessionId) {
+      fetchChats(currentSessionId);
+    }
+  }, [currentSessionId]);
+
   const fetchChats = async (sessionId: number) => {
     try {
       const response = await fetch(`/api/chats/${sessionId}`);
@@ -362,14 +371,6 @@ export default function Home() {
       console.error("Error fetching chats:", error);
     }
   };
-
-  useEffect(() => {
-    if (currentSessionId) {
-      fetchChats(currentSessionId);
-    }
-  }, [currentSessionId, fetchChats]);
-
-  
 
   const handleRevise = async (request: string) => {
     if (!summary) {
