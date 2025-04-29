@@ -655,6 +655,12 @@ export default function Home() {
         
         // Refresh the chat list
         fetchChats(currentSessionId);
+        
+        // Show success message
+        setChatDeleted(true);
+        setTimeout(() => {
+          setChatDeleted(false);
+        }, 3000);
       } else {
         console.error("Failed to delete chat");
       }
@@ -678,6 +684,12 @@ export default function Home() {
       if (response.ok) {
         // Refresh the chat list
         fetchChats(currentSessionId);
+        
+        // Show success message
+        setChatRenamed(true);
+        setTimeout(() => {
+          setChatRenamed(false);
+        }, 3000);
       } else {
         console.error("Failed to rename chat");
       }
