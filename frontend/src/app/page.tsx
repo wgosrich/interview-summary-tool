@@ -687,6 +687,13 @@ export default function Home() {
       alert("Cannot delete the last chat in a session. Please create a new chat first.");
       return;
     }
+    // temp fix
+    // Don't allow deleting the default chat
+    const chatToDelete = chats.find(chat => chat.id === chatId);
+    if (chatToDelete && chatToDelete.name === "default") {
+      alert("Cannot delete the default chat. Please create and use another chat if needed.");
+      return;
+    }
 
     try {
       const response = await fetch(`/api/chat/${chatId}`, {
