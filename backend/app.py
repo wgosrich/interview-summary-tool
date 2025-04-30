@@ -9,7 +9,10 @@ from session import Session
 app = Flask(__name__)
 CORS(app)  # Enable CORS so Next.js frontend can talk to Flask
 
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///sessions.db"
+# app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///sessions.db"
+
+db_path = os.path.join("/tmp", "sessions.db")
+app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{db_path}"
 db = SQLAlchemy(app)
 
 

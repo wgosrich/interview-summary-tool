@@ -4,7 +4,7 @@ export async function GET(request: NextRequest) {
   const chatId = request.nextUrl.pathname.split('/').pop();
 
   try {
-    const response = await fetch(`http://localhost:8000/load_chat/${chatId}`);
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/load_chat/${chatId}`);
 
     if (!response.ok) {
       return NextResponse.json(
@@ -49,7 +49,7 @@ export async function DELETE(request: NextRequest) {
   const chatId = request.nextUrl.pathname.split('/').pop();
 
   try {
-    const response = await fetch(`http://localhost:8000/delete_chat/${chatId}`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/delete_chat/${chatId}`, {
       method: 'DELETE',
     });
 
@@ -75,7 +75,7 @@ export async function PATCH(request: NextRequest) {
     const body = await request.json();
     const { name } = body;
 
-    const response = await fetch(`http://localhost:8000/rename_chat/${chatId}`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/rename_chat/${chatId}`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',

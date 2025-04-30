@@ -1,30 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function DELETE(request: NextRequest) {
+  const pathParts = request.nextUrl.pathname.split('/');
+  const userId = pathParts[3];
+  const sessionId = pathParts[5];
+
+  if (!userId || !sessionId) {
+    return NextResponse.json(
+      { error: 'User ID and Session ID are required' },
+      { status: 400 }
+    );
+  }
+
   try {
-    const pathParts = request.nextUrl.pathname.split('/');
-    const userId = pathParts[3];
-    const sessionId = pathParts[5];
-
-    if (!userId || !sessionId) {
-      return NextResponse.json(
-        { error: 'User ID and Session ID are required' },
-        { status: 400 }
-      );
-    }
-
     const response = await fetch(
-      `http://localhost:8000/unsubscribe/${userId}/${sessionId}`,
+      `${process.env.NEXT_PUBLIC_API_URL}/unsubscribe/${userId}/${sessionId}`,
       {
         method: 'DELETE',
       }
     );
 
     if (!response.ok) {
-      return NextResponse.json(
-        { error: 'Failed to unsubscribe from session' },
-        { status: response.status }
-      );
+      const errorText = await response.text();
+      return NextResponse.json({ error: errorText }, { status: response.status });
     }
 
     return NextResponse.json({ success: true });
@@ -35,4 +33,4 @@ export async function DELETE(request: NextRequest) {
       { status: 500 }
     );
   }
-} 
+}

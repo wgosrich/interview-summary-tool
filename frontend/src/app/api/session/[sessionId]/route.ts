@@ -6,7 +6,7 @@ export async function PATCH(request: NextRequest) {
   try {
     const body = await request.json();
 
-    const response = await fetch(`http://localhost:8000/rename_session/${sessionId}`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/rename_session/${sessionId}`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
@@ -15,10 +15,8 @@ export async function PATCH(request: NextRequest) {
     });
 
     if (!response.ok) {
-      return NextResponse.json(
-        { error: 'Failed to rename session' },
-        { status: response.status }
-      );
+      const errorText = await response.text();
+      return NextResponse.json({ error: errorText }, { status: response.status });
     }
 
     const data = await response.json();

@@ -4,7 +4,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
-    const response = await fetch("http://localhost:8000/login", {
+    const response = await fetch("${process.env.NEXT_PUBLIC_API_URL}/login", {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -13,10 +13,8 @@ export async function POST(request: NextRequest) {
     });
 
     if (!response.ok) {
-      return NextResponse.json(
-        { error: 'Login failed' },
-        { status: response.status }
-      );
+      const errorText = await response.text();
+      return NextResponse.json({ error: errorText }, { status: response.status });
     }
 
     const data = await response.json();

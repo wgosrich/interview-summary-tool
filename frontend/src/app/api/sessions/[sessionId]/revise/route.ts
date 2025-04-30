@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
     }
 
     const response = await fetch(
-      `http://localhost:8000/revise/${sessionId}`,
+      `${process.env.NEXT_PUBLIC_API_URL}/revise/${sessionId}`,
       {
         method: 'POST',
         headers: {
@@ -33,10 +33,8 @@ export async function POST(request: NextRequest) {
     );
 
     if (!response.ok) {
-      return NextResponse.json(
-        { error: 'Failed to revise summary' },
-        { status: response.status }
-      );
+      const errorText = await response.text();
+      return NextResponse.json({ error: errorText }, { status: response.status });
     }
 
     // Create a stream from the backend response

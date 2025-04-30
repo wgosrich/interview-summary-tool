@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
 
     // Forward the FormData to the backend API
     const response = await fetch(
-      `http://localhost:8000/summarize/${userId}`,
+      `${process.env.NEXT_PUBLIC_API_URL}/summarize/${userId}`,
       {
         method: 'POST',
         body: formData,
@@ -32,10 +32,8 @@ export async function POST(request: NextRequest) {
     );
 
     if (!response.ok) {
-      return NextResponse.json(
-        { error: 'Failed to generate summary' },
-        { status: response.status }
-      );
+      const errorText = await response.text();
+      return NextResponse.json({ error: errorText }, { status: response.status });
     }
 
     // Create a stream from the backend response

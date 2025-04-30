@@ -4,7 +4,7 @@ export async function GET(request: NextRequest) {
   const sessionId = request.nextUrl.pathname.split('/').pop();
 
   try {
-    const response = await fetch(`http://localhost:8000/get_chats/${sessionId}`);
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/get_chats/${sessionId}`);
 
     if (!response.ok) {
       return NextResponse.json(

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(request: NextRequest) {
   try {
-    const response = await fetch("http://localhost:8000/get_all_sessions");
+    const response = await fetch("${process.env.NEXT_PUBLIC_API_URL}/get_all_sessions");
 
     if (!response.ok) {
       return NextResponse.json(

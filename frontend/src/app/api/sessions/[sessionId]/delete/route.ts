@@ -12,17 +12,15 @@ export async function DELETE(request: NextRequest) {
     }
 
     const response = await fetch(
-      `http://localhost:8000/delete_session/${sessionId}`,
+      `${process.env.NEXT_PUBLIC_API_URL}/delete_session/${sessionId}`,
       {
         method: 'DELETE',
       }
     );
 
     if (!response.ok) {
-      return NextResponse.json(
-        { error: 'Failed to delete session' },
-        { status: response.status }
-      );
+      const errorText = await response.text();
+      return NextResponse.json({ error: errorText }, { status: response.status });
     }
 
     return NextResponse.json({ success: true });
@@ -33,4 +31,4 @@ export async function DELETE(request: NextRequest) {
       { status: 500 }
     );
   }
-} 
+}

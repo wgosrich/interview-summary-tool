@@ -14,17 +14,15 @@ export async function POST(request: NextRequest) {
     }
 
     const response = await fetch(
-      `http://localhost:8000/subscribe/${userId}/${sessionId}`,
+      `${process.env.NEXT_PUBLIC_API_URL}/subscribe/${userId}/${sessionId}`,
       {
         method: 'POST',
       }
     );
 
     if (!response.ok) {
-      return NextResponse.json(
-        { error: 'Failed to subscribe to session' },
-        { status: response.status }
-      );
+      const errorText = await response.text();
+      return NextResponse.json({ error: errorText }, { status: response.status });
     }
 
     const data = await response.json();
@@ -36,4 +34,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-} 
+}
