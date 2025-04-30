@@ -49,5 +49,5 @@ jobs:
             --set-env-vars \
               AZURE_OPENAI_API_KEY=${{ secrets.AZURE_OPENAI_API_KEY }} \
               AZURE_OPENAI_ENDPOINT_GPT4O=${{ secrets.AZURE_OPENAI_ENDPOINT_GPT4O }} \
-              AZURE_OPENAI_ENDPOINT_WHISPER=${{ secrets.AZURE_OPENAI_ENDPOINT_WHISPER }}
+              AZURE_OPENAI_ENDPOINT_WHISPER=${{ secrets.AZURE_OPENAI_ENDPOINT_WHISPER }} \
               DATABASE_URL=${{ secrets.DATABASE_URL }}
