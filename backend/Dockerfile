@@ -2,7 +2,13 @@
 FROM python:3.11-slim
 
 # Install ffmpeg and other dependencies
-RUN apt-get update && apt-get install -y ffmpeg git curl build-essential && apt-get clean
+RUN apt-get update && apt-get install -y \
+    ffmpeg \
+    git \
+    curl \
+    build-essential \
+    ca-certificates \
+    && apt-get clean
 
 # Set the working directory
 WORKDIR /app

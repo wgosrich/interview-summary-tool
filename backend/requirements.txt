@@ -10,3 +10,4 @@ azure-functions
 werkzeug
 gunicorn
 psycopg2-binary
+certifi
