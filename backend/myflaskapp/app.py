@@ -15,8 +15,6 @@ CORS(app)  # Enable CORS so Next.js frontend can talk to Flask
 
 # local development
 # app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///sessions.db"
-# Configure SQLAlchemy to use in-memory SQLite database for development/testing
-#app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
 
 
 # Use environment variable for database URL

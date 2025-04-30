@@ -46,19 +46,8 @@ jobs:
           az containerapp update \
             --name fair-ai-backend \
             --resource-group fair-rg \
-            --set-env-vars AZURE_OPENAI_API_KEY=${{ secrets.AZURE_OPENAI_API_KEY }}
-
-          az containerapp update \
-            --name fair-ai-backend \
-            --resource-group fair-rg \
-            --set-env-vars AZURE_OPENAI_ENDPOINT_GPT4O=${{ secrets.AZURE_OPENAI_ENDPOINT_GPT4O }}
-
-          az containerapp update \
-            --name fair-ai-backend \
-            --resource-group fair-rg \
-            --set-env-vars AZURE_OPENAI_ENDPOINT_WHISPER=${{ secrets.AZURE_OPENAI_ENDPOINT_WHISPER }}
-
-          az containerapp update \
-            --name fair-ai-backend \
-            --resource-group fair-rg \
-            --set-env-vars DATABASE_URL=${{ secrets.DATABASE_URL }}
+            --set-env-vars \
+              AZURE_OPENAI_API_KEY=${{ secrets.AZURE_OPENAI_API_KEY }} \
+              AZURE_OPENAI_ENDPOINT_GPT4O=${{ secrets.AZURE_OPENAI_ENDPOINT_GPT4O }} \
+              AZURE_OPENAI_ENDPOINT_WHISPER=${{ secrets.AZURE_OPENAI_ENDPOINT_WHISPER }} \
+              DATABASE_URL=${{ secrets.DATABASE_URL }}
