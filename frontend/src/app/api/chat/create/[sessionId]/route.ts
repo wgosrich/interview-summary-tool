@@ -4,7 +4,7 @@ export async function POST(
   request: Request,
   { params }: { params: { sessionId: string } }
 ) {
-  const { sessionId } = await params;
+  const { sessionId } = params;
   
   try {
     const body = await request.json();

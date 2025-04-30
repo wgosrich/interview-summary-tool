@@ -4,7 +4,7 @@ export async function GET(
   request: Request,
   { params }: { params: { chatId: string } }
 ) {
-  const { chatId } = await params;
+  const { chatId } = params;
   
   try {
     const response = await fetch(`http://localhost:8000/load_chat/${chatId}`);
