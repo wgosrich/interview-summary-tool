@@ -82,7 +82,7 @@ export default function Home() {
 
     try {
       const response = await fetch(
-        `http://localhost:8000/get_sessions/${currentUserId}`
+        `/api/users/${currentUserId}/sessions`
       );
       if (response.ok) {
         const data = await response.json();
@@ -382,7 +382,7 @@ export default function Home() {
     setLoading(true);
 
     const response = await fetch(
-      `http://localhost:8000/revise/${currentSessionId}`,
+      `/api/sessions/${currentSessionId}/revise`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -444,7 +444,7 @@ export default function Home() {
       setLoading(true);
 
       const response = await fetch(
-        `http://localhost:8000/summarize/${currentUserId}`,
+        `/api/users/${currentUserId}/summarize`,
         {
           method: "POST",
           body: formData,
@@ -507,7 +507,7 @@ export default function Home() {
 
     try {
       const response = await fetch(
-        `http://localhost:8000/chat/${currentSessionId}`,
+        `/api/sessions/${currentSessionId}/chat`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -551,7 +551,7 @@ export default function Home() {
   const loadSession = async (sessionId: number) => {
     try {
       const response = await fetch(
-        `http://localhost:8000/load_session/${sessionId}`
+        `/api/sessions/${sessionId}/load`
       );
       if (response.ok) {
         const data = await response.json();
@@ -1741,7 +1741,7 @@ export default function Home() {
                               }
                               try {
                                 const response = await fetch(
-                                  `http://localhost:8000/subscribe/${currentUserId}/${Number(
+                                  `/api/users/${currentUserId}/subscribe/${Number(
                                     subscribeSessionId
                                   )}`,
                                   {
@@ -2099,7 +2099,7 @@ export default function Home() {
               if (selectedSessionInfo !== null) {
                 try {
                   const response = await fetch(
-                    `http://localhost:8000/unsubscribe/${currentUserId}/${selectedSessionInfo.id}`,
+                    `/api/users/${currentUserId}/unsubscribe/${selectedSessionInfo.id}`,
                     { method: "DELETE" }
                   );
                   if (response.ok) {
@@ -2167,7 +2167,7 @@ export default function Home() {
                   if (selectedSessionInfo !== null) {
                     try {
                       const response = await fetch(
-                        `http://localhost:8000/delete_session/${selectedSessionInfo.id}`,
+                        `/api/sessions/${selectedSessionInfo.id}/delete`,
                         { method: "DELETE" }
                       );
                       if (response.ok) {
