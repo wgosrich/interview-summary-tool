@@ -20,6 +20,7 @@ CORS(app)  # Enable CORS so Next.js frontend can talk to Flask
 
 
 # Use environment variable for database URL
+# url has to be in the format: postgresql+psycopg2://username:password@host/database_name
 app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL")
 db = SQLAlchemy(app)
 
