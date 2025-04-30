@@ -8,3 +8,4 @@ Flask-SQLAlchemy
 PyPDF2
 azure-functions
 werkzeug
+gunicorn

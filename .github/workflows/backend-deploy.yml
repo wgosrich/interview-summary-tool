@@ -1,0 +1,52 @@
+name: Deploy Backend to Azure Container Apps
+
+on:
+  push:
+    paths:
+      - backend/**
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Log in to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Azure ACR Login
+        run: |
+          az acr login --name fairRegistry
+
+      - name: Build and Push Docker image for linux/amd64
+        run: |
+          docker buildx build \
+            --platform linux/amd64 \
+            -t fairregistry.azurecr.io/fair-ai-backend:latest \
+            --push ./backend
+
+      - name: Deploy to Azure Container Apps
+        run: |
+          az containerapp update \
+            --name fair-ai-backend \
+            --resource-group fair-rg \
+            --image fairregistry.azurecr.io/fair-ai-backend:latest
+
+      - name: Set environment variables on Azure Container App
+        run: |
+          az containerapp update \
+            --name fair-ai-backend \
+            --resource-group fair-rg \
+            --set-env-vars \
+              AZURE_OPENAI_API_KEY=${{ secrets.AZURE_OPENAI_API_KEY }} \
+              AZURE_OPENAI_ENDPOINT_GPT4O=${{ secrets.AZURE_OPENAI_ENDPOINT_GPT4O }} \
+              AZURE_OPENAI_ENDPOINT_WHISPER=${{ secrets.AZURE_OPENAI_ENDPOINT_WHISPER }}
