@@ -1,8 +1,8 @@
 import os
 from dotenv import load_dotenv
 from docx import Document
-from pydub import AudioSegment
-from pydub.utils import make_chunks
+from pydub import AudioSegment # incomptabile with azure web app
+from pydub.utils import make_chunks # incomptabile with azure web app
 from myflaskapp.llm.llm_clients import gpt4o_client, whisper_client
 import PyPDF2
 
