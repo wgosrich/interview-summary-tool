@@ -1,27 +1,22 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
-export async function GET(
-  request: Request,
-  { params }: { params: { chatId: string } }
-) {
-  const { chatId } = params;
-  
+export async function GET(request: NextRequest) {
+  const chatId = request.nextUrl.pathname.split('/').pop();
+
   try {
     const response = await fetch(`http://localhost:8000/load_chat/${chatId}`);
-    
+
     if (!response.ok) {
       return NextResponse.json(
         { error: 'Failed to load chat from backend' },
         { status: response.status }
       );
     }
-    
+
     const data = await response.json();
-    
-    // Ensure messages are in the correct format with role and content properties
+
     if (data.messages) {
       data.messages = data.messages.map((msg: any) => {
-        // If it's a string like "You: message" or "Assistant: message", convert it
         if (typeof msg === 'string') {
           if (msg.startsWith('You:')) {
             return { role: 'user', content: msg.replace(/^You:\s*/, '') };
@@ -31,69 +26,55 @@ export async function GET(
             return { role: 'unknown', content: msg };
           }
         }
-        
-        // If it's already an object with role/content, use it as is
-        if (typeof msg === 'object' && msg && msg.role && msg.content) {
+
+        if (typeof msg === 'object' && msg.role && msg.content) {
           return msg;
         }
-        
-        // Default fallback for other formats
-        return { 
-          role: 'unknown', 
-          content: typeof msg === 'object' ? JSON.stringify(msg) : String(msg || '') 
+
+        return {
+          role: 'unknown',
+          content: typeof msg === 'object' ? JSON.stringify(msg) : String(msg || ''),
         };
       });
     }
-    
+
     return NextResponse.json(data);
   } catch (error) {
     console.error('Error in load chat API route:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 
-export async function DELETE(
-  request: Request,
-  { params }: { params: { chatId: string } }
-) {
-  const { chatId } = params;
-  
+export async function DELETE(request: NextRequest) {
+  const chatId = request.nextUrl.pathname.split('/').pop();
+
   try {
     const response = await fetch(`http://localhost:8000/delete_chat/${chatId}`, {
-      method: 'DELETE'
+      method: 'DELETE',
     });
-    
+
     if (!response.ok) {
       return NextResponse.json(
         { error: 'Failed to delete chat' },
         { status: response.status }
       );
     }
-    
+
     const data = await response.json();
     return NextResponse.json(data);
   } catch (error) {
     console.error('Error in delete chat API route:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 
-export async function PATCH(
-  request: Request,
-  { params }: { params: { chatId: string } }
-) {
-  const { chatId } = params;
-  
+export async function PATCH(request: NextRequest) {
+  const chatId = request.nextUrl.pathname.split('/').pop();
+
   try {
     const body = await request.json();
     const { name } = body;
-    
+
     const response = await fetch(`http://localhost:8000/rename_chat/${chatId}`, {
       method: 'PATCH',
       headers: {
@@ -101,21 +82,18 @@ export async function PATCH(
       },
       body: JSON.stringify({ name }),
     });
-    
+
     if (!response.ok) {
       return NextResponse.json(
         { error: 'Failed to rename chat' },
         { status: response.status }
       );
     }
-    
+
     const data = await response.json();
     return NextResponse.json(data);
   } catch (error) {
     console.error('Error in rename chat API route:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
-} 
+}

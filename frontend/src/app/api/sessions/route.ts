@@ -1,16 +1,16 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const response = await fetch("http://localhost:8000/get_all_sessions");
-    
+
     if (!response.ok) {
       return NextResponse.json(
         { error: 'Failed to fetch sessions from backend' },
         { status: response.status }
       );
     }
-    
+
     const data = await response.json();
     return NextResponse.json(data);
   } catch (error) {
@@ -20,4 +20,4 @@ export async function GET() {
       { status: 500 }
     );
   }
-} 
+}
