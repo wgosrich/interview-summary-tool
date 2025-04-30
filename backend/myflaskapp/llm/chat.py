@@ -1,4 +1,4 @@
-from .llm_clients import gpt4o_client
+from myflaskapp.llm.llm_clients import gpt4o_client
 
 
 class Chat:

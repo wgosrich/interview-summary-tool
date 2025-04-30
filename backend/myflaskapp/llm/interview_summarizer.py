@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 from docx import Document
 from pydub import AudioSegment
 from pydub.utils import make_chunks
-from .llm_clients import gpt4o_client, whisper_client
+from myflaskapp.llm.llm_clients import gpt4o_client, whisper_client
 import PyPDF2
 
 load_dotenv()

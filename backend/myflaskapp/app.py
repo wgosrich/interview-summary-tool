@@ -4,7 +4,7 @@ from werkzeug.utils import secure_filename
 from flask_sqlalchemy import SQLAlchemy
 import os
 import json
-from session import Session
+from myflaskapp.session import Session
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS so Next.js frontend can talk to Flask
@@ -69,23 +69,40 @@ user_sessions = db.Table(
 # requires username, returns user_id
 @app.route("/login", methods=["POST"])
 def login():
-    user_data = request.json
-    username = user_data.get("username")
-    if not username:
-        return jsonify({"error": "Missing username"}), 400
+    try:
+        print(">> /login hit")
+        user_data = request.get_json(force=True, silent=True)
+        print(">> Received payload:", user_data)
 
-    existing_user = UserModel.query.filter_by(username=username).first()
-    if existing_user:
-        return (
-            jsonify({"message": "User already exists", "user_id": existing_user.id}),
-            200,
-        )
+        if not user_data:
+            return jsonify({"error": "Missing request body"}), 400
 
-    new_user = UserModel(username=username)
-    db.session.add(new_user)
-    db.session.commit()
+        username = user_data.get("username")
+        if not username:
+            return jsonify({"error": "Missing username"}), 400
 
-    return jsonify({"message": "User created", "user_id": new_user.id}), 201
+        existing_user = UserModel.query.filter_by(username=username).first()
+        if existing_user:
+            print(">> Existing user found:", existing_user.id)
+            return jsonify({
+                "message": "User already exists",
+                "user_id": existing_user.id
+            }), 200
+
+        new_user = UserModel(username=username)
+        db.session.add(new_user)
+        db.session.commit()
+
+        print(">> New user created:", new_user.id)
+
+        return jsonify({
+            "message": "User created",
+            "user_id": new_user.id
+        }), 201
+
+    except Exception as e:
+        print("!!! Error in /login route:", str(e))
+        return jsonify({"error": f"Internal error: {str(e)}"}), 500
 
 
 # requires user_id

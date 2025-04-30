@@ -1,5 +1,5 @@
-from llm.interview_summarizer import InterviewSummarizer as IS
-from llm.chat import Chat
+from myflaskapp.llm.interview_summarizer import InterviewSummarizer as IS
+from myflaskapp.llm.chat import Chat
 
 
 class Session:
