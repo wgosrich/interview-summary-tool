@@ -345,6 +345,7 @@ export default function Home() {
     if (currentSessionId) {
       fetchChats(currentSessionId);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentSessionId]);
 
   const fetchChats = async (sessionId: number) => {
