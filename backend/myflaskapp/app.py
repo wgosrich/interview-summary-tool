@@ -13,7 +13,11 @@ load_dotenv()
 app = Flask(__name__)
 CORS(app)  # Enable CORS so Next.js frontend can talk to Flask
 
+# local development
 # app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///sessions.db"
+# Configure SQLAlchemy to use in-memory SQLite database for development/testing
+#app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
+
 
 # Use environment variable for database URL
 app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL")
@@ -453,4 +457,4 @@ with app.app_context():
     db.create_all()
 
 if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0", port=8000)
+    app.run(debug=True, host="0.0.0.0", port=8080)
