@@ -59,7 +59,7 @@ export async function DELETE(
   request: Request,
   { params }: { params: { chatId: string } }
 ) {
-  const { chatId } = await params;
+  const { chatId } = params;
   
   try {
     const response = await fetch(`http://localhost:8000/delete_chat/${chatId}`, {
@@ -88,7 +88,7 @@ export async function PATCH(
   request: Request,
   { params }: { params: { chatId: string } }
 ) {
-  const { chatId } = await params;
+  const { chatId } = params;
   
   try {
     const body = await request.json();
