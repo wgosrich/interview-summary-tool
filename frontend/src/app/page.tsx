@@ -82,7 +82,7 @@ export default function Home() {
 
     try {
       const response = await fetch(
-        `/api/users/${currentUserId}/sessions`
+        `${process.env.NEXT_PUBLIC_API_URL}/get_sessions/${currentUserId}`
       );
       if (response.ok) {
         const data = await response.json();
@@ -97,7 +97,7 @@ export default function Home() {
 
   const fetchAllSessions = async () => {
     try {
-      const response = await fetch("/api/sessions");
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/get_all_sessions`);
       if (response.ok) {
         const data = await response.json();
         setAllSessions(data);
@@ -350,7 +350,7 @@ export default function Home() {
 
   const fetchChats = async (sessionId: number) => {
     try {
-      const response = await fetch(`/api/chats/${sessionId}`);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/get_chats/${sessionId}`);
       if (response.ok) {
         const data = await response.json();
         setChats(data);
@@ -382,7 +382,7 @@ export default function Home() {
     setLoading(true);
 
     const response = await fetch(
-      `/api/sessions/${currentSessionId}/revise`,
+      `${process.env.NEXT_PUBLIC_API_URL}/revise/${currentSessionId}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -444,7 +444,7 @@ export default function Home() {
       setLoading(true);
 
       const response = await fetch(
-        `/api/users/${currentUserId}/summarize`,
+        `${process.env.NEXT_PUBLIC_API_URL}/summarize/${currentUserId}`,
         {
           method: "POST",
           body: formData,
@@ -507,7 +507,7 @@ export default function Home() {
 
     try {
       const response = await fetch(
-        `/api/sessions/${currentSessionId}/chat`,
+        `${process.env.NEXT_PUBLIC_API_URL}/chat/${currentSessionId}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -551,7 +551,7 @@ export default function Home() {
   const loadSession = async (sessionId: number) => {
     try {
       const response = await fetch(
-        `/api/sessions/${sessionId}/load`
+        `${process.env.NEXT_PUBLIC_API_URL}/load_session/${sessionId}`
       );
       if (response.ok) {
         const data = await response.json();
@@ -603,7 +603,7 @@ export default function Home() {
 
   const loadChat = async (chatId: number) => {
     try {
-      const response = await fetch(`/api/chat/${chatId}`);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/load_chat/${chatId}`);
       if (response.ok) {
         const data = await response.json();
         if (data && data.messages) {
@@ -639,7 +639,7 @@ export default function Home() {
     if (!currentSessionId || !newChatName.trim()) return;
 
     try {
-      const response = await fetch(`/api/chat/create/${currentSessionId}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/create_chat/${currentSessionId}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -657,7 +657,7 @@ export default function Home() {
         setNewChatName("");
 
         // Fetch the new chat data
-        const chatResponse = await fetch(`/api/chat/${data.chat_id}`);
+        const chatResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/load_chat/${data.chat_id}`);
         if (chatResponse.ok) {
           const chatData = await chatResponse.json();
 
@@ -700,7 +700,7 @@ export default function Home() {
     }
 
     try {
-      const response = await fetch(`/api/chat/${chatId}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/delete_chat/${chatId}`, {
         method: "DELETE",
       });
 
@@ -739,7 +739,7 @@ export default function Home() {
     if (!newName.trim() || !currentSessionId) return;
 
     try {
-      const response = await fetch(`/api/chat/${chatId}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/rename_chat/${chatId}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -810,7 +810,7 @@ export default function Home() {
             onClick={async () => {
               if (!username.trim()) return;
               try {
-                const response = await fetch("/api/login", {
+                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/login`, {
                   method: "POST",
                   headers: { "Content-Type": "application/json" },
                   body: JSON.stringify({ username }),
@@ -1741,7 +1741,7 @@ export default function Home() {
                               }
                               try {
                                 const response = await fetch(
-                                  `/api/users/${currentUserId}/subscribe/${Number(
+                                  `${process.env.NEXT_PUBLIC_API_URL}/subscribe/${currentUserId}/${Number(
                                     subscribeSessionId
                                   )}`,
                                   {
@@ -2099,7 +2099,7 @@ export default function Home() {
               if (selectedSessionInfo !== null) {
                 try {
                   const response = await fetch(
-                    `/api/users/${currentUserId}/unsubscribe/${selectedSessionInfo.id}`,
+                    `${process.env.NEXT_PUBLIC_API_URL}/unsubscribe/${currentUserId}/${selectedSessionInfo.id}`,
                     { method: "DELETE" }
                   );
                   if (response.ok) {
@@ -2167,7 +2167,7 @@ export default function Home() {
                   if (selectedSessionInfo !== null) {
                     try {
                       const response = await fetch(
-                        `/api/sessions/${selectedSessionInfo.id}/delete`,
+                        `${process.env.NEXT_PUBLIC_API_URL}/delete_session/${selectedSessionInfo.id}`,
                         { method: "DELETE" }
                       );
                       if (response.ok) {
@@ -2333,7 +2333,7 @@ export default function Home() {
                 onClick={() => {
                   if (selectedSessionInfo !== null && newSessionName.trim()) {
                     // Implement the logic to rename the session
-                    fetch(`/api/session/${selectedSessionInfo.id}`, {
+                    fetch(`${process.env.NEXT_PUBLIC_API_URL}/rename_session/${selectedSessionInfo.id}`, {
                       method: "PATCH",
                       headers: { "Content-Type": "application/json" },
                       body: JSON.stringify({ name: newSessionName.trim() })
