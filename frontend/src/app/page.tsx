@@ -1207,13 +1207,13 @@ export default function Home() {
                         });
                       }}
                       className={`flex justify-between items-center truncate group cursor-pointer ${session.id === currentSessionId
-                        ? "bg-gray-300 dark:bg-gray-700 rounded-lg"
+                        ? "bg-gray-300 dark:bg-gray-900 rounded-lg"
                         : ""
                         }`}
                     >
                       <span
                         className={`flex-1 truncate text-sm p-2 rounded-lg ${session.id !== currentSessionId
-                          ? "hover:bg-gray-100 dark:hover:bg-gray-900"
+                          ? "hover:bg-gray-100 dark:hover:bg-gray-700"
                           : ""
                           }`}
                         onClick={() => {
