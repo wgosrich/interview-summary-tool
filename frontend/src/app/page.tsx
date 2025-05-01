@@ -73,6 +73,7 @@ export default function Home() {
   const [chatRenamed, setChatRenamed] = useState(false);
   const [chatDeleted, setChatDeleted] = useState(false);
   const renameChatPopupRef = useRef<HTMLDivElement | null>(null);
+  const [loginLoading, setLoginLoading] = useState(false);
 
   const fetchSessions = async () => {
     if (!currentUserId) {
@@ -809,6 +810,7 @@ export default function Home() {
           <button
             onClick={async () => {
               if (!username.trim()) return;
+              setLoginLoading(true);
               try {
                 const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/login`, {
                   method: "POST",
@@ -828,11 +830,14 @@ export default function Home() {
               } catch (error) {
                 console.error("Login error:", error);
                 alert("Login error.");
+              } finally {
+                setLoginLoading(false);
               }
             }}
-            className="bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 font-bold"
+            disabled={loginLoading}
+            className="bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 font-bold disabled:opacity-50"
           >
-            Login
+            {loginLoading ? "Logging in..." : "Login"}
           </button>
         </div>
       </div>
