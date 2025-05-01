@@ -1135,10 +1135,10 @@ export default function Home() {
         </button>
         <div className="flex flex-col gap-1 h-1/2">
           <h2 className="text-xs font-bold text-slate-800 dark:text-slate-100">
-            Sessions
+            My Sessions
           </h2>
           <div
-            className="overflow-y-auto h-[calc(100vh-260px)] pr-1"
+            className="overflow-y-auto h-[calc(100vh)] pr-1"
             style={{ scrollbarWidth: "thin", msOverflowStyle: "auto" }}
           >
             <ul className="space-y-1 text-slate-800 dark:text-slate-100">
@@ -1185,7 +1185,7 @@ export default function Home() {
             Subscribed Sessions
           </h2>
           <div
-            className="overflow-y-auto h-[calc(100vh-260px)] pr-1"
+            className="overflow-y-auto h-[calc(100vh-400px)] pr-1"
             style={{ scrollbarWidth: "thin", msOverflowStyle: "auto" }}
           >
             <ul className="space-y-1 text-slate-800 dark:text-slate-100">
