@@ -1634,8 +1634,8 @@ export default function Home() {
 
                           <button
                             onClick={handleSubmit}
-                            disabled={loading}
-                            className="w-full py-2 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50 font-bold"
+                            disabled={loading || !transcriptFile || !recordingFile}
+                            className="w-full py-2 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50 font-bold disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-blue-600"
                           >
                             {loading
                               ? "Generating summary..."
