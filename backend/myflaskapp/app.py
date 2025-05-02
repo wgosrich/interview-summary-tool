@@ -11,7 +11,13 @@ from dotenv import load_dotenv
 load_dotenv()
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS so Next.js frontend can talk to Flask
+
+# Configure CORS with allowed origins
+ALLOWED_ORIGINS = [
+    'https://lemon-coast-09ad20f0f.6.azurestaticapps.net/', 
+    'http://localhost:3000'  
+]
+CORS(app, origins=ALLOWED_ORIGINS)  # Enable CORS for specific origins
 
 # local development
 # app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///sessions.db"
