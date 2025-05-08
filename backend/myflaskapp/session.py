@@ -1,5 +1,9 @@
-from myflaskapp.llm.interview_summarizer import InterviewSummarizer as IS
-from myflaskapp.llm.chat import Chat
+from myflaskapp.llm.interview_summarizer import (
+    parse_transcript, parse_recording, align_transcripts, 
+    generate_summary, generate_title, initial_greeting, 
+    generate_revision, parse_additional_context
+)
+from myflaskapp.llm.chat import get_chat_prompt, stream_response
 
 
 class Session:
@@ -22,16 +26,16 @@ class Session:
         
         # parse transcript and recording
         print("Parsing transcript...")
-        og_transcript = IS.parse_transcript(transcript)
+        og_transcript = parse_transcript(transcript)
         print("Transcribing recording...")
-        whisper_transcript = IS.parse_recording(recording)
+        whisper_transcript = parse_recording(recording)
 
         # align transcripts
         print("Aligning transcripts...")
-        aligned_transcript = IS.align_transcripts(og_transcript, whisper_transcript)
+        aligned_transcript = align_transcripts(og_transcript, whisper_transcript)
         self.transcript = aligned_transcript
 
-        self.messages.append({"role": "system", "content": Chat.PROMPT})
+        self.messages.append({"role": "system", "content": get_chat_prompt()})
         self.messages.append(
             {"role": "system", "content": f"Transcript: {aligned_transcript}"}
         )
@@ -40,7 +44,7 @@ class Session:
         additional_context_concat = ""
         if additional_context:
             print("Parsing additional context...")
-            additional_context_concat = IS.parse_additional_context(additional_context)
+            additional_context_concat = parse_additional_context(additional_context)
             
             # add additional context to chat
             self.messages.append(
@@ -53,7 +57,7 @@ class Session:
 
         # generate summary
         print("Generating summary...")
-        for chunk in IS.generate_summary(aligned_transcript, additional_context_concat):
+        for chunk in generate_summary(aligned_transcript, additional_context_concat):
             # add summary to chat
             self.summary += chunk
             yield chunk
@@ -61,10 +65,10 @@ class Session:
         self.messages.append(
             {"role": "system", "content": f"Initial Summary: {self.summary}"}
         )
-        self.name = IS.generate_title(self.summary)
+        self.name = generate_title(self.summary)
 
         # initial message
-        greeting = IS.initial_greeting()
+        greeting = initial_greeting()
         self.messages.append({"role": "assistant", "content": greeting})
 
     def prompt_chat(self, prompt: str):
@@ -72,7 +76,7 @@ class Session:
         self.messages.append({"role": "user", "content": prompt})
         # get response in a streaming manner
         response = ""
-        for chunk in Chat.stream_response(self.messages):
+        for chunk in stream_response(self.messages):
             # add assistant message to conversation
             response += chunk
             yield chunk
@@ -125,7 +129,7 @@ class Session:
             }
         )
         self.summary = ""
-        for chunk in IS.generate_revision(system_messages):
+        for chunk in generate_revision(system_messages):
             # add revision to chat
             self.summary += chunk
             yield chunk
