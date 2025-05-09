@@ -1501,7 +1501,7 @@ export default function Home() {
                               />
                               <label
                                 htmlFor="transcriptUpload"
-                                className="cursor-pointer bg-slate-100 text-blue-600 hover:bg-blue-200 font-bold py-2 px-4 rounded-lg"
+                                className="cursor-pointer bg-blue-100 text-blue-600 hover:bg-blue-200 font-bold py-2 px-4 rounded-lg"
                               >
                                 Choose File
                               </label>
@@ -1529,7 +1529,7 @@ export default function Home() {
                               />
                               <label
                                 htmlFor="recordingUpload"
-                                className="cursor-pointer bg-slate-100 text-blue-600 hover:bg-blue-200 font-bold py-2 px-4 rounded-lg"
+                                className="cursor-pointer bg-blue-100 text-blue-600 hover:bg-blue-200 font-bold py-2 px-4 rounded-lg"
                               >
                                 Choose File
                               </label>
@@ -1592,7 +1592,7 @@ export default function Home() {
 
                               <button
                                 onClick={() => setTextContextPopupOpen(true)}
-                                className="bg-slate-100 text-blue-600 hover:bg-blue-200 font-bold py-2 px-4 rounded-lg flex items-center cursor-pointer"
+                                className="bg-blue-100 text-blue-600 hover:bg-blue-200 font-bold py-2 px-4 rounded-lg flex items-center cursor-pointer"
                                 title="Add text context"
                               >
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
