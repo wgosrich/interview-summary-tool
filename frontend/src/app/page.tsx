@@ -1241,6 +1241,7 @@ export default function Home() {
             <button
               onClick={() => setProfileMenuOpen(!profileMenuOpen)}
               className="profile-button w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center hover:bg-blue-700 shadow-md"
+              title="Account Settings"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -1500,7 +1501,7 @@ export default function Home() {
                               />
                               <label
                                 htmlFor="transcriptUpload"
-                                className="cursor-pointer bg-blue-100 text-blue-600 hover:bg-blue-200 font-bold py-2 px-4 rounded-lg"
+                                className="cursor-pointer bg-slate-100 text-blue-600 hover:bg-blue-200 font-bold py-2 px-4 rounded-lg"
                               >
                                 Choose File
                               </label>
@@ -1528,7 +1529,7 @@ export default function Home() {
                               />
                               <label
                                 htmlFor="recordingUpload"
-                                className="cursor-pointer bg-blue-100 text-blue-600 hover:bg-blue-200 font-bold py-2 px-4 rounded-lg"
+                                className="cursor-pointer bg-slate-100 text-blue-600 hover:bg-blue-200 font-bold py-2 px-4 rounded-lg"
                               >
                                 Choose File
                               </label>
@@ -1591,7 +1592,7 @@ export default function Home() {
 
                               <button
                                 onClick={() => setTextContextPopupOpen(true)}
-                                className="bg-blue-100 text-blue-600 hover:bg-blue-200 font-bold py-2 px-4 rounded-lg flex items-center"
+                                className="bg-slate-100 text-blue-600 hover:bg-blue-200 font-bold py-2 px-4 rounded-lg flex items-center"
                                 title="Add text context"
                               >
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
