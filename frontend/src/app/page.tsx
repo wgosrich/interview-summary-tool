@@ -835,7 +835,7 @@ export default function Home() {
               }
             }}
             disabled={loginLoading}
-            className="bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 font-bold disabled:opacity-50"
+            className="bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 font-bold disabled:opacity-50 cursor-pointer"
           >
             {loginLoading ? "Logging in..." : "Login"}
           </button>
@@ -1076,7 +1076,7 @@ export default function Home() {
             setShowPanel(!showPanel);
             if (!showPanel) fetchSessions();
           }}
-          className="absolute top-4 right-[-55px] bg-blue-600 text-white w-10 h-10 rounded-full shadow-lg hover:bg-blue-700 flex items-center justify-center"
+          className="absolute top-4 right-[-55px] bg-blue-600 text-white w-10 h-10 rounded-full shadow-lg hover:bg-blue-700 flex items-center justify-center cursor-pointer"
           title={showPanel ? "Hide Panel" : "Show Panel"}
         >
           <svg
@@ -1113,7 +1113,7 @@ export default function Home() {
             setRevisionRequest("");
             localStorage.clear();
           }}
-          className="w-full bg-blue-600 text-white py-2 px-3 rounded-lg hover:bg-blue-700 mb-4 font-semibold"
+          className="w-full bg-blue-600 text-white py-2 px-3 rounded-lg hover:bg-blue-700 mb-4 font-semibold cursor-pointer"
         >
           <span className="flex items-center justify-center">
             <svg
@@ -1240,7 +1240,7 @@ export default function Home() {
           <div className="absolute top-4 right-6 z-50">
             <button
               onClick={() => setProfileMenuOpen(!profileMenuOpen)}
-              className="profile-button w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center hover:bg-blue-700 shadow-md"
+              className="profile-button w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center hover:bg-blue-700 shadow-md cursor-pointer"
               title="Account Settings"
             >
               <svg
@@ -1284,7 +1284,7 @@ export default function Home() {
                     setProfileMenuOpen(false);
                     localStorage.clear();
                   }}
-                  className="w-full text-left px-4 py-2 text-sm font-semibold text-slate-800 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-700 rounded-md"
+                  className="w-full text-left px-4 py-2 text-sm font-semibold text-slate-800 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-700 rounded-md cursor-pointer"
                 >
                   <div className="flex items-center">
                     <svg
@@ -1323,7 +1323,7 @@ export default function Home() {
                     onClick={() => {
                       setRevisionWindow(!revisionWindow);
                     }}
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-sm font-semibold"
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-sm font-semibold cursor-pointer"
                   >
                     Revise
                   </button>
@@ -1380,7 +1380,7 @@ export default function Home() {
                         setSummaryCopied(false);
                       }, 3000);
                     }}
-                    className="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded"
+                    className="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded cursor-pointer"
                     title="Copy"
                   >
                     <svg
@@ -1431,7 +1431,7 @@ export default function Home() {
                         setSummaryDownloaded(false);
                       }, 3000);
                     }}
-                    className="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded"
+                    className="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded cursor-pointer"
                     title="Download"
                   >
                     <svg
@@ -1462,7 +1462,7 @@ export default function Home() {
                     <div className="flex border-b border-slate-300 dark:border-slate-600">
                       <button
                         onClick={() => setTab("newSummary")}
-                        className={`flex-1 px-4 py-2 font-semibold ${tab === "newSummary"
+                        className={`flex-1 px-4 py-2 font-semibold cursor-pointer ${tab === "newSummary"
                           ? "border-b-2 border-blue-600 text-blue-600"
                           : "text-slate-600 dark:text-slate-100"
                           }`}
@@ -1474,7 +1474,7 @@ export default function Home() {
                           setTab("existingSummary");
                           fetchAllSessions(); // make sure dropdown will be up to date
                         }}
-                        className={`flex-1 px-4 py-2 font-semibold ${tab === "existingSummary"
+                        className={`flex-1 px-4 py-2 font-semibold cursor-pointer ${tab === "existingSummary"
                           ? "border-b-2 border-blue-600 text-blue-600"
                           : "text-slate-600 dark:text-slate-100"
                           }`}
@@ -1592,7 +1592,7 @@ export default function Home() {
 
                               <button
                                 onClick={() => setTextContextPopupOpen(true)}
-                                className="bg-slate-100 text-blue-600 hover:bg-blue-200 font-bold py-2 px-4 rounded-lg flex items-center"
+                                className="bg-slate-100 text-blue-600 hover:bg-blue-200 font-bold py-2 px-4 rounded-lg flex items-center cursor-pointer"
                                 title="Add text context"
                               >
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1636,7 +1636,7 @@ export default function Home() {
                           <button
                             onClick={handleSubmit}
                             disabled={loading || !transcriptFile || !recordingFile}
-                            className="w-full py-2 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-bold disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-blue-600"
+                            className="w-full py-2 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-bold disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-blue-600 cursor-pointer"
                           >
                             {loading
                               ? "Generating summary..."
@@ -1753,7 +1753,7 @@ export default function Home() {
                                 }, 3000);
                               }
                             }}
-                            className="w-full px-3 py-2 bg-blue-600 text-white text-base font-bold rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-blue-600"
+                            className="w-full px-3 py-2 bg-blue-600 text-white text-base font-bold rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-blue-600 cursor-pointer"
                             disabled={!subscribeSessionId}
                           >
                             Subscribe
@@ -1793,7 +1793,7 @@ export default function Home() {
               <div className="absolute left-0 top-1/2 -translate-y-1/2 z-10" ref={chatDropdownRef}>
                 <button
                   onClick={() => setChatDropdownOpen(!chatDropdownOpen)}
-                  className="flex items-center gap-1 px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm"
+                  className="flex items-center gap-1 px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm cursor-pointer"
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -1858,7 +1858,7 @@ export default function Home() {
                     ))}
                     <div className="border-t border-slate-200 dark:border-slate-600 my-1"></div>
                     <button
-                      className="w-full text-left px-3 py-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-slate-600 flex items-center font-semibold"
+                      className="w-full text-left px-3 py-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-slate-600 flex items-center font-semibold cursor-pointer"
                       onClick={() => {
                         setChatDropdownOpen(false);
                         setCreateChatOpen(true);
@@ -1945,7 +1945,7 @@ export default function Home() {
               />
               <button
                 onClick={handleChatSubmit}
-                className="bg-blue-600 text-white py-2 px-3 rounded-lg hover:bg-blue-700 font-bold flex items-center justify-center antialiased"
+                className="bg-blue-600 text-white py-2 px-3 rounded-lg hover:bg-blue-700 font-bold flex items-center justify-center antialiased cursor-pointer"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -1973,7 +1973,7 @@ export default function Home() {
                         setRevisionWindow(false);
                         setRevisionRequest("");
                       }}
-                      className="absolute left-0 top-1/2 -translate-y-1/2 text-red-600 hover:text-red-700"
+                      className="absolute left-0 top-1/2 -translate-y-1/2 text-red-600 hover:text-red-700 cursor-pointer"
                       title="Revert to Original"
                     >
                       <svg
@@ -1993,7 +1993,7 @@ export default function Home() {
                     </button>
                     <button
                       onClick={() => setInfoPopupOpen(true)}
-                      className="absolute right-0 top-1/2 -translate-y-1/2 text-blue-600 hover:text-blue-700"
+                      className="absolute right-0 top-1/2 -translate-y-1/2 text-blue-600 hover:text-blue-700 cursor-pointer"
                       title="Prompt Writing Tips"
                     >
                       <svg
@@ -2023,7 +2023,7 @@ export default function Home() {
                   />
                   <div className="flex justify-end gap-2">
                     <button
-                      className="font-semibold px-4 py-2 bg-gray-300 dark:bg-gray-600 text-slate-800 dark:text-white rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500"
+                      className="font-semibold px-4 py-2 bg-gray-300 dark:bg-gray-600 text-slate-800 dark:text-white rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500 cursor-pointer"
                       onClick={() => {
                         setRevisionWindow(false);
                         setRevisionRequest("");
@@ -2032,7 +2032,7 @@ export default function Home() {
                       Cancel
                     </button>
                     <button
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold"
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold cursor-pointer"
                       onClick={() => {
                         handleRevise(revisionRequest);
                         setRevisionWindow(false);
@@ -2054,7 +2054,7 @@ export default function Home() {
           style={{ top: contextMenu.mouseY, left: contextMenu.mouseX }}
         >
           <button
-            className="text-left px-4 py-1 hover:bg-blue-500 hover:text-white rounded-md"
+            className="text-left px-4 py-1 hover:bg-blue-500 hover:text-white rounded-md cursor-pointer"
             onClick={() => {
               navigator.clipboard.writeText(
                 selectedSessionInfo
@@ -2070,7 +2070,7 @@ export default function Home() {
             Copy ID
           </button>
           {selectedSessionInfo && selectedSessionInfo.creator_id === currentUserId && (
-            <button className="text-left px-4 py-1 hover:bg-blue-500 hover:text-white rounded-md"
+            <button className="text-left px-4 py-1 hover:bg-blue-500 hover:text-white rounded-md cursor-pointer"
               onClick={() => {
                 setRenamePopupOpen(true);
                 setContextMenu(null);
@@ -2079,7 +2079,7 @@ export default function Home() {
             </button>
           )}
           <button
-            className="text-left px-4 py-1 hover:bg-blue-500 hover:text-white rounded-md"
+            className="text-left px-4 py-1 hover:bg-blue-500 hover:text-white rounded-md cursor-pointer"
             onClick={async () => {
               if (selectedSessionInfo !== null) {
                 try {
@@ -2117,7 +2117,7 @@ export default function Home() {
           </button>
           {selectedSessionInfo && selectedSessionInfo.creator_id === currentUserId && (
             <button
-              className="text-left px-4 py-1 hover:bg-blue-500 hover:text-white rounded-md"
+              className="text-left px-4 py-1 hover:bg-blue-500 hover:text-white rounded-md cursor-pointer"
               onClick={() => {
                 setDeleteConfirmOpen(true);
                 setContextMenu(null);
@@ -2138,7 +2138,7 @@ export default function Home() {
             </p>
             <div className="flex justify-end gap-3">
               <button
-                className="font-semibold px-4 py-2 bg-gray-300 dark:bg-gray-600 text-slate-800 dark:text-white rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500"
+                className="font-semibold px-4 py-2 bg-gray-300 dark:bg-gray-600 text-slate-800 dark:text-white rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500 cursor-pointer"
                 onClick={() => {
                   setDeleteConfirmOpen(false);
                   setSelectedSessionInfo(null);
@@ -2147,7 +2147,7 @@ export default function Home() {
                 Cancel
               </button>
               <button
-                className="font-semibold px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                className="font-semibold px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 cursor-pointer"
                 onClick={async () => {
                   if (selectedSessionInfo !== null) {
                     try {
@@ -2196,7 +2196,7 @@ export default function Home() {
               <h2 className="text-xl font-bold text-slate-800 dark:text-white">How to Write Effective Revision Prompts</h2>
               <button
                 onClick={() => setInfoPopupOpen(false)}
-                className="text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+                className="text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 cursor-pointer"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -2268,7 +2268,7 @@ export default function Home() {
 
             <div className="mt-6 flex justify-end">
               <button
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold"
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold cursor-pointer"
                 onClick={() => setInfoPopupOpen(false)}
               >
                 Got it!
@@ -2285,7 +2285,7 @@ export default function Home() {
               <h2 className="text-xl font-bold text-slate-800 dark:text-white">Rename Session</h2>
               <button
                 onClick={() => setRenamePopupOpen(false)}
-                className="text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+                className="text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 cursor-pointer"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -2314,7 +2314,7 @@ export default function Home() {
 
             <div className="flex justify-end">
               <button
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold"
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold cursor-pointer"
                 onClick={() => {
                   if (selectedSessionInfo !== null && newSessionName.trim()) {
                     // Implement the logic to rename the session
@@ -2364,7 +2364,7 @@ export default function Home() {
               <h2 className="text-xl font-bold text-slate-800 dark:text-white">Add Text Context</h2>
               <button
                 onClick={() => setTextContextPopupOpen(false)}
-                className="text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+                className="text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 cursor-pointer"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -2397,13 +2397,13 @@ export default function Home() {
 
             <div className="flex justify-end gap-3">
               <button
-                className="px-4 py-2 bg-gray-300 dark:bg-gray-600 text-slate-800 dark:text-white rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500 font-semibold"
+                className="px-4 py-2 bg-gray-300 dark:bg-gray-600 text-slate-800 dark:text-white rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500 font-semibold cursor-pointer"
                 onClick={() => setTextContextPopupOpen(false)}
               >
                 Cancel
               </button>
               <button
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold"
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold cursor-pointer"
                 onClick={() => setTextContextPopupOpen(false)}
               >
                 Save
@@ -2431,13 +2431,13 @@ export default function Home() {
                   setCreateChatOpen(false);
                   setNewChatName("");
                 }}
-                className="font-semibold px-3 py-1 bg-gray-300 dark:bg-gray-600 text-slate-800 dark:text-white rounded hover:bg-gray-400 dark:hover:bg-gray-500"
+                className="font-semibold px-3 py-1 bg-gray-300 dark:bg-gray-600 text-slate-800 dark:text-white rounded hover:bg-gray-400 dark:hover:bg-gray-500 cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 onClick={createNewChat}
-                className="font-semibold px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
+                className="font-semibold px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 cursor-pointer"
               >
                 Create
               </button>
@@ -2453,7 +2453,7 @@ export default function Home() {
           style={{ top: chatContextMenu.mouseY, left: chatContextMenu.mouseX }}
         >
           <button
-            className="text-left px-4 py-1 hover:bg-blue-500 hover:text-white rounded-md"
+            className="text-left px-4 py-1 hover:bg-blue-500 hover:text-white rounded-md cursor-pointer"
             onClick={() => {
               setRenameChatPopupOpen(true);
               setChatContextMenu(null);
@@ -2462,7 +2462,7 @@ export default function Home() {
             Rename
           </button>
           <button
-            className="text-left px-4 py-1 hover:bg-blue-500 hover:text-white rounded-md"
+            className="text-left px-4 py-1 hover:bg-blue-500 hover:text-white rounded-md cursor-pointer"
             onClick={() => {
               if (selectedChatInfo) {
                 // Don't allow deleting the default chat if it's the only one
@@ -2491,7 +2491,7 @@ export default function Home() {
               <h2 className="text-xl font-bold text-slate-800 dark:text-white">Rename Chat</h2>
               <button
                 onClick={() => setRenameChatPopupOpen(false)}
-                className="text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+                className="text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 cursor-pointer"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -2520,7 +2520,7 @@ export default function Home() {
 
             <div className="flex justify-end">
               <button
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold"
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold cursor-pointer"
                 onClick={() => {
                   if (selectedChatInfo !== null && newChatName.trim()) {
                     renameChat(selectedChatInfo.id, newChatName.trim());
