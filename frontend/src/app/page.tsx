@@ -4,6 +4,127 @@ import MarkdownPreview from "@uiw/react-markdown-preview";
 import BurnesLogo from "@/images/burnes_logo";
 import { Document, Packer, Paragraph, TextRun } from "docx";
 
+// Clean transcript by removing content before or after dividers
+const cleanTranscript = (transcript: string): string => {
+  if (!transcript) return "";
+  
+  // Common divider patterns (markdown, text, etc.)
+  const dividerPatterns = [
+    /^-{3,}$/mg,      // --- divider
+    /^_{3,}$/mg,      // ___ divider
+    /^\*{3,}$/mg,     // *** divider
+    /^={3,}$/mg,      // === divider
+    /^-{3,}\s*$/mg,   // --- with possible spaces
+    /^_{3,}\s*$/mg,   // ___ with possible spaces
+    /^\*{3,}\s*$/mg,  // *** with possible spaces
+    /^={3,}\s*$/mg,   // === with possible spaces
+    /^<hr\s*\/*>$/mg, // HTML hr tag
+    /^---+$/mg,       // Longer dash dividers
+    /^___+$/mg,       // Longer underscore dividers
+    /^\*\*\*+$/mg     // Longer asterisk dividers
+  ];
+  
+  // Find the first and last divider line
+  let startIndex = -1;
+  let endIndex = transcript.length;
+  
+  // Check each divider pattern
+  for (const pattern of dividerPatterns) {
+    const matches = [...transcript.matchAll(pattern)];
+    if (matches.length > 0) {
+      // Get first divider index
+      const firstMatch = matches[0];
+      const firstIndex = firstMatch.index !== undefined ? firstMatch.index : -1;
+      
+      if (firstIndex > -1 && (startIndex === -1 || firstIndex < startIndex)) {
+        startIndex = firstIndex;
+      }
+      
+      // Get last divider index if there are multiple
+      if (matches.length > 1) {
+        const lastMatch = matches[matches.length - 1];
+        const lastIndex = lastMatch.index !== undefined ? lastMatch.index : -1;
+        
+        if (lastIndex > -1 && lastIndex < endIndex) {
+          // Find the end of the line
+          const lineEndMatch = transcript.slice(lastIndex).match(/\n/);
+          if (lineEndMatch && lineEndMatch.index !== undefined) {
+            endIndex = lastIndex + lineEndMatch.index;
+          }
+        }
+      }
+    }
+  }
+  
+  // Extract content between dividers
+  if (startIndex > -1) {
+    // Find the end of the first divider line
+    const afterFirstDivider = transcript.slice(startIndex).indexOf('\n');
+    if (afterFirstDivider > -1) {
+      startIndex = startIndex + afterFirstDivider + 1;
+      
+      // If we found a valid range between dividers
+      if (startIndex < endIndex) {
+        return transcript.slice(startIndex, endIndex).trim();
+      }
+    }
+  }
+  
+  // If no dividers found or processing failed, return the original
+  return transcript;
+};
+
+// Transcript formatting helper function
+const formatTranscript = (transcript: string): string => {
+  if (!transcript) return "";
+  
+  // First, handle the specific format shown in the user example
+  // Check if transcript has the specific issue with double asterisks and split timestamps
+  if (/\*\*[A-Za-z\s]+ \[\*\*\d{2}:\d{2}:\d{2}\s*\n\s*\]/.test(transcript)) {
+    // This is a very specific fix for the format observed in the user's example
+    return transcript
+      // Fix the split timestamps in the format "**Name [**00:00:00\n]:"
+      .replace(/\*\*([A-Za-z\s]+) \[\*\*(\d{2}:\d{2}:\d{2})\s*\n\s*\]:/g, "**$1 [$2]:**")
+      // Ensure proper spacing between speakers
+      .replace(/\*\*([^:]+):\*\*/g, "\n\n**$1:**")
+      // Clean up any excessive newlines
+      .replace(/\n{3,}/g, "\n\n");
+  }
+  
+  // For regular markdown-formatted transcripts
+  else if (/\*\*[A-Za-z\s]+/.test(transcript)) {
+    return transcript
+      // Handle any remaining split brackets
+      .replace(/\[(\d{2}:\d{2}:\d{2})\s*\n\s*\]/g, "[$1]")
+      // Ensure proper spacing between dialogue
+      .replace(/\*\*([^:]+):\*\*/g, "\n\n**$1:**")
+      // Remove excessive newlines while preserving paragraph structure
+      .replace(/\n{3,}/g, "\n\n");
+  }
+  
+  // For raw unformatted transcripts with timestamps
+  else {
+    const hasTimestamps = /\d{2}:\d{2}:\d{2}/.test(transcript);
+    const hasSpeakers = /\b(Interviewer|Speaker|[A-Z][a-z]+):/i.test(transcript);
+    
+    if (hasTimestamps || hasSpeakers) {
+      // Format with markdown to improve readability
+      return transcript
+        // Handle format with name and timestamp in square brackets: "Name [00:00:00]:"
+        .replace(/^([A-Za-z\s]+)\s*\[(\d{2}:\d{2}:\d{2})\]:/gm, "**$1 [$2]:**")
+        // Handle format with just names
+        .replace(/^([A-Za-z\s]+):/gm, "**$1:**")
+        // Ensure proper spacing
+        .replace(/\*\*([^:]+):\*\*/g, "\n\n**$1:**")
+        // Remove excessive newlines
+        .replace(/\n{3,}/g, "\n\n");
+    }
+  }
+  
+  // If not in a standard format, just return as is
+  return transcript;
+};
+
 export default function Home() {
   const [transcriptFile, setTranscriptFile] = useState<File | null>(null);
   const [recordingFile, setRecordingFile] = useState<File | null>(null);
@@ -16,6 +137,8 @@ export default function Home() {
   const [summaryCopied, setSummaryCopied] = useState(false);
   const [summaryDownloaded, setSummaryDownloaded] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const [transcript, setTranscript] = useState<string>("");
+  const [showTranscript, setShowTranscript] = useState(false);
   const chatContainerRef = useRef<HTMLDivElement | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
   const [showPanel, setShowPanel] = useState(false);
@@ -73,6 +196,11 @@ export default function Home() {
   const [chatRenamed, setChatRenamed] = useState(false);
   const [chatDeleted, setChatDeleted] = useState(false);
   const renameChatPopupRef = useRef<HTMLDivElement | null>(null);
+  const transcriptPopupRef = useRef<HTMLDivElement | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [searchResults, setSearchResults] = useState<{ text: string; index: number }[]>([]);
+  const [selectedResultIndex, setSelectedResultIndex] = useState(-1);
+  const searchResultsRef = useRef<HTMLDivElement | null>(null);
   const [loginLoading, setLoginLoading] = useState(false);
 
   const fetchSessions = async () => {
@@ -263,13 +391,23 @@ export default function Home() {
         setRenameChatPopupOpen(false);
         setNewChatName("");
       }
+
+      // Check if click is outside transcript popup
+      if (
+        showTranscript &&
+        transcriptPopupRef.current &&
+        !transcriptPopupRef.current.contains(e.target as Node) &&
+        (e.target as Element).classList.contains("backdrop-blur-xl")
+      ) {
+        setShowTranscript(false);
+      }
     };
 
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [showPanel, profileMenuOpen, dropdownOpen, infoPopupOpen, deleteConfirmOpen, renamePopupOpen, chatDropdownOpen, createChatOpen, renameChatPopupOpen]);
+  }, [showPanel, profileMenuOpen, dropdownOpen, infoPopupOpen, deleteConfirmOpen, renamePopupOpen, chatDropdownOpen, createChatOpen, renameChatPopupOpen, showTranscript]);
 
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
@@ -476,6 +614,12 @@ export default function Home() {
               role: msg.role,
               content: msg.content
             }));
+          
+          // Extract transcript from the second message if available
+          if (meta.messages && meta.messages.length > 1 && meta.messages[1]?.content) {
+            setTranscript(cleanTranscript(meta.messages[1].content));
+          }
+          
           setChatMessages(formattedMessages);
           continue;
         }
@@ -558,6 +702,13 @@ export default function Home() {
         const data = await response.json();
         setCurrentSessionId(data.session_id);
         setSummary(data.summary);
+
+        // Extract transcript if available in messages and clean it
+        if (data.messages && data.messages.length > 1 && data.messages[1]?.content) {
+          setTranscript(cleanTranscript(data.messages[1].content));
+        } else {
+          setTranscript("");
+        }
 
         // Set the current chat to the default chat or first available
         if (data.chats && data.chats.length > 0) {
@@ -764,6 +915,83 @@ export default function Home() {
       console.error("Error renaming chat:", error);
     }
   };
+
+  // Add a new search function to find instances in the transcript
+  const searchTranscript = (term: string, text: string) => {
+    if (!term.trim() || !text) {
+      setSearchResults([]);
+      setSelectedResultIndex(-1);
+      return;
+    }
+
+    const results: { text: string; index: number }[] = [];
+    const lowerText = text.toLowerCase();
+    const lowerTerm = term.toLowerCase();
+    const lines = text.split('\n');
+    
+    let currentStatement = "";
+    let lineIndex = 0;
+
+    // Process each line of the transcript
+    lines.forEach(line => {
+      // Check if this is a new speaker (starts with a name)
+      const isNewSpeaker = /^([A-Za-z\s]+):|^\*\*([A-Za-z\s]+)/.test(line);
+      
+      if (isNewSpeaker || !currentStatement) {
+        // If we had a previous statement and it contains the search term
+        if (currentStatement && currentStatement.toLowerCase().includes(lowerTerm)) {
+          // Pre-format the text to ensure proper speaker name formatting
+          results.push({
+            text: formatTranscript(currentStatement.trim()),
+            index: lineIndex - currentStatement.split('\n').length
+          });
+        }
+        // Start a new statement
+        currentStatement = line + '\n';
+      } else {
+        // Continue the current statement
+        currentStatement += line + '\n';
+      }
+      
+      lineIndex++;
+    });
+    
+    // Check the last statement
+    if (currentStatement && currentStatement.toLowerCase().includes(lowerTerm)) {
+      results.push({
+        text: formatTranscript(currentStatement.trim()),
+        index: lineIndex - currentStatement.split('\n').length
+      });
+    }
+
+    setSearchResults(results);
+    setSelectedResultIndex(results.length > 0 ? 0 : -1);
+  };
+
+  // Helper function to highlight the search term in markdown text
+  const highlightSearchTerm = (markdown: string, searchTerm: string): string => {
+    if (!searchTerm) return markdown;
+    
+    // Escape special characters in the search term for use in a regex
+    const escapedSearchTerm = searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    
+    // Replace the search term with the highlighted version
+    // We add a special marker that won't interfere with markdown
+    return markdown.replace(
+      new RegExp(escapedSearchTerm, 'gi'),
+      `<mark style="background-color: #fef08a; color: #000; font-weight: 600; border-radius: 0.125rem; padding: 0 0.125rem;">$&</mark>`
+    );
+  };
+
+  // Effect to scroll to selected search result
+  useEffect(() => {
+    if (selectedResultIndex >= 0 && searchResultsRef.current) {
+      const selectedElement = searchResultsRef.current.children[selectedResultIndex] as HTMLElement;
+      if (selectedElement) {
+        selectedElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    }
+  }, [selectedResultIndex]);
 
   if (initializing) {
     return (
@@ -1104,6 +1332,7 @@ export default function Home() {
             setRecordingFile(null);
             setAdditionalContextFiles([]);
             setSummary("");
+            setTranscript("");
             setShowChat(false);
             setChatInput("");
             setChatMessages([]);
@@ -1274,6 +1503,7 @@ export default function Home() {
                     setRecordingFile(null);
                     setAdditionalContextFiles([]);
                     setSummary("");
+                    setTranscript("");
                     setShowChat(false);
                     setChatInput("");
                     setChatMessages([]);
@@ -1561,7 +1791,6 @@ export default function Home() {
                                     const pdfFiles = Array.from(files).filter(file => file.name.toLowerCase().endsWith('.pdf'));
                                     if (pdfFiles.length > 0) {
                                       setAdditionalContextFiles(prev => [...prev, ...pdfFiles]);
-                                      console.log("Files added via drop:", pdfFiles.map(f => f.name));
                                     }
                                   }
                                 }}
@@ -1575,7 +1804,6 @@ export default function Home() {
                                     const files = e.target.files;
                                     if (files && files.length > 0) {
                                       const newFile = files[0];
-                                      console.log("File selected:", newFile.name);
                                       setAdditionalContextFiles(prev => [...prev, newFile]);
                                       // Reset the input so the same file can be selected again
                                       e.target.value = '';
@@ -1603,32 +1831,29 @@ export default function Home() {
 
                             {additionalContextFiles.length > 0 && (
                               <div className="mt-2 space-y-2 max-h-40 overflow-y-auto p-1 bg-slate-50 dark:bg-slate-700 rounded-lg">
-                                {additionalContextFiles.map((file, index) => {
-                                  console.log(`Rendering file ${index}:`, file?.name);
-                                  return (
-                                    <div key={index} className="flex items-center justify-between p-2 bg-white dark:bg-slate-600 rounded shadow-sm">
-                                      <div className="flex items-center">
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                                        </svg>
-                                        <span className="text-xs truncate max-w-[150px]" title={file?.name || ""}>
-                                          {file?.name || "Unknown file"}
-                                        </span>
-                                      </div>
-                                      <button
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          setAdditionalContextFiles(prev => prev.filter((_, i) => i !== index));
-                                        }}
-                                        className="text-gray-500 hover:text-red-600 dark:text-gray-300 dark:hover:text-red-400"
-                                      >
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                        </svg>
-                                      </button>
+                                {additionalContextFiles.map((file, index) => (
+                                  <div key={index} className="flex items-center justify-between p-2 bg-white dark:bg-slate-600 rounded shadow-sm">
+                                    <div className="flex items-center">
+                                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                      </svg>
+                                      <span className="text-xs truncate max-w-[150px]" title={file?.name || ""}>
+                                        {file?.name || "Unknown file"}
+                                      </span>
                                     </div>
-                                  );
-                                })}
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setAdditionalContextFiles(prev => prev.filter((_, i) => i !== index));
+                                      }}
+                                      className="text-gray-500 hover:text-red-600 dark:text-gray-300 dark:hover:text-red-400"
+                                    >
+                                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                      </svg>
+                                    </button>
+                                  </div>
+                                ))}
                               </div>
                             )}
                           </div>
@@ -1888,6 +2113,31 @@ export default function Home() {
               <h2 className="text-2xl font-semibold text-slate-800 dark:text-slate-100 w-full text-center">
                 Chat with Assistant
               </h2>
+              
+              {/* Transcript button */}
+              <div className="absolute right-0 top-1/2 -translate-y-1/2 z-10">
+                <button
+                  onClick={() => setShowTranscript(true)}
+                  className="flex items-center gap-1 px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm cursor-pointer"
+                  title="Show Interview Transcript"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-4 w-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                    />
+                  </svg>
+                  <span className="font-semibold">Transcript</span>
+                </button>
+              </div>
             </div>
 
             {/* Rest of the chat UI remains the same */}
@@ -2530,6 +2780,260 @@ export default function Home() {
                 }}
               >
                 Rename
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Transcript Popup */}
+      {showTranscript && (
+        <div className="fixed inset-0 backdrop-blur-xl bg-white/30 dark:bg-slate-900/30 flex items-center justify-center z-50">
+          <div 
+            ref={transcriptPopupRef} 
+            className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-lg w-3/4 max-w-4xl max-h-[80vh] flex flex-col"
+          >
+            {/* Header */}
+            <div className="flex justify-between items-center mb-4 flex-shrink-0">
+              <h2 className="text-xl font-bold text-slate-800 dark:text-white">Interview Transcript</h2>
+              <button
+                onClick={() => {
+                  setShowTranscript(false);
+                  setSearchTerm("");
+                  setSearchResults([]);
+                  setSelectedResultIndex(-1);
+                }}
+                className="text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 cursor-pointer"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  className="h-6 w-6"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+            
+            {/* Search Bar */}
+            <div className="mb-4 flex-shrink-0">
+              <div className="flex items-center gap-2">
+                <div className="relative flex-1">
+                  <input
+                    type="text"
+                    placeholder="Search transcript..."
+                    value={searchTerm}
+                    onChange={(e) => {
+                      setSearchTerm(e.target.value);
+                      searchTranscript(e.target.value, transcript);
+                    }}
+                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-800 dark:text-white"
+                  />
+                  {searchTerm && (
+                    <button
+                      onClick={() => {
+                        setSearchTerm("");
+                        setSearchResults([]);
+                        setSelectedResultIndex(-1);
+                      }}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
+                {searchResults.length > 0 && (
+                  <div className="text-sm text-slate-600 dark:text-slate-300">
+                    {selectedResultIndex + 1} of {searchResults.length} results
+                  </div>
+                )}
+                {searchResults.length > 0 && (
+                  <div className="flex gap-1">
+                    <button 
+                      onClick={() => {
+                        setSelectedResultIndex(prev => 
+                          prev > 0 ? prev - 1 : searchResults.length - 1
+                        );
+                      }}
+                      className="p-1 bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-800 dark:text-white rounded"
+                      title="Previous result"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                    </button>
+                    <button 
+                      onClick={() => {
+                        setSelectedResultIndex(prev => 
+                          prev < searchResults.length - 1 ? prev + 1 : 0
+                        );
+                      }}
+                      className="p-1 bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-800 dark:text-white rounded"
+                      title="Next result"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                      </svg>
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+            
+            {/* Content Area - Main scrollable area */}
+            {searchTerm ? (
+              // Search Results
+              searchResults.length > 0 ? (
+                <div 
+                  ref={searchResultsRef}
+                  className="flex-1 overflow-y-auto bg-slate-100 dark:bg-slate-700 p-4 rounded-lg space-y-4"
+                  style={{ 
+                    minHeight: "0",
+                    overflowY: "auto"
+                  }}
+                >
+                  <div className="text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
+                    Showing {searchResults.length} {searchResults.length === 1 ? 'result' : 'results'} for "{searchTerm}"
+                  </div>
+                  {searchResults.map((result, idx) => (
+                    <div 
+                      key={idx}
+                      className={`p-3 rounded-lg ${idx === selectedResultIndex ? 'bg-blue-50 dark:bg-blue-900 border border-blue-200 dark:border-blue-800' : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700'}`}
+                      onClick={() => setSelectedResultIndex(idx)}
+                    >
+                      <MarkdownPreview
+                        source={highlightSearchTerm(result.text, searchTerm)}
+                        style={{
+                          backgroundColor: "transparent",
+                          color: isDarkMode ? "white" : "black",
+                          margin: 0,
+                          padding: 0,
+                        }}
+                        rehypeRewrite={(node) => {
+                          // This ensures that links open in a new tab
+                          if (
+                            node.type === 'element' && 
+                            node.tagName === 'a' && 
+                            node.properties
+                          ) {
+                            node.properties.target = '_blank';
+                            node.properties.rel = 'noopener noreferrer';
+                          }
+                        }}
+                      />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                // No Results Message
+                <div className="flex-1 bg-slate-100 dark:bg-slate-700 p-4 rounded-lg flex items-center justify-center">
+                  <div className="text-center text-slate-600 dark:text-slate-400 py-8">
+                    No results found for "{searchTerm}"
+                  </div>
+                </div>
+              )
+            ) : (
+              // Full Transcript
+              <div 
+                className="flex-1 bg-slate-100 dark:bg-slate-700 p-4 rounded-lg" 
+                style={{ 
+                  minHeight: "0",
+                  overflowY: "auto"
+                }}
+              >
+                {transcript ? (
+                  <MarkdownPreview
+                    source={formatTranscript(transcript)}
+                    style={{
+                      backgroundColor: "transparent",
+                      color: isDarkMode ? "white" : "black",
+                    }}
+                  />
+                ) : (
+                  <div className="text-center text-slate-600 dark:text-slate-400 py-8">
+                    No transcript available for this session.
+                  </div>
+                )}
+              </div>
+            )}
+            
+            {/* Footer */}
+            <div className="mt-4 flex justify-end flex-shrink-0">
+              <button
+                onClick={() => {
+                  if (transcript) {
+                    navigator.clipboard.writeText(transcript);
+                    alert("Transcript copied to clipboard!");
+                  }
+                }}
+                className="mr-2 px-4 py-2 bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-800 dark:text-white rounded cursor-pointer"
+                disabled={!transcript}
+              >
+                Copy to Clipboard
+              </button>
+              <button
+                onClick={async () => {
+                  if (transcript) {
+                    const doc = new Document({
+                      sections: [
+                        {
+                          properties: {},
+                          children: [
+                            new Paragraph({
+                              children: [
+                                new TextRun({
+                                  text: "INTERVIEW TRANSCRIPT",
+                                  bold: true,
+                                  size: 28,
+                                }),
+                              ],
+                            }),
+                            ...transcript.split("\n").map(
+                              (line) =>
+                                new Paragraph({
+                                  children: [new TextRun(line)],
+                                })
+                            ),
+                          ],
+                        },
+                      ],
+                    });
+
+                    const blob = await Packer.toBlob(doc);
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement("a");
+                    a.href = url;
+                    a.download = "transcript.docx";
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                  }
+                }}
+                className="mr-2 px-4 py-2 bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-800 dark:text-white rounded cursor-pointer"
+                disabled={!transcript}
+              >
+                Download
+              </button>
+              <button
+                onClick={() => {
+                  setShowTranscript(false);
+                  setSearchTerm("");
+                  setSearchResults([]);
+                  setSelectedResultIndex(-1);
+                }}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded cursor-pointer"
+              >
+                Close
               </button>
             </div>
           </div>
