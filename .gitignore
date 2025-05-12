@@ -55,5 +55,5 @@ venv
 .DS_Store
 
 
-# Instance directory
-/instance/
+# Instance directory (database)
+/backend/myflaskapp/instance/
