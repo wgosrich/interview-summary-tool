@@ -4,76 +4,6 @@ import MarkdownPreview from "@uiw/react-markdown-preview";
 import BurnesLogo from "@/images/burnes_logo";
 import { Document, Packer, Paragraph, TextRun } from "docx";
 
-// Clean transcript by removing content before or after dividers
-const cleanTranscript = (transcript: string): string => {
-  if (!transcript) return "";
-  
-  // Common divider patterns (markdown, text, etc.)
-  const dividerPatterns = [
-    /^-{3,}$/mg,      // --- divider
-    /^_{3,}$/mg,      // ___ divider
-    /^\*{3,}$/mg,     // *** divider
-    /^={3,}$/mg,      // === divider
-    /^-{3,}\s*$/mg,   // --- with possible spaces
-    /^_{3,}\s*$/mg,   // ___ with possible spaces
-    /^\*{3,}\s*$/mg,  // *** with possible spaces
-    /^={3,}\s*$/mg,   // === with possible spaces
-    /^<hr\s*\/*>$/mg, // HTML hr tag
-    /^---+$/mg,       // Longer dash dividers
-    /^___+$/mg,       // Longer underscore dividers
-    /^\*\*\*+$/mg     // Longer asterisk dividers
-  ];
-  
-  // Find the first and last divider line
-  let startIndex = -1;
-  let endIndex = transcript.length;
-  
-  // Check each divider pattern
-  for (const pattern of dividerPatterns) {
-    const matches = [...transcript.matchAll(pattern)];
-    if (matches.length > 0) {
-      // Get first divider index
-      const firstMatch = matches[0];
-      const firstIndex = firstMatch.index !== undefined ? firstMatch.index : -1;
-      
-      if (firstIndex > -1 && (startIndex === -1 || firstIndex < startIndex)) {
-        startIndex = firstIndex;
-      }
-      
-      // Get last divider index if there are multiple
-      if (matches.length > 1) {
-        const lastMatch = matches[matches.length - 1];
-        const lastIndex = lastMatch.index !== undefined ? lastMatch.index : -1;
-        
-        if (lastIndex > -1 && lastIndex < endIndex) {
-          // Find the end of the line
-          const lineEndMatch = transcript.slice(lastIndex).match(/\n/);
-          if (lineEndMatch && lineEndMatch.index !== undefined) {
-            endIndex = lastIndex + lineEndMatch.index;
-          }
-        }
-      }
-    }
-  }
-  
-  // Extract content between dividers
-  if (startIndex > -1) {
-    // Find the end of the first divider line
-    const afterFirstDivider = transcript.slice(startIndex).indexOf('\n');
-    if (afterFirstDivider > -1) {
-      startIndex = startIndex + afterFirstDivider + 1;
-      
-      // If we found a valid range between dividers
-      if (startIndex < endIndex) {
-        return transcript.slice(startIndex, endIndex).trim();
-      }
-    }
-  }
-  
-  // If no dividers found or processing failed, return the original
-  return transcript;
-};
-
 // Debounce function to limit how often a function runs
 const debounce = (func: Function, delay: number) => {
   let timeoutId: NodeJS.Timeout;
@@ -635,7 +565,7 @@ export default function Home() {
           
           // Extract transcript from the second message if available
           if (meta.messages && meta.messages.length > 1 && meta.messages[1]?.content) {
-            setTranscript(cleanTranscript(meta.messages[1].content));
+            setTranscript(meta.messages[1].content);
           }
           
           setChatMessages(formattedMessages);
@@ -723,7 +653,7 @@ export default function Home() {
 
         // Extract transcript if available in messages and clean it
         if (data.messages && data.messages.length > 1 && data.messages[1]?.content) {
-          setTranscript(cleanTranscript(data.messages[1].content));
+          setTranscript(data.messages[1].content);
         } else {
           setTranscript("");
         }
