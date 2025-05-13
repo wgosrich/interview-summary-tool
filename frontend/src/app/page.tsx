@@ -565,7 +565,7 @@ export default function Home() {
         // Updated SESSION_META parsing: handle new JSON format
         try {
           const maybeJson = chunk.trim();
-          if (maybeJson.startsWith("{") && maybeJson.includes('"type":"SESSION_META"')) {
+          if (maybeJson.startsWith("{") && maybeJson.includes('"type": "SESSION_META"')) {
             const parsed = JSON.parse(maybeJson);
             const meta = parsed.data;
             setCurrentSessionId(meta.id);
