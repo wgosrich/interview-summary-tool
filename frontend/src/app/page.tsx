@@ -545,31 +545,51 @@ export default function Home() {
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let done = false;
+      // Buffer for accumulating session meta data across chunks
+      let sessionMetaBuffer = "";
+      let sessionMetaStarted = false;
 
       while (!done) {
         const { value, done: readerDone } = await reader.read();
         done = readerDone;
         const chunk = decoder.decode(value, { stream: true });
 
-        const metaMatch = chunk.match(/\[SESSION_META::(.*)\]/);
-        if (metaMatch) {
-          const meta = JSON.parse(metaMatch[1]);
-          setCurrentSessionId(meta.id);
-          setCurrentChatId(meta.chat_id);
-          const formattedMessages = meta.messages
-            .filter((msg: { role: string; content: string }) => msg.role !== "system")
-            .map((msg: { role: string; content: string }) => ({
-              role: msg.role,
-              content: msg.content
-            }));
-          
-          // Extract transcript from the second message if available
-          if (meta.messages && meta.messages.length > 1 && meta.messages[1]?.content) {
-            setTranscript(meta.messages[1].content);
+        // Improved logic to handle SESSION_META spanning multiple chunks
+        if (chunk.includes("[SESSION_META::") || sessionMetaStarted) {
+          sessionMetaStarted = true;
+          sessionMetaBuffer += chunk;
+
+          const startIdx = sessionMetaBuffer.indexOf("[SESSION_META::");
+          const endIdx = sessionMetaBuffer.indexOf("]", startIdx);
+
+          if (startIdx !== -1 && endIdx !== -1) {
+            const jsonPart = sessionMetaBuffer.slice(startIdx + 14, endIdx);
+            try {
+              const meta = JSON.parse(jsonPart);
+              setCurrentSessionId(meta.id);
+              setCurrentChatId(meta.chat_id);
+              const formattedMessages = meta.messages
+                .filter((msg: { role: string; content: string }) => msg.role !== "system")
+                .map((msg: { role: string; content: string }) => ({
+                  role: msg.role,
+                  content: msg.content
+                }));
+
+              if (meta.messages && meta.messages.length > 1 && meta.messages[1]?.content) {
+                setTranscript(meta.messages[1].content);
+              }
+
+              setChatMessages(formattedMessages);
+            } catch (e) {
+              console.error("Failed to parse SESSION_META:", e);
+            }
+            sessionMetaStarted = false;
+            sessionMetaBuffer = "";
+            continue; // skip setSummary for this chunk
+          } else {
+            // Wait for next chunk
+            continue;
           }
-          
-          setChatMessages(formattedMessages);
-          continue;
         }
 
         setSummary((prev) => prev + chunk);
