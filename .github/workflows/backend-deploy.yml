@@ -48,6 +48,7 @@ jobs:
             --resource-group fair-rg \
             --set-env-vars \
               AZURE_OPENAI_API_KEY=${{ secrets.AZURE_OPENAI_API_KEY }} \
-              AZURE_OPENAI_ENDPOINT_GPT4O=${{ secrets.AZURE_OPENAI_ENDPOINT_GPT4O }} \
               AZURE_OPENAI_ENDPOINT_WHISPER=${{ secrets.AZURE_OPENAI_ENDPOINT_WHISPER }} \
+              OPENAI_GPT4O_API_KEY=${{ secrets.OPENAI_GPT4O_API_KEY }} \
               DATABASE_URL=${{ secrets.DATABASE_URL }}
+              

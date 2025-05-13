@@ -177,6 +177,7 @@ def align_transcripts(teams_transcript: str, whisper_transcript: str) -> str:
     # Call the GPT-4 model to align and merge the transcripts
     response = gpt4o_client.chat.completions.create(
         model="gpt-4o",
+        max_tokens=16384,
         messages=[{"role": "user", "content": prompt}],
     )
 
