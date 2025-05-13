@@ -225,9 +225,14 @@ def summarize(user_id):
                 user.sessions.append(new_session)
 
             db.session.commit()
-            yield "\n[SESSION_META::" + json.dumps(
-                {"id": new_session.id, "messages": session.messages, "chat_id": default_chat.id}
-            ) + "]"
+            yield json.dumps({
+                "type": "SESSION_META",
+                "data": {
+                    "id": new_session.id,
+                    "messages": session.messages,
+                    "chat_id": default_chat.id
+                }
+            }) + "\n"
 
     return Response(stream_with_context(generate()), content_type="text/markdown")
 

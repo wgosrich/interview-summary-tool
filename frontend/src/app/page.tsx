@@ -545,51 +545,36 @@ export default function Home() {
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let done = false;
-      // Buffer for accumulating session meta data across chunks
-      let sessionMetaBuffer = "";
-      let sessionMetaStarted = false;
 
       while (!done) {
         const { value, done: readerDone } = await reader.read();
         done = readerDone;
         const chunk = decoder.decode(value, { stream: true });
 
-        // Improved logic to handle SESSION_META spanning multiple chunks
-        if (chunk.includes("[SESSION_META::") || sessionMetaStarted) {
-          sessionMetaStarted = true;
-          sessionMetaBuffer += chunk;
+        // Updated SESSION_META parsing: handle new JSON format
+        try {
+          const maybeJson = chunk.trim();
+          if (maybeJson.startsWith("{") && maybeJson.includes('"type":"SESSION_META"')) {
+            const parsed = JSON.parse(maybeJson);
+            const meta = parsed.data;
+            setCurrentSessionId(meta.id);
+            setCurrentChatId(meta.chat_id);
+            const formattedMessages = meta.messages
+              .filter((msg: { role: string; content: string }) => msg.role !== "system")
+              .map((msg: { role: string; content: string }) => ({
+                role: msg.role,
+                content: msg.content
+              }));
 
-          const startIdx = sessionMetaBuffer.indexOf("[SESSION_META::");
-          const endIdx = sessionMetaBuffer.indexOf("]", startIdx);
-
-          if (startIdx !== -1 && endIdx !== -1) {
-            const jsonPart = sessionMetaBuffer.slice(startIdx + "[SESSION_META::".length, endIdx);
-            try {
-              const meta = JSON.parse(jsonPart);
-              setCurrentSessionId(meta.id);
-              setCurrentChatId(meta.chat_id);
-              const formattedMessages = meta.messages
-                .filter((msg: { role: string; content: string }) => msg.role !== "system")
-                .map((msg: { role: string; content: string }) => ({
-                  role: msg.role,
-                  content: msg.content
-                }));
-
-              if (meta.messages && meta.messages.length > 1 && meta.messages[1]?.content) {
-                setTranscript(meta.messages[1].content);
-              }
-
-              setChatMessages(formattedMessages);
-            } catch (e) {
-              console.error("Failed to parse SESSION_META:", e);
+            if (meta.messages && meta.messages.length > 1 && meta.messages[1]?.content) {
+              setTranscript(meta.messages[1].content);
             }
-            sessionMetaStarted = false;
-            sessionMetaBuffer = "";
-            continue; // skip setSummary for this chunk
-          } else {
-            // Wait for next chunk
-            continue;
+
+            setChatMessages(formattedMessages);
+            continue; // skip adding to summary
           }
+        } catch (err) {
+          // If JSON parsing fails, fall back to appending chunk to summary
         }
 
         setSummary((prev) => prev + chunk);
