@@ -5,6 +5,7 @@ from pydub import AudioSegment # incomptabile with azure web app
 from pydub.utils import make_chunks # incomptabile with azure web app
 from myflaskapp.llm.llm_clients import gpt4o_client, whisper_client
 import PyPDF2
+import re
 
 load_dotenv()
 
@@ -36,7 +37,6 @@ def summarize(transcript_path: str, recording_path: str):
     for chunk in generate_summary(aligned_transcript):
         yield chunk
 
-
 def parse_transcript(docx_file: str) -> str:
     """Extract text from a DOCX transcript and return as a single string."""
 
@@ -47,11 +47,16 @@ def parse_transcript(docx_file: str) -> str:
         text = paragraph.text.strip()
         if text:
             transcript.append(text)
-
+              
     transcription = "\n".join(transcript)
 
     return transcription
 
+def format_timestamp(seconds: float) -> str:
+    hrs = int(seconds // 3600)
+    mins = int((seconds % 3600) // 60)
+    secs = int(seconds % 60)
+    return f"{hrs:02}:{mins:02}:{secs:02}"
 
 def parse_recording(recording_path: str) -> str:
     """Transcribe the audio recording using Whisper and return the transcription."""
@@ -66,38 +71,41 @@ def parse_recording(recording_path: str) -> str:
 
         audio = AudioSegment.from_file(recording_path)
         chunk_length_ms = 5 * 60 * 1000  # 5 minutes per chunk
-        chunks = make_chunks(audio, chunk_length_ms)
+        overlap_ms = 1000  # 1 second overlap
+        chunks = []
+        for start in range(0, len(audio), chunk_length_ms - overlap_ms):
+            chunks.append(audio[start:start + chunk_length_ms])
 
         formatted_transcription = []
         cumulative_offset = 0  # To track the overall timeline
 
         for i, chunk in enumerate(chunks):
-            chunk_path = f"chunk_{i}.mp4"
-            chunk.export(chunk_path, format="mp4")
-
-            with open(chunk_path, "rb") as audio_file:
-                response = whisper_client.audio.transcriptions.create(
-                    model="whisper-1",
-                    file=audio_file,
-                    response_format="verbose_json",
-                    timestamp_granularities=["segment"],
-                )
-
-            for segment in response.segments:
-                start_time = cumulative_offset + segment.start
-                end_time = cumulative_offset + segment.end
-                text = segment.text.strip()
-
-                # Format time as HH:MM:SS
-                start_time_formatted = f"{int(start_time // 3600):02}:{int((start_time % 3600) // 60):02}:{int(start_time % 60):02}"
-                end_time_formatted = f"{int(end_time // 3600):02}:{int((end_time % 3600) // 60):02}:{int(end_time % 60):02}"
-
-                formatted_transcription.append(
-                    f"[{start_time_formatted} - {end_time_formatted}] {text}"
-                )
-
-            cumulative_offset += chunk_length_ms / 1000  # Update offset in seconds
-            os.remove(chunk_path)  # Clean up temporary chunk file
+            chunk_path = f"chunk_{i}.mp3"
+            chunk.export(chunk_path, format="mp3")
+            try:
+                with open(chunk_path, "rb") as audio_file:
+                    response = whisper_client.audio.transcriptions.create(
+                        model="whisper-1",
+                        file=audio_file,
+                        response_format="verbose_json",
+                        timestamp_granularities=["segment"],
+                    )
+                if not response.segments:
+                    print(f"Warning: No segments returned for chunk {i}")
+                for segment in response.segments:
+                    start_time = cumulative_offset + segment.start
+                    end_time = cumulative_offset + segment.end
+                    text = segment.text.strip()
+                    # Format time as HH:MM:SS using helper
+                    start_time_formatted = format_timestamp(start_time)
+                    end_time_formatted = format_timestamp(end_time)
+                    formatted_transcription.append(
+                        f"[{start_time_formatted} - {end_time_formatted}] {text}"
+                    )
+                os.remove(chunk_path)
+            except Exception as e:
+                print(f"Error transcribing chunk {i}: {e}")
+                continue
     else:
         with open(recording_path, "rb") as audio_file:
             response = whisper_client.audio.transcriptions.create(
@@ -109,8 +117,8 @@ def parse_recording(recording_path: str) -> str:
 
         formatted_transcription = []
         for segment in response.segments:
-            start_time = f"{segment.start:.2f}"
-            end_time = f"{segment.end:.2f}"
+            start_time = format_timestamp(segment.start)
+            end_time = format_timestamp(segment.end)
             text = segment.text.strip()
             formatted_transcription.append(f"[{start_time} - {end_time}] {text}")
 
@@ -119,17 +127,52 @@ def parse_recording(recording_path: str) -> str:
     return transcription
 
 
-def align_transcripts(vtt_transcript: str, whisper_transcript: str) -> str:
+def align_transcripts(teams_transcript: str, whisper_transcript: str) -> str:
     """Use GPT-4 to align and merge transcripts while keeping timestamps."""
-    prompt = (
-        "You are a helpful assistant. Your task is to align and merge two transcripts "
-        "from an interview. The first transcript is from a VTT file, and the second "
-        "is from an audio recording. Please ensure that the timestamps are preserved. "
-        "Here are the transcripts:\n\n"
-        f"VTT Transcript:\n{vtt_transcript}\n\n"
-        f"Whisper Transcript:\n{whisper_transcript}\n\n"
-        "Please provide the aligned and merged transcript."
-    )
+    prompt = f"""
+    You are a helpful assistant tasked with refining an interview transcript by using two versions of the same interview:
+
+    1. The Teams Transcript, which contains accurate timestamps and should serve as the primary source for both structure and content.
+    2. The Whisper Transcript, which has higher transcription quality, but may have inaccurate timestamps.
+
+    Your objective is to enhance the Teams transcript using the Whisper transcript while following these strict rules:
+
+    TIMESTAMPS
+    - Preserve all timestamps from the Teams transcript. These are considered more reliable.
+    - If the Whisper transcript contains dialogue not captured in the Teams version, integrate that content at the appropriate timestamp from the Teams transcript, estimating placement based on context—but never invent timestamps.
+
+    CONTENT
+    - All final transcript content must originate from and be traceable to the Teams transcript.
+    - Use the Whisper transcript only to clarify or fill in gaps in the Teams version—such as correcting misheard phrases, completing truncated sentences, or adding missing words.
+    - Never introduce content from the Whisper transcript that cannot be matched to something from the Teams transcript.
+    - If any of the interviewee, interview date, or duration information is not found in either transcript, simply write "N/A" for that field. ONLY DO THIS IF THE INFORMATION IS NOT PRESENT IN EITHER TRANSCRIPT.
+
+    FORMATTING
+    - The output should exactly match this format:
+      **Interviewee: [Interviewee's Name]**
+      **Interview Date: [Interview Date]**
+      **Duration: [Interview Duration]**
+
+      **[Speaker Name] [hh:mm:ss]:**
+      [Text spoken by that speaker]
+
+    - Do not include any additional commentary, headings, or section breaks.
+    - Do not include any extra asterisks or other formatting as this will be parsed as markdown and messes up the formatting.
+    - Do not include any opening or closing remarks not found in the original content.
+    - Do not add quotation marks around any lines.
+    - All timestamps should be formatted as [hh:mm:ss] and placed next to speaker names, bolded.
+    - Leave a blank line between each speaker's turn.
+
+    Use the Teams transcript as the authoritative source and the Whisper transcript only to correct or complete it. Do not merge or paraphrase across both transcripts in a way that loses the structure of the Teams version.
+
+    Return only the final formatted transcript, with no leading or trailing explanation.
+
+    Teams Transcript:
+    {teams_transcript}
+
+    Whisper Transcript:
+    {whisper_transcript}
+    """
 
     # Call the GPT-4 model to align and merge the transcripts
     response = gpt4o_client.chat.completions.create(
