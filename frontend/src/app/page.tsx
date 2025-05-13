@@ -563,7 +563,7 @@ export default function Home() {
           const endIdx = sessionMetaBuffer.indexOf("]", startIdx);
 
           if (startIdx !== -1 && endIdx !== -1) {
-            const jsonPart = sessionMetaBuffer.slice(startIdx + 14, endIdx);
+            const jsonPart = sessionMetaBuffer.slice(startIdx + "[SESSION_META::".length, endIdx);
             try {
               const meta = JSON.parse(jsonPart);
               setCurrentSessionId(meta.id);
