@@ -2243,23 +2243,10 @@ export default function Home() {
                         setRevisionWindow(false);
                         setRevisionRequest("");
                       }}
-                      className="absolute left-0 top-1/2 -translate-y-1/2 text-red-600 hover:text-red-700 cursor-pointer"
+                      className="absolute left-0 top-1/2 -translate-y-1/2 bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-sm font-semibold cursor-pointer"
                       title="Revert to Original"
                     >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 24 24"
-                        fill="currentColor"
-                        stroke="currentColor"
-                        className="h-6 w-6"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z"
-                        />
-                      </svg>
+                      Revert
                     </button>
                     <button
                       onClick={() => setInfoPopupOpen(true)}
