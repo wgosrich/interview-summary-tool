@@ -37,7 +37,7 @@ class Session:
 
         self.messages.append({"role": "system", "content": get_chat_prompt()})
         self.messages.append(
-            {"role": "system", "content": f"Transcript: {aligned_transcript}"}
+            {"role": "system", "content": aligned_transcript}
         )
         
         # parse additional context

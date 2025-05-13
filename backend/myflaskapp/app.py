@@ -20,12 +20,12 @@ ALLOWED_ORIGINS = [
 CORS(app, origins=ALLOWED_ORIGINS)  # Enable CORS for specific origins
 
 # local development
-# app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///sessions.db"
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///sessions.db"
 
 
 # Use environment variable for database URL
 # url has to be in the format: postgresql+psycopg2://username:password@host/database_name
-app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL")
+# app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL")
 db = SQLAlchemy(app)
 
 

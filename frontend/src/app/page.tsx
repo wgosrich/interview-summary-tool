@@ -74,6 +74,15 @@ const cleanTranscript = (transcript: string): string => {
   return transcript;
 };
 
+// Debounce function to limit how often a function runs
+const debounce = (func: Function, delay: number) => {
+  let timeoutId: NodeJS.Timeout;
+  return (...args: any[]) => {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => func(...args), delay);
+  };
+};
+
 // Transcript formatting helper function
 const formatTranscript = (transcript: string): string => {
   if (!transcript) return "";
@@ -200,8 +209,17 @@ export default function Home() {
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState<{ text: string; index: number }[]>([]);
   const [selectedResultIndex, setSelectedResultIndex] = useState(-1);
+  const [isSearching, setIsSearching] = useState(false);
   const searchResultsRef = useRef<HTMLDivElement | null>(null);
   const [loginLoading, setLoginLoading] = useState(false);
+
+  // Create a debounced version of the search function with updated implementation
+  const debouncedSearch = useRef(
+    debounce((term: string, text: string) => {
+      setIsSearching(true);
+      searchTranscript(term, text);
+    }, 300)
+  ).current;
 
   const fetchSessions = async () => {
     if (!currentUserId) {
@@ -921,6 +939,7 @@ export default function Home() {
     if (!term.trim() || !text) {
       setSearchResults([]);
       setSelectedResultIndex(-1);
+      setIsSearching(false);
       return;
     }
 
@@ -966,6 +985,7 @@ export default function Home() {
 
     setSearchResults(results);
     setSelectedResultIndex(results.length > 0 ? 0 : -1);
+    setIsSearching(false);
   };
 
   // Helper function to highlight the search term in markdown text
@@ -2832,7 +2852,8 @@ export default function Home() {
                     value={searchTerm}
                     onChange={(e) => {
                       setSearchTerm(e.target.value);
-                      searchTranscript(e.target.value, transcript);
+                      setIsSearching(true);
+                      debouncedSearch(e.target.value, transcript);
                     }}
                     className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-800 dark:text-white"
                   />
@@ -2892,7 +2913,30 @@ export default function Home() {
             {/* Content Area - Main scrollable area */}
             {searchTerm ? (
               // Search Results
-              searchResults.length > 0 ? (
+              isSearching ? (
+                // Loading State
+                <div className="flex-1 bg-slate-100 dark:bg-slate-700 p-4 rounded-lg flex items-center justify-center">
+                  <div className="text-center text-slate-600 dark:text-slate-400 py-8 flex flex-col items-center">
+                    <svg
+                      className="animate-spin h-6 w-6 text-blue-600 mb-2"
+                      style={{ animationDuration: "0.5s" }}
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        className="opacity-75"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                        strokeLinecap="round"
+                        d="M12 4a8 8 0 018 8"
+                      />
+                    </svg>
+                    Searching...
+                  </div>
+                </div>
+              ) : searchResults.length > 0 ? (
                 <div 
                   ref={searchResultsRef}
                   className="flex-1 overflow-y-auto bg-slate-100 dark:bg-slate-700 p-4 rounded-lg space-y-4"
