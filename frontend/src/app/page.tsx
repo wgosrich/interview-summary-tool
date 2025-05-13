@@ -16,7 +16,7 @@ const debounce = (func: Function, delay: number) => {
 // Transcript formatting helper function
 const formatTranscript = (transcript: string): string => {
   if (!transcript) return "";
-  
+
   // First, handle the specific format shown in the user example
   // Check if transcript has the specific issue with double asterisks and split timestamps
   if (/\*\*[A-Za-z\s]+ \[\*\*\d{2}:\d{2}:\d{2}\s*\n\s*\]/.test(transcript)) {
@@ -29,7 +29,7 @@ const formatTranscript = (transcript: string): string => {
       // Clean up any excessive newlines
       .replace(/\n{3,}/g, "\n\n");
   }
-  
+
   // For regular markdown-formatted transcripts
   else if (/\*\*[A-Za-z\s]+/.test(transcript)) {
     return transcript
@@ -40,12 +40,12 @@ const formatTranscript = (transcript: string): string => {
       // Remove excessive newlines while preserving paragraph structure
       .replace(/\n{3,}/g, "\n\n");
   }
-  
+
   // For raw unformatted transcripts with timestamps
   else {
     const hasTimestamps = /\d{2}:\d{2}:\d{2}/.test(transcript);
     const hasSpeakers = /\b(Interviewer|Speaker|[A-Z][a-z]+):/i.test(transcript);
-    
+
     if (hasTimestamps || hasSpeakers) {
       // Format with markdown to improve readability
       return transcript
@@ -59,7 +59,7 @@ const formatTranscript = (transcript: string): string => {
         .replace(/\n{3,}/g, "\n\n");
     }
   }
-  
+
   // If not in a standard format, just return as is
   return transcript;
 };
@@ -557,38 +557,58 @@ export default function Home() {
       const decoder = new TextDecoder();
       let done = false;
 
+      let metaBuffer = "";
+      let metaTagSeen = false;
+
       while (!done) {
         const { value, done: readerDone } = await reader.read();
         done = readerDone;
         const chunk = decoder.decode(value, { stream: true });
 
-        // Updated SESSION_META parsing: handle new JSON format
-        try {
-          const maybeJson = chunk.trim();
-          if (maybeJson.startsWith("{") && maybeJson.includes('"type": "SESSION_META"')) {
-            const parsed = JSON.parse(maybeJson);
-            const meta = parsed.data;
+        if (!metaTagSeen) {
+          const metaStart = chunk.indexOf("SESSION_META::");
+          if (metaStart !== -1) {
+            metaTagSeen = true;
+            // Append everything before the tag to the summary
+            setSummary((prev) => prev + chunk.slice(0, metaStart));
+            // Start collecting the rest for metadata
+            metaBuffer += chunk.slice(metaStart);
+          } else {
+            // Stream chunk directly to summary
+            setSummary((prev) => prev + chunk);
+          }
+        } else {
+          // After tag seen, just buffer for metadata
+          metaBuffer += chunk;
+        }
+      }
+
+      if (metaTagSeen) {
+        const metaStart = metaBuffer.indexOf("SESSION_META::");
+        if (metaStart !== -1) {
+          const jsonString = metaBuffer
+            .slice(metaStart + "SESSION_META::".length)
+
+          try {
+            const meta = JSON.parse(jsonString);
             setCurrentSessionId(meta.id);
             setCurrentChatId(meta.chat_id);
             const formattedMessages = meta.messages
               .filter((msg: { role: string; content: string }) => msg.role !== "system")
               .map((msg: { role: string; content: string }) => ({
                 role: msg.role,
-                content: msg.content
+                content: msg.content,
               }));
 
-            if (meta.messages && meta.messages.length > 1 && meta.messages[1]?.content) {
+            if (meta.messages?.[1]?.content) {
               setTranscript(meta.messages[1].content);
             }
 
             setChatMessages(formattedMessages);
-            continue; // skip adding to summary
+          } catch (err) {
+            console.error("Failed to parse SESSION_META block:", err);
           }
-        } catch (err) {
-          // If JSON parsing fails, fall back to appending chunk to summary
         }
-
-        setSummary((prev) => prev + chunk);
       }
 
       setShowChat(true);
@@ -893,7 +913,7 @@ export default function Home() {
     const lowerText = text.toLowerCase();
     const lowerTerm = term.toLowerCase();
     const lines = text.split('\n');
-    
+
     let currentStatement = "";
     let lineIndex = 0;
 
@@ -901,7 +921,7 @@ export default function Home() {
     lines.forEach(line => {
       // Check if this is a new speaker (starts with a name)
       const isNewSpeaker = /^([A-Za-z\s]+):|^\*\*([A-Za-z\s]+)/.test(line);
-      
+
       if (isNewSpeaker || !currentStatement) {
         // If we had a previous statement and it contains the search term
         if (currentStatement && currentStatement.toLowerCase().includes(lowerTerm)) {
@@ -917,10 +937,10 @@ export default function Home() {
         // Continue the current statement
         currentStatement += line + '\n';
       }
-      
+
       lineIndex++;
     });
-    
+
     // Check the last statement
     if (currentStatement && currentStatement.toLowerCase().includes(lowerTerm)) {
       results.push({
@@ -937,10 +957,10 @@ export default function Home() {
   // Helper function to highlight the search term in markdown text
   const highlightSearchTerm = (markdown: string, searchTerm: string): string => {
     if (!searchTerm) return markdown;
-    
+
     // Escape special characters in the search term for use in a regex
     const escapedSearchTerm = searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    
+
     // Replace the search term with the highlighted version
     // We add a special marker that won't interfere with markdown
     return markdown.replace(
@@ -1872,11 +1892,11 @@ export default function Home() {
                             </div>
 
                             {dropdownOpen && (
-                              <div 
-                                className="fixed mt-1 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg shadow-lg max-h-48 overflow-y-auto" 
-                                style={{ 
-                                  scrollbarWidth: "thin", 
-                                  msOverflowStyle: "auto", 
+                              <div
+                                className="fixed mt-1 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg shadow-lg max-h-48 overflow-y-auto"
+                                style={{
+                                  scrollbarWidth: "thin",
+                                  msOverflowStyle: "auto",
                                   overscrollBehavior: "contain",
                                   zIndex: 9999,
                                   top: `${dropdownPosition.top}px`,
@@ -1912,10 +1932,10 @@ export default function Home() {
                                     ) &&
                                     session.name.toLowerCase().includes(searchSessionInput.toLowerCase())
                                 ).length === 0 && (
-                                  <div className="px-2 py-1 text-slate-500 dark:text-slate-400">
-                                    No matching sessions
-                                  </div>
-                                )}
+                                    <div className="px-2 py-1 text-slate-500 dark:text-slate-400">
+                                      No matching sessions
+                                    </div>
+                                  )}
                               </div>
                             )}
                           </div>
@@ -1927,7 +1947,7 @@ export default function Home() {
                                 alert("Invalid session ID.");
                                 return;
                               }
-                              
+
                               if (sessions.some((s) => s.id === Number(subscribeSessionId))) {
                                 alert("You are already subscribed to this session.");
                                 return;
@@ -2090,7 +2110,7 @@ export default function Home() {
               <h2 className="text-2xl font-semibold text-slate-800 dark:text-slate-100 w-full text-center">
                 Chat with Assistant
               </h2>
-              
+
               {/* Transcript button */}
               <div className="absolute right-0 top-1/2 -translate-y-1/2 z-10">
                 <button
@@ -2134,8 +2154,8 @@ export default function Home() {
                   >
                     <div
                       className={`inline-block px-4 py-2 rounded-lg text-sm max-w-[90%] ${isUser
-                          ? "bg-blue-600 text-white"
-                          : "bg-gray-200 dark:bg-slate-600 text-gray-900 dark:text-white"
+                        ? "bg-blue-600 text-white"
+                        : "bg-gray-200 dark:bg-slate-600 text-gray-900 dark:text-white"
                         }`}
                     >
                       {isUser ? (
@@ -2753,8 +2773,8 @@ export default function Home() {
       {/* Transcript Popup */}
       {showTranscript && (
         <div className="fixed inset-0 backdrop-blur-xl bg-white/30 dark:bg-slate-900/30 flex items-center justify-center z-50">
-          <div 
-            ref={transcriptPopupRef} 
+          <div
+            ref={transcriptPopupRef}
             className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-lg w-3/4 max-w-4xl max-h-[80vh] flex flex-col"
           >
             {/* Header */}
@@ -2785,7 +2805,7 @@ export default function Home() {
                 </svg>
               </button>
             </div>
-            
+
             {/* Search Bar */}
             <div className="mb-4 flex-shrink-0">
               <div className="flex items-center gap-2">
@@ -2823,9 +2843,9 @@ export default function Home() {
                 )}
                 {searchResults.length > 0 && (
                   <div className="flex gap-1">
-                    <button 
+                    <button
                       onClick={() => {
-                        setSelectedResultIndex(prev => 
+                        setSelectedResultIndex(prev =>
                           prev > 0 ? prev - 1 : searchResults.length - 1
                         );
                       }}
@@ -2836,9 +2856,9 @@ export default function Home() {
                         <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
                       </svg>
                     </button>
-                    <button 
+                    <button
                       onClick={() => {
-                        setSelectedResultIndex(prev => 
+                        setSelectedResultIndex(prev =>
                           prev < searchResults.length - 1 ? prev + 1 : 0
                         );
                       }}
@@ -2853,7 +2873,7 @@ export default function Home() {
                 )}
               </div>
             </div>
-            
+
             {/* Content Area - Main scrollable area */}
             {searchTerm ? (
               // Search Results
@@ -2881,10 +2901,10 @@ export default function Home() {
                   </div>
                 </div>
               ) : searchResults.length > 0 ? (
-                <div 
+                <div
                   ref={searchResultsRef}
                   className="flex-1 overflow-y-auto bg-slate-100 dark:bg-slate-700 p-4 rounded-lg space-y-4"
-                  style={{ 
+                  style={{
                     minHeight: "0",
                     overflowY: "auto"
                   }}
@@ -2893,7 +2913,7 @@ export default function Home() {
                     Showing {searchResults.length} {searchResults.length === 1 ? 'result' : 'results'} for "{searchTerm}"
                   </div>
                   {searchResults.map((result, idx) => (
-                    <div 
+                    <div
                       key={idx}
                       className={`p-3 rounded-lg ${idx === selectedResultIndex ? 'bg-blue-50 dark:bg-blue-900 border border-blue-200 dark:border-blue-800' : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700'}`}
                       onClick={() => setSelectedResultIndex(idx)}
@@ -2909,8 +2929,8 @@ export default function Home() {
                         rehypeRewrite={(node) => {
                           // This ensures that links open in a new tab
                           if (
-                            node.type === 'element' && 
-                            node.tagName === 'a' && 
+                            node.type === 'element' &&
+                            node.tagName === 'a' &&
                             node.properties
                           ) {
                             node.properties.target = '_blank';
@@ -2931,9 +2951,9 @@ export default function Home() {
               )
             ) : (
               // Full Transcript
-              <div 
-                className="flex-1 bg-slate-100 dark:bg-slate-700 p-4 rounded-lg" 
-                style={{ 
+              <div
+                className="flex-1 bg-slate-100 dark:bg-slate-700 p-4 rounded-lg"
+                style={{
                   minHeight: "0",
                   overflowY: "auto"
                 }}
@@ -2953,7 +2973,7 @@ export default function Home() {
                 )}
               </div>
             )}
-            
+
             {/* Footer */}
             <div className="mt-4 flex justify-end flex-shrink-0">
               <button
