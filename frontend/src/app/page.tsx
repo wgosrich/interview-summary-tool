@@ -142,6 +142,7 @@ export default function Home() {
   const [isSearching, setIsSearching] = useState(false);
   const searchResultsRef = useRef<HTMLDivElement | null>(null);
   const [loginLoading, setLoginLoading] = useState(false);
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
 
   // Create a debounced version of the search function with updated implementation
   const debouncedSearch = useRef(
@@ -434,6 +435,16 @@ export default function Home() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentSessionId]);
+
+  useEffect(() => {
+    if (dropdownOpen && dropdownRef.current) {
+      const rect = dropdownRef.current.getBoundingClientRect();
+      setDropdownPosition({
+        top: rect.bottom + window.scrollY,
+        left: rect.left + window.scrollX
+      });
+    }
+  }, [dropdownOpen]);
 
   const fetchChats = async (sessionId: number) => {
     try {
@@ -1840,10 +1851,10 @@ export default function Home() {
                         </div>
                       ) : (
                         <div className="flex flex-col gap-5 mt-5 py-1 h-full w-full">
-                          <div className="relative" ref={dropdownRef}>
+                          <div className="relative" ref={dropdownRef} style={{ position: 'static' }}>
                             <div
                               onClick={() => setDropdownOpen(!dropdownOpen)}
-                              className="px-2 py-1 rounded-lg border border-slate-300 dark:border-slate-600 text-sm bg-white dark:bg-slate-700 text-slate-800 dark:text-white cursor-pointer flex justify-between items-center"
+                              className="px-2 py-1 rounded-lg border border-slate-300 dark:border-slate-600 text-sm bg-white dark:bg-slate-700 text-slate-800 dark:text-white cursor-pointer flex justify-between items-center relative"
                             >
                               <input
                                 type="text"
@@ -1876,7 +1887,18 @@ export default function Home() {
                             </div>
 
                             {dropdownOpen && (
-                              <div className="absolute z-10 mt-1 w-full bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                              <div 
+                                className="fixed mt-1 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg shadow-lg max-h-48 overflow-y-auto" 
+                                style={{ 
+                                  scrollbarWidth: "thin", 
+                                  msOverflowStyle: "auto", 
+                                  overscrollBehavior: "contain",
+                                  zIndex: 9999,
+                                  top: `${dropdownPosition.top}px`,
+                                  left: `${dropdownPosition.left}px`,
+                                  width: dropdownRef.current ? dropdownRef.current.offsetWidth + 'px' : '100%'
+                                }}
+                              >
                                 {allSessions
                                   .filter(
                                     (session) =>
@@ -1905,10 +1927,10 @@ export default function Home() {
                                     ) &&
                                     session.name.toLowerCase().includes(searchSessionInput.toLowerCase())
                                 ).length === 0 && (
-                                    <div className="px-2 py-1 text-slate-500 dark:text-slate-400">
-                                      No matching sessions
-                                    </div>
-                                  )}
+                                  <div className="px-2 py-1 text-slate-500 dark:text-slate-400">
+                                    No matching sessions
+                                  </div>
+                                )}
                               </div>
                             )}
                           </div>
