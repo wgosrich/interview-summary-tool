@@ -1,6 +1,6 @@
 from myflaskapp.llm.interview_summarizer import (
     parse_transcript, parse_recording, align_transcripts, 
-    generate_summary, generate_title, initial_greeting, 
+    generate_summary, initial_greeting, 
     generate_revision, parse_additional_context
 )
 from myflaskapp.llm.chat import get_chat_prompt, stream_response
@@ -65,7 +65,6 @@ class Session:
         self.messages.append(
             {"role": "system", "content": f"Initial Summary: {self.summary}"}
         )
-        self.name = generate_title(self.summary)
 
         # initial message
         greeting = initial_greeting()

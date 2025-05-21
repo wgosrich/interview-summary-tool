@@ -172,7 +172,16 @@ def summarize(user_id):
         return jsonify({"error": "Missing transcript or recording file"}), 400
 
     session = Session()
-
+    
+    # get case number and interviewee name, set session name
+    case_number = request.form.get("case_number")
+    interviewee_name = request.form.get("interviewee_name")
+    if not case_number or not interviewee_name:
+        return jsonify({"error": "Missing case number or interviewee name"}), 400
+    
+    session.name = f"{case_number}: {interviewee_name}"
+    
+    # get transcript and recording files
     transcript_file = request.files["transcript"]
     recording_file = request.files["recording"]
 

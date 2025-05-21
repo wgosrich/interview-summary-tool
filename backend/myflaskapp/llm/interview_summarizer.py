@@ -234,31 +234,6 @@ def generate_summary(aligned_transcript: str, additional_context: str = ""):
         yield delta
 
 
-def generate_title(summary: str):
-    prompt = f"""
-    You are an AI assistant helping to summarize interview transcripts for a civil rights investigation.
-    Your task is to generate a title detailing the name of the interviewee for the following summary:
-    {summary}
-    The title should be a string that is formatted with the [Docket Number]: ["Interviewee Name"] like the following example:
-    "Z1982-098127: John Doe"
-    If the docket number is not known, use the following format:
-    "UNKNOWN: John Doe"
-    If the name of the interviewee is not known, use the following format:
-    "Z1982-098127: UNKNOWN"
-    Do not include any other names mentioned apart from the interviewee's name. Do not include any quotation marks in the title.
-    """
-
-    # Call the GPT-4 model to generate the title
-    response = gpt4o_client.chat.completions.create(
-        model="gpt-4o",
-        messages=[{"role": "user", "content": prompt}],
-    )
-
-    content = response.choices[0].message.content
-
-    return content
-
-
 def initial_greeting():
     prompt = f"""
     You are an AI assistant helping to summarize interview transcripts 
