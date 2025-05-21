@@ -19,8 +19,4 @@ gpt4o_client = OpenAI(
     api_key=openai_gpt4o_api_key
 )
 
-whisper_client = AzureOpenAI(
-    api_key=api_key, api_version="2024-10-21", azure_endpoint=whisper_endpoint
-)
-
-__all__ = ["gpt4o_client", "whisper_client"]
+__all__ = ["gpt4o_client"]
