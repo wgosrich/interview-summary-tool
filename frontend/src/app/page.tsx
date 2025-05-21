@@ -1111,11 +1111,11 @@ export default function Home() {
             {/* Processing stages - improved design */}
             <div className="w-full space-y-5 mb-8 relative">
               {/* Progress line connecting steps */}
-              <div className="absolute left-[14px] top-3 w-[2px] h-[calc(100%-24px)] bg-slate-200 dark:bg-slate-700"></div>
+              <div className="absolute left-[14px] top-3 w-[2px] h-[calc(100%-24px)] bg-slate-200 dark:bg-slate-700 z-0"></div>
               
               {/* Active progress line that grows as steps complete */}
               <div 
-                className="absolute left-[14px] top-3 w-[2px] bg-blue-500 transition-all duration-1000 ease-in-out" 
+                className="absolute left-[14px] top-3 w-[2px] bg-blue-500 transition-all duration-1000 ease-in-out z-0" 
                 style={{ 
                   height: `${processingStep === 0 ? '0%' : processingStep === 1 ? '50%' : '100%'}`,
                 }}
@@ -1123,22 +1123,26 @@ export default function Home() {
               
               {/* Step 1 */}
               <div className="flex items-center relative z-10">
-                <div className={`flex-shrink-0 h-7 w-7 rounded-full ${
-                  processingStep > 0 
-                    ? 'bg-blue-500 text-white' 
-                    : processingStep === 0 
-                      ? 'bg-blue-500 text-white animate-[pulse_2s_infinite]' 
-                      : 'bg-slate-200 dark:bg-slate-700'
-                } flex items-center justify-center transition-all duration-300`}>
-                  {processingStep > 0 ? (
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                  ) : processingStep === 0 ? (
-                    <div className="h-2 w-2 bg-white rounded-full"></div>
-                  ) : (
-                    <div className="h-2 w-2 bg-slate-400 dark:bg-slate-600 rounded-full"></div>
-                  )}
+                <div className="relative flex-shrink-0 h-7 w-7 z-20">
+                  {/* Add a solid background circle that will cover the line */}
+                  <div className="absolute inset-0 rounded-full bg-white dark:bg-slate-800"></div>
+                  <div className={`absolute inset-0 rounded-full ${
+                    processingStep > 0 
+                      ? 'bg-blue-500 text-white' 
+                      : processingStep === 0 
+                        ? 'bg-blue-500 text-white animate-[pulse_2s_infinite]' 
+                        : 'bg-slate-200 dark:bg-slate-700'
+                  } flex items-center justify-center transition-all duration-300`}>
+                    {processingStep > 0 ? (
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    ) : processingStep === 0 ? (
+                      <div className="h-2 w-2 bg-white rounded-full"></div>
+                    ) : (
+                      <div className="h-2 w-2 bg-slate-400 dark:bg-slate-600 rounded-full"></div>
+                    )}
+                  </div>
                 </div>
                 <div className="ml-4">
                   <p className={`font-medium ${
@@ -1156,22 +1160,26 @@ export default function Home() {
               
               {/* Step 2 */}
               <div className="flex items-center relative z-10">
-                <div className={`flex-shrink-0 h-7 w-7 rounded-full ${
-                  processingStep > 1 
-                    ? 'bg-blue-500 text-white' 
-                    : processingStep === 1 
-                      ? 'bg-blue-500 text-white animate-[pulse_2s_infinite]' 
-                      : 'bg-slate-200 dark:bg-slate-700'
-                } flex items-center justify-center transition-all duration-300`}>
-                  {processingStep > 1 ? (
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                  ) : processingStep === 1 ? (
-                    <div className="h-2 w-2 bg-white rounded-full"></div>
-                  ) : (
-                    <div className="h-2 w-2 bg-slate-400 dark:bg-slate-600 rounded-full"></div>
-                  )}
+                <div className="relative flex-shrink-0 h-7 w-7 z-20">
+                  {/* Add a solid background circle that will cover the line */}
+                  <div className="absolute inset-0 rounded-full bg-white dark:bg-slate-800"></div>
+                  <div className={`absolute inset-0 rounded-full ${
+                    processingStep > 1 
+                      ? 'bg-blue-500 text-white' 
+                      : processingStep === 1 
+                        ? 'bg-blue-500 text-white animate-[pulse_2s_infinite]' 
+                        : 'bg-slate-200 dark:bg-slate-700'
+                  } flex items-center justify-center transition-all duration-300`}>
+                    {processingStep > 1 ? (
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    ) : processingStep === 1 ? (
+                      <div className="h-2 w-2 bg-white rounded-full"></div>
+                    ) : (
+                      <div className="h-2 w-2 bg-slate-400 dark:bg-slate-600 rounded-full"></div>
+                    )}
+                  </div>
                 </div>
                 <div className="ml-4">
                   <p className={`font-medium ${
@@ -1189,22 +1197,26 @@ export default function Home() {
               
               {/* Step 3 */}
               <div className="flex items-center relative z-10">
-                <div className={`flex-shrink-0 h-7 w-7 rounded-full ${
-                  processingStep > 2 
-                    ? 'bg-blue-500 text-white' 
-                    : processingStep === 2 
-                      ? 'bg-blue-500 text-white animate-[pulse_2s_infinite]' 
-                      : 'bg-slate-200 dark:bg-slate-700'
-                } flex items-center justify-center transition-all duration-300`}>
-                  {processingStep > 2 ? (
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                  ) : processingStep === 2 ? (
-                    <div className="h-2 w-2 bg-white rounded-full"></div>
-                  ) : (
-                    <div className="h-2 w-2 bg-slate-400 dark:bg-slate-600 rounded-full"></div>
-                  )}
+                <div className="relative flex-shrink-0 h-7 w-7 z-20">
+                  {/* Add a solid background circle that will cover the line */}
+                  <div className="absolute inset-0 rounded-full bg-white dark:bg-slate-800"></div>
+                  <div className={`absolute inset-0 rounded-full ${
+                    processingStep > 2 
+                      ? 'bg-blue-500 text-white' 
+                      : processingStep === 2 
+                        ? 'bg-blue-500 text-white animate-[pulse_2s_infinite]' 
+                        : 'bg-slate-200 dark:bg-slate-700'
+                  } flex items-center justify-center transition-all duration-300`}>
+                    {processingStep > 2 ? (
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    ) : processingStep === 2 ? (
+                      <div className="h-2 w-2 bg-white rounded-full"></div>
+                    ) : (
+                      <div className="h-2 w-2 bg-slate-400 dark:bg-slate-600 rounded-full"></div>
+                    )}
+                  </div>
                 </div>
                 <div className="ml-4">
                   <p className={`font-medium ${
@@ -1233,19 +1245,6 @@ export default function Home() {
                 Please keep this window open
               </p>
             </div>
-            
-            <style jsx>{`
-              @keyframes pulse-border {
-                0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.1); }
-                70% { box-shadow: 0 0 0 15px rgba(59, 130, 246, 0); }
-                100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
-              }
-              @keyframes pulse {
-                0% { opacity: 0.8; transform: scale(0.95); }
-                50% { opacity: 1; transform: scale(1); }
-                100% { opacity: 0.8; transform: scale(0.95); }
-              }
-            `}</style>
           </div>
         </div>
       )}
