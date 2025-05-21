@@ -120,6 +120,7 @@ export default function Home() {
   const [infoPopupOpen, setInfoPopupOpen] = useState(false);
   const [caseNumber, setCaseNumber] = useState("");
   const [intervieweeName, setIntervieweeName] = useState("");
+  const [processingStep, setProcessingStep] = useState(0); // 0: transcript, 1: summary, 2: assistant
   const dropdownRef = useRef<HTMLDivElement | null>(null);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const infoPopupRef = useRef<HTMLDivElement | null>(null);
@@ -544,6 +545,7 @@ export default function Home() {
     try {
       setSummary("");
       setLoading(true);
+      setProcessingStep(0); // Reset to first step
 
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/summarize/${currentUserId}`,
@@ -985,6 +987,28 @@ export default function Home() {
     }
   }, [selectedResultIndex]);
 
+  // Add effect for simulating progress of processing steps
+  useEffect(() => {
+    if (!loading) {
+      setProcessingStep(0);
+      return;
+    }
+
+    // Simulate progression through steps
+    const step1Delay = setTimeout(() => {
+      setProcessingStep(1);
+    }, 10000); // Move to step 2 after 3 seconds
+    
+    const step2Delay = setTimeout(() => {
+      setProcessingStep(2);
+    }, 25000); // Move to step 3 after 7 seconds total
+    
+    return () => {
+      clearTimeout(step1Delay);
+      clearTimeout(step2Delay);
+    };
+  }, [loading]);
+
   if (initializing) {
     return (
       <div className="h-screen w-screen flex items-center justify-center bg-slate-100 dark:bg-slate-600">
@@ -1065,7 +1089,167 @@ export default function Home() {
   }
 
   return (
-    <div className="h-screen font-sans bg-slate-100 dark:bg-slate-600 py-5 px-6 sm:px-8 lg:px-16">
+    <div className={`h-screen font-sans bg-slate-100 dark:bg-slate-600 py-5 px-6 sm:px-8 lg:px-16 ${loading ? 'pointer-events-none' : ''}`}>
+      {/* Loading Overlay - Improved UX */}
+      {loading && (
+        <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-md z-[100] flex items-center justify-center">
+          <div className={`bg-white dark:bg-slate-800 p-10 rounded-2xl shadow-2xl flex flex-col items-center max-w-md w-full pointer-events-auto border border-slate-200 dark:border-slate-700 ${loading ? "animate-[pulse-border_3s_ease-in-out_infinite]" : ""}`}>
+            {/* Document icon with glow effect */}
+            <div className="mb-8 relative">
+              <div className="absolute inset-0 bg-blue-400/20 dark:bg-blue-500/20 rounded-full blur-xl"></div>
+              <div className="relative bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/40 dark:to-blue-800/20 p-5 rounded-full shadow-inner">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 text-blue-500 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              </div>
+            </div>
+            
+            <h3 className="text-2xl font-bold text-slate-800 dark:text-white mb-6 text-center">
+              Processing Your Interview
+            </h3>
+            
+            {/* Processing stages - improved design */}
+            <div className="w-full space-y-5 mb-8 relative">
+              {/* Progress line connecting steps */}
+              <div className="absolute left-[14px] top-3 w-[2px] h-[calc(100%-24px)] bg-slate-200 dark:bg-slate-700"></div>
+              
+              {/* Active progress line that grows as steps complete */}
+              <div 
+                className="absolute left-[14px] top-3 w-[2px] bg-blue-500 transition-all duration-1000 ease-in-out" 
+                style={{ 
+                  height: `${processingStep === 0 ? '0%' : processingStep === 1 ? '50%' : '100%'}`,
+                }}
+              ></div>
+              
+              {/* Step 1 */}
+              <div className="flex items-center relative z-10">
+                <div className={`flex-shrink-0 h-7 w-7 rounded-full ${
+                  processingStep > 0 
+                    ? 'bg-blue-500 text-white' 
+                    : processingStep === 0 
+                      ? 'bg-blue-500 text-white animate-[pulse_2s_infinite]' 
+                      : 'bg-slate-200 dark:bg-slate-700'
+                } flex items-center justify-center transition-all duration-300`}>
+                  {processingStep > 0 ? (
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  ) : processingStep === 0 ? (
+                    <div className="h-2 w-2 bg-white rounded-full"></div>
+                  ) : (
+                    <div className="h-2 w-2 bg-slate-400 dark:bg-slate-600 rounded-full"></div>
+                  )}
+                </div>
+                <div className="ml-4">
+                  <p className={`font-medium ${
+                    processingStep >= 0 
+                      ? 'text-slate-800 dark:text-white' 
+                      : 'text-slate-400 dark:text-slate-500'
+                  } transition-colors duration-300`}>
+                    Analyzing transcript
+                  </p>
+                  {processingStep === 0 && (
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Processing interview data...</p>
+                  )}
+                </div>
+              </div>
+              
+              {/* Step 2 */}
+              <div className="flex items-center relative z-10">
+                <div className={`flex-shrink-0 h-7 w-7 rounded-full ${
+                  processingStep > 1 
+                    ? 'bg-blue-500 text-white' 
+                    : processingStep === 1 
+                      ? 'bg-blue-500 text-white animate-[pulse_2s_infinite]' 
+                      : 'bg-slate-200 dark:bg-slate-700'
+                } flex items-center justify-center transition-all duration-300`}>
+                  {processingStep > 1 ? (
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  ) : processingStep === 1 ? (
+                    <div className="h-2 w-2 bg-white rounded-full"></div>
+                  ) : (
+                    <div className="h-2 w-2 bg-slate-400 dark:bg-slate-600 rounded-full"></div>
+                  )}
+                </div>
+                <div className="ml-4">
+                  <p className={`font-medium ${
+                    processingStep >= 1 
+                      ? 'text-slate-800 dark:text-white' 
+                      : 'text-slate-400 dark:text-slate-500'
+                  } transition-colors duration-300`}>
+                    Generating summary
+                  </p>
+                  {processingStep === 1 && (
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Identifying key information...</p>
+                  )}
+                </div>
+              </div>
+              
+              {/* Step 3 */}
+              <div className="flex items-center relative z-10">
+                <div className={`flex-shrink-0 h-7 w-7 rounded-full ${
+                  processingStep > 2 
+                    ? 'bg-blue-500 text-white' 
+                    : processingStep === 2 
+                      ? 'bg-blue-500 text-white animate-[pulse_2s_infinite]' 
+                      : 'bg-slate-200 dark:bg-slate-700'
+                } flex items-center justify-center transition-all duration-300`}>
+                  {processingStep > 2 ? (
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  ) : processingStep === 2 ? (
+                    <div className="h-2 w-2 bg-white rounded-full"></div>
+                  ) : (
+                    <div className="h-2 w-2 bg-slate-400 dark:bg-slate-600 rounded-full"></div>
+                  )}
+                </div>
+                <div className="ml-4">
+                  <p className={`font-medium ${
+                    processingStep >= 2 
+                      ? 'text-slate-800 dark:text-white' 
+                      : 'text-slate-400 dark:text-slate-500'
+                  } transition-colors duration-300`}>
+                    Preparing AI assistant
+                  </p>
+                  {processingStep === 2 && (
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Almost done...</p>
+                  )}
+                </div>
+              </div>
+            </div>
+            
+            <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 text-center">
+              <p className="text-slate-700 dark:text-slate-300 text-sm">
+                We're processing your interview data. This typically takes <span className="font-semibold">1-2 minutes</span> depending on content length.
+              </p>
+              
+              <p className="text-xs text-slate-500 dark:text-slate-400 flex items-center justify-center mt-3">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Please keep this window open
+              </p>
+            </div>
+            
+            <style jsx>{`
+              @keyframes pulse-border {
+                0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.1); }
+                70% { box-shadow: 0 0 0 15px rgba(59, 130, 246, 0); }
+                100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+              }
+              @keyframes pulse {
+                0% { opacity: 0.8; transform: scale(0.95); }
+                50% { opacity: 1; transform: scale(1); }
+                100% { opacity: 0.8; transform: scale(0.95); }
+              }
+            `}</style>
+          </div>
+        </div>
+      )}
+      
       <div
         className={`fixed top-0 left-1/2 transform -translate-x-1/2 transition-transform duration-500 ease-in-out z-50 ${subscribed
           ? "translate-y-6 opacity-100"
@@ -1876,6 +2060,7 @@ export default function Home() {
                             )}
                           </div>
 
+                          <div className="relative w-full group">
                           <button
                             onClick={handleSubmit}
                             disabled={loading || !transcriptFile || !recordingFile || !caseNumber || !intervieweeName}
@@ -1885,6 +2070,25 @@ export default function Home() {
                               ? "Generating summary..."
                               : "Generate Summary"}
                           </button>
+                            
+                            {/* Simple tooltip that appears when button is disabled and hovered */}
+                            {(!transcriptFile || !recordingFile || !caseNumber || !intervieweeName) && (
+                              <div className="absolute opacity-0 group-hover:opacity-100 transition-opacity duration-200 bottom-full mb-2 left-0 right-0 mx-auto text-center pointer-events-none">
+                                <div className="bg-slate-700 dark:bg-blue-100 text-white dark:text-slate-800 text-xs rounded-md p-3 shadow-md max-w-xs mx-auto relative">
+                                  <p className="mb-2 font-medium">Please complete the following fields:</p>
+                                  <ul className="text-left space-y-1 text-slate-200 dark:text-slate-700">
+                                    {!caseNumber && <li>• Case number</li>}
+                                    {!intervieweeName && <li>• Interviewee name</li>}
+                                    {!transcriptFile && <li>• Transcript file</li>}
+                                    {!recordingFile && <li>• Recording file</li>}
+                                  </ul>
+                                  
+                                  {/* Simple tooltip arrow with dark mode support */}
+                                  <div className="absolute left-1/2 -bottom-2 transform -translate-x-1/2 w-0 h-0 border-l-8 border-r-8 border-t-8 border-transparent border-t-slate-700 dark:border-t-blue-100"></div>
+                                </div>
+                              </div>
+                            )}
+                          </div>
                         </div>
                       ) : (
                         <div className="flex flex-col gap-5 mt-5 py-1 h-full w-full">
