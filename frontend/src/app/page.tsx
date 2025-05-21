@@ -118,6 +118,8 @@ export default function Home() {
   const [revisionWindow, setRevisionWindow] = useState(false);
   const [revisionRequest, setRevisionRequest] = useState("");
   const [infoPopupOpen, setInfoPopupOpen] = useState(false);
+  const [caseNumber, setCaseNumber] = useState("");
+  const [intervieweeName, setIntervieweeName] = useState("");
   const dropdownRef = useRef<HTMLDivElement | null>(null);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const infoPopupRef = useRef<HTMLDivElement | null>(null);
@@ -512,14 +514,16 @@ export default function Home() {
   };
 
   const handleSubmit = async () => {
-    if (!transcriptFile || !recordingFile) {
-      alert("Please upload both transcript and recording files.");
+    if (!transcriptFile || !recordingFile || !caseNumber || !intervieweeName) {
+      alert("Please fill out all required fields and upload both transcript and recording files.");
       return;
     }
 
     const formData = new FormData();
     formData.append("transcript", transcriptFile);
     formData.append("recording", recordingFile);
+    formData.append("case_number", caseNumber);
+    formData.append("interviewee_name", intervieweeName);
 
     // Add additional context files if any
     additionalContextFiles.forEach(file => {
@@ -621,6 +625,8 @@ export default function Home() {
       alert("Error while streaming summary.");
     } finally {
       setLoading(false);
+      setCaseNumber("");
+      setIntervieweeName("");
     }
   };
 
@@ -1703,6 +1709,32 @@ export default function Home() {
                         <div className="flex justify-center gap-6 flex-wrap">
                           <div className="flex-1 min-w-[220px]">
                             <label className="block text-md font-semibold text-slate-800 dark:text-slate-100 mb-1">
+                              Case Number <span className="text-red-500">*</span>
+                            </label>
+                            <input
+                              type="text"
+                              value={caseNumber}
+                              onChange={(e) => setCaseNumber(e.target.value)}
+                              className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-800 dark:text-white"
+                              placeholder="Enter case number"
+                            />
+                          </div>
+
+                          <div className="flex-1 min-w-[220px]">
+                            <label className="block text-md font-semibold text-slate-800 dark:text-slate-100 mb-1">
+                              Interviewee Name <span className="text-red-500">*</span>
+                            </label>
+                            <input
+                              type="text"
+                              value={intervieweeName}
+                              onChange={(e) => setIntervieweeName(e.target.value)}
+                              className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-800 dark:text-white"
+                              placeholder="Enter interviewee name"
+                            />
+                          </div>
+
+                          <div className="flex-1 min-w-[220px]">
+                            <label className="block text-md font-semibold text-slate-800 dark:text-slate-100 mb-1">
                               Transcript (.docx) <span className="text-red-500">*</span>
                             </label>
                             <div className="flex items-center gap-3">
@@ -1846,7 +1878,7 @@ export default function Home() {
 
                           <button
                             onClick={handleSubmit}
-                            disabled={loading || !transcriptFile || !recordingFile}
+                            disabled={loading || !transcriptFile || !recordingFile || !caseNumber || !intervieweeName}
                             className="w-full py-2 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-bold disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-blue-600 cursor-pointer"
                           >
                             {loading
