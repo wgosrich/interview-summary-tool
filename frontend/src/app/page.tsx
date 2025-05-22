@@ -1858,29 +1858,30 @@ export default function Home() {
                 </div>
               )}
             </div>
-            <div className="flex border-b border-slate-300 dark:border-slate-600">
-              <button
-                onClick={() => setTab("newSummary")}
-                className={`flex-1 px-4 py-2 font-semibold cursor-pointer ${tab === "newSummary"
-                  ? "border-b-2 border-blue-600 text-blue-600"
-                  : "text-slate-600 dark:text-slate-100"
-                  }`}
-              >
-                Generate New Summary
-              </button>
-              <button
-                onClick={() => {
-                  setTab("existingSummary");
-                  fetchAllSessions(); // make sure dropdown will be up to date
-                }}
-                className={`flex-1 px-4 py-2 font-semibold cursor-pointer ${tab === "existingSummary"
-                  ? "border-b-2 border-blue-600 text-blue-600"
-                  : "text-slate-600 dark:text-slate-100"
-                  }`}
-              >
-                Add Existing Summary
-              </button>
-            </div>
+            {!summary && (
+              <div className="flex border-b border-slate-300 dark:border-slate-600">
+                <button
+                  onClick={() => setTab("newSummary")}
+                  className={`flex-1 px-4 py-2 font-semibold cursor-pointer ${tab === "newSummary"
+                    ? "border-b-2 border-blue-600 text-blue-600"
+                    : "text-slate-600 dark:text-slate-100"
+                    }`}
+                >
+                  Generate New Summary
+                </button>
+                <button
+                  onClick={() => {
+                    setTab("existingSummary");
+                    fetchAllSessions(); // make sure dropdown will be up to date
+                  }}
+                  className={`flex-1 px-4 py-2 font-semibold cursor-pointer ${tab === "existingSummary"
+                    ? "border-b-2 border-blue-600 text-blue-600"
+                    : "text-slate-600 dark:text-slate-100"
+                    }`}
+                >
+                  Add Existing Summary
+                </button>
+              </div>)}
             <div
               className="overflow-y-auto flex-1"
               style={{ scrollbarWidth: "thin", msOverflowStyle: "auto" }}
