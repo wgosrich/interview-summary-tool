@@ -572,7 +572,7 @@ export default function Home() {
         const { value, done: readerDone } = await reader.read();
         done = readerDone;
         const chunk = decoder.decode(value, { stream: true });
-        
+
         // Set loading to false as soon as the first chunk arrives
         if (isFirstChunk && chunk) {
           setLoading(false);
@@ -1006,11 +1006,11 @@ export default function Home() {
     const step1Delay = setTimeout(() => {
       setProcessingStep(1);
     }, 10000); // Move to step 2 after 3 seconds
-    
+
     const step2Delay = setTimeout(() => {
       setProcessingStep(2);
     }, 25000); // Move to step 3 after 7 seconds total
-    
+
     return () => {
       clearTimeout(step1Delay);
       clearTimeout(step2Delay);
@@ -1111,36 +1111,35 @@ export default function Home() {
                 </svg>
               </div>
             </div>
-            
+
             <h3 className="text-2xl font-bold text-slate-800 dark:text-white mb-6 text-center">
               Processing Your Interview
             </h3>
-            
+
             {/* Processing stages - improved design */}
             <div className="w-full space-y-5 mb-8 relative">
               {/* Progress line connecting steps */}
               <div className="absolute left-[14px] top-3 w-[2px] h-[calc(100%-24px)] bg-slate-200 dark:bg-slate-700 z-0"></div>
-              
+
               {/* Active progress line that grows as steps complete */}
-              <div 
-                className="absolute left-[14px] top-3 w-[2px] bg-blue-500 transition-all duration-1000 ease-in-out z-0" 
-                style={{ 
+              <div
+                className="absolute left-[14px] top-3 w-[2px] bg-blue-500 transition-all duration-1000 ease-in-out z-0"
+                style={{
                   height: `${processingStep === 0 ? '0%' : processingStep === 1 ? '50%' : '100%'}`,
                 }}
               ></div>
-              
+
               {/* Step 1 */}
               <div className="flex items-center relative z-10">
                 <div className="relative flex-shrink-0 h-7 w-7 z-20">
                   {/* Add a solid background circle that will cover the line */}
                   <div className="absolute inset-0 rounded-full bg-white dark:bg-slate-800"></div>
-                  <div className={`absolute inset-0 rounded-full ${
-                    processingStep > 0 
-                      ? 'bg-blue-500 text-white' 
-                      : processingStep === 0 
-                        ? 'bg-blue-500 text-white animate-[pulse_2s_infinite]' 
-                        : 'bg-slate-200 dark:bg-slate-700'
-                  } flex items-center justify-center transition-all duration-300`}>
+                  <div className={`absolute inset-0 rounded-full ${processingStep > 0
+                    ? 'bg-blue-500 text-white'
+                    : processingStep === 0
+                      ? 'bg-blue-500 text-white animate-[pulse_2s_infinite]'
+                      : 'bg-slate-200 dark:bg-slate-700'
+                    } flex items-center justify-center transition-all duration-300`}>
                     {processingStep > 0 ? (
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -1153,11 +1152,10 @@ export default function Home() {
                   </div>
                 </div>
                 <div className="ml-4">
-                  <p className={`font-medium ${
-                    processingStep >= 0 
-                      ? 'text-slate-800 dark:text-white' 
-                      : 'text-slate-400 dark:text-slate-500'
-                  } transition-colors duration-300`}>
+                  <p className={`font-medium ${processingStep >= 0
+                    ? 'text-slate-800 dark:text-white'
+                    : 'text-slate-400 dark:text-slate-500'
+                    } transition-colors duration-300`}>
                     Analyzing transcript
                   </p>
                   {processingStep === 0 && (
@@ -1165,19 +1163,18 @@ export default function Home() {
                   )}
                 </div>
               </div>
-              
+
               {/* Step 2 */}
               <div className="flex items-center relative z-10">
                 <div className="relative flex-shrink-0 h-7 w-7 z-20">
                   {/* Add a solid background circle that will cover the line */}
                   <div className="absolute inset-0 rounded-full bg-white dark:bg-slate-800"></div>
-                  <div className={`absolute inset-0 rounded-full ${
-                    processingStep > 1 
-                      ? 'bg-blue-500 text-white' 
-                      : processingStep === 1 
-                        ? 'bg-blue-500 text-white animate-[pulse_2s_infinite]' 
-                        : 'bg-slate-200 dark:bg-slate-700'
-                  } flex items-center justify-center transition-all duration-300`}>
+                  <div className={`absolute inset-0 rounded-full ${processingStep > 1
+                    ? 'bg-blue-500 text-white'
+                    : processingStep === 1
+                      ? 'bg-blue-500 text-white animate-[pulse_2s_infinite]'
+                      : 'bg-slate-200 dark:bg-slate-700'
+                    } flex items-center justify-center transition-all duration-300`}>
                     {processingStep > 1 ? (
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -1190,11 +1187,10 @@ export default function Home() {
                   </div>
                 </div>
                 <div className="ml-4">
-                  <p className={`font-medium ${
-                    processingStep >= 1 
-                      ? 'text-slate-800 dark:text-white' 
-                      : 'text-slate-400 dark:text-slate-500'
-                  } transition-colors duration-300`}>
+                  <p className={`font-medium ${processingStep >= 1
+                    ? 'text-slate-800 dark:text-white'
+                    : 'text-slate-400 dark:text-slate-500'
+                    } transition-colors duration-300`}>
                     Generating summary
                   </p>
                   {processingStep === 1 && (
@@ -1202,19 +1198,18 @@ export default function Home() {
                   )}
                 </div>
               </div>
-              
+
               {/* Step 3 */}
               <div className="flex items-center relative z-10">
                 <div className="relative flex-shrink-0 h-7 w-7 z-20">
                   {/* Add a solid background circle that will cover the line */}
                   <div className="absolute inset-0 rounded-full bg-white dark:bg-slate-800"></div>
-                  <div className={`absolute inset-0 rounded-full ${
-                    processingStep > 2 
-                      ? 'bg-blue-500 text-white' 
-                      : processingStep === 2 
-                        ? 'bg-blue-500 text-white animate-[pulse_2s_infinite]' 
-                        : 'bg-slate-200 dark:bg-slate-700'
-                  } flex items-center justify-center transition-all duration-300`}>
+                  <div className={`absolute inset-0 rounded-full ${processingStep > 2
+                    ? 'bg-blue-500 text-white'
+                    : processingStep === 2
+                      ? 'bg-blue-500 text-white animate-[pulse_2s_infinite]'
+                      : 'bg-slate-200 dark:bg-slate-700'
+                    } flex items-center justify-center transition-all duration-300`}>
                     {processingStep > 2 ? (
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -1227,11 +1222,10 @@ export default function Home() {
                   </div>
                 </div>
                 <div className="ml-4">
-                  <p className={`font-medium ${
-                    processingStep >= 2 
-                      ? 'text-slate-800 dark:text-white' 
-                      : 'text-slate-400 dark:text-slate-500'
-                  } transition-colors duration-300`}>
+                  <p className={`font-medium ${processingStep >= 2
+                    ? 'text-slate-800 dark:text-white'
+                    : 'text-slate-400 dark:text-slate-500'
+                    } transition-colors duration-300`}>
                     Preparing AI assistant
                   </p>
                   {processingStep === 2 && (
@@ -1240,12 +1234,12 @@ export default function Home() {
                 </div>
               </div>
             </div>
-            
+
             <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 text-center">
               <p className="text-slate-700 dark:text-slate-300 text-sm">
                 We're processing your interview data. This typically takes <span className="font-semibold">1-2 minutes</span> depending on content length.
               </p>
-              
+
               <p className="text-xs text-slate-500 dark:text-slate-400 flex items-center justify-center mt-3">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -1256,7 +1250,7 @@ export default function Home() {
           </div>
         </div>
       )}
-      
+
       <div
         className={`fixed top-0 left-1/2 transform -translate-x-1/2 transition-transform duration-500 ease-in-out z-50 ${subscribed
           ? "translate-y-6 opacity-100"
@@ -1758,12 +1752,11 @@ export default function Home() {
                     <br />
                     Investigation & Review
                   </h1>
-                  <div className="text-left max-w-2xl mx-auto text-slate-600 dark:text-white text-lg space-y-4">
+                  <div className="text-left max-w-2xl mx-auto text-slate-600 dark:text-white text-lg space-y-2">
                     <p>
-                      <strong>FAIR</strong> makes it easy to get the most out of
-                      your interviews by offering concise but thorough summaries
-                      alongside an AI assistant to identify key case details and
-                      explore them further.
+                      <strong>FAIR</strong> simplifies the process of reviewing
+                      and summarizing interviews, making it easier than ever to
+                      get the most out of your interviews.
                     </p>
                     <ul className="list-disc list-inside space-y-1">
                       <li>
@@ -1865,369 +1858,365 @@ export default function Home() {
                 </div>
               )}
             </div>
+            <div className="flex border-b border-slate-300 dark:border-slate-600">
+              <button
+                onClick={() => setTab("newSummary")}
+                className={`flex-1 px-4 py-2 font-semibold cursor-pointer ${tab === "newSummary"
+                  ? "border-b-2 border-blue-600 text-blue-600"
+                  : "text-slate-600 dark:text-slate-100"
+                  }`}
+              >
+                Generate New Summary
+              </button>
+              <button
+                onClick={() => {
+                  setTab("existingSummary");
+                  fetchAllSessions(); // make sure dropdown will be up to date
+                }}
+                className={`flex-1 px-4 py-2 font-semibold cursor-pointer ${tab === "existingSummary"
+                  ? "border-b-2 border-blue-600 text-blue-600"
+                  : "text-slate-600 dark:text-slate-100"
+                  }`}
+              >
+                Add Existing Summary
+              </button>
+            </div>
             <div
               className="overflow-y-auto flex-1"
               style={{ scrollbarWidth: "thin", msOverflowStyle: "auto" }}
             >
               {!summary && (
-                <>
-                  <div className="">
-                    <div className="flex border-b border-slate-300 dark:border-slate-600">
-                      <button
-                        onClick={() => setTab("newSummary")}
-                        className={`flex-1 px-4 py-2 font-semibold cursor-pointer ${tab === "newSummary"
-                          ? "border-b-2 border-blue-600 text-blue-600"
-                          : "text-slate-600 dark:text-slate-100"
-                          }`}
-                      >
-                        Generate New Summary
-                      </button>
-                      <button
-                        onClick={() => {
-                          setTab("existingSummary");
-                          fetchAllSessions(); // make sure dropdown will be up to date
-                        }}
-                        className={`flex-1 px-4 py-2 font-semibold cursor-pointer ${tab === "existingSummary"
-                          ? "border-b-2 border-blue-600 text-blue-600"
-                          : "text-slate-600 dark:text-slate-100"
-                          }`}
-                      >
-                        Add Existing Summary
-                      </button>
-                    </div>
-                    <div className="mt-2 bg-slate-100 dark:bg-slate-700 p-4 rounded-lg text-slate-800 dark:text-slate-100 flex-1 overflow-y-auto">
-                      {tab === "newSummary" ? (
-                        <div className="flex justify-center gap-6 flex-wrap">
-                          <div className="flex-1 min-w-[220px]">
-                            <label className="block text-md font-semibold text-slate-800 dark:text-slate-100 mb-1">
-                              Case Number <span className="text-red-500">*</span>
-                            </label>
-                            <input
-                              type="text"
-                              value={caseNumber}
-                              onChange={(e) => setCaseNumber(e.target.value)}
-                              className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-800 dark:text-white"
-                              placeholder="Enter case number"
-                            />
-                          </div>
+                <div className="mt-2 bg-slate-100 dark:bg-slate-700 p-4 rounded-lg text-slate-800 dark:text-slate-100 flex-1 overflow-y-auto">
+                  {tab === "newSummary" ? (
+                    <div className="flex justify-center gap-6 flex-wrap">
+                      <div className="flex-1 min-w-[220px]">
+                        <label className="block text-md font-semibold text-slate-800 dark:text-slate-100 mb-1">
+                          Case Number <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          value={caseNumber}
+                          onChange={(e) => setCaseNumber(e.target.value)}
+                          className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-800 dark:text-white"
+                          placeholder="Enter case number"
+                        />
+                      </div>
 
-                          <div className="flex-1 min-w-[220px]">
-                            <label className="block text-md font-semibold text-slate-800 dark:text-slate-100 mb-1">
-                              Interviewee Name <span className="text-red-500">*</span>
-                            </label>
-                            <input
-                              type="text"
-                              value={intervieweeName}
-                              onChange={(e) => setIntervieweeName(e.target.value)}
-                              className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-800 dark:text-white"
-                              placeholder="Enter interviewee name"
-                            />
-                          </div>
+                      <div className="flex-1 min-w-[220px]">
+                        <label className="block text-md font-semibold text-slate-800 dark:text-slate-100 mb-1">
+                          Interviewee Name <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          value={intervieweeName}
+                          onChange={(e) => setIntervieweeName(e.target.value)}
+                          className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-800 dark:text-white"
+                          placeholder="Enter interviewee name"
+                        />
+                      </div>
 
-                          <div className="flex-1 min-w-[220px]">
-                            <label className="block text-md font-semibold text-slate-800 dark:text-slate-100 mb-1">
-                              Transcript (.docx) <span className="text-red-500">*</span>
-                            </label>
-                            <div className="flex items-center gap-3">
-                              <input
-                                type="file"
-                                accept=".docx"
-                                id="transcriptUpload"
-                                className="hidden"
-                                onChange={(e) =>
-                                  setTranscriptFile(e.target.files?.[0] || null)
-                                }
-                              />
-                              <label
-                                htmlFor="transcriptUpload"
-                                className="cursor-pointer bg-blue-100 text-blue-600 hover:bg-blue-200 font-bold py-2 px-4 rounded-lg"
-                              >
-                                Choose File
-                              </label>
-                              <span className="text-slate-800 dark:text-slate-100 text-sm font-light">
-                                {transcriptFile
-                                  ? transcriptFile.name
-                                  : "No file chosen"}
-                              </span>
-                            </div>
-                          </div>
-
-                          <div className="flex-1 min-w-[220px]">
-                            <label className="block text-md font-semibold text-slate-800 dark:text-slate-100 mb-1">
-                              Recording (.mp4) <span className="text-red-500">*</span>
-                            </label>
-                            <div className="flex items-center gap-3">
-                              <input
-                                type="file"
-                                accept=".mp4"
-                                id="recordingUpload"
-                                className="hidden"
-                                onChange={(e) =>
-                                  setRecordingFile(e.target.files?.[0] || null)
-                                }
-                              />
-                              <label
-                                htmlFor="recordingUpload"
-                                className="cursor-pointer bg-blue-100 text-blue-600 hover:bg-blue-200 font-bold py-2 px-4 rounded-lg"
-                              >
-                                Choose File
-                              </label>
-                              <span className="text-slate-800 dark:text-slate-100 text-sm font-light">
-                                {recordingFile
-                                  ? recordingFile.name
-                                  : "No file chosen"}
-                              </span>
-                            </div>
-                          </div>
-
-                          <div className="flex-1 min-w-[220px]">
-                            <label className="block text-md font-semibold text-slate-800 dark:text-slate-100 mb-1">
-                              Additional Context (.pdf) - Optional
-                            </label>
-                            <div className="flex gap-2 mb-2">
-                              <div
-                                className="border-2 border-dashed border-blue-300 dark:border-blue-600 rounded-lg p-2 text-center cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 transition flex-1"
-                                onClick={() => document.getElementById("contextUpload")?.click()}
-                                onDragOver={(e) => {
-                                  e.preventDefault();
-                                  e.stopPropagation();
-                                }}
-                                onDrop={(e) => {
-                                  e.preventDefault();
-                                  e.stopPropagation();
-                                  const files = e.dataTransfer.files;
-                                  if (files && files.length > 0) {
-                                    const pdfFiles = Array.from(files).filter(file => file.name.toLowerCase().endsWith('.pdf'));
-                                    if (pdfFiles.length > 0) {
-                                      setAdditionalContextFiles(prev => [...prev, ...pdfFiles]);
-                                    }
-                                  }
-                                }}
-                              >
-                                <input
-                                  type="file"
-                                  accept=".pdf"
-                                  id="contextUpload"
-                                  className="hidden"
-                                  onChange={(e) => {
-                                    const files = e.target.files;
-                                    if (files && files.length > 0) {
-                                      const newFile = files[0];
-                                      setAdditionalContextFiles(prev => [...prev, newFile]);
-                                      // Reset the input so the same file can be selected again
-                                      e.target.value = '';
-                                    }
-                                  }}
-                                />
-                                <div className="flex flex-col items-center justify-center text-blue-600 dark:text-blue-400">
-                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                                  </svg>
-                                  <p className="text-sm">Drag & drop PDF files here or click to browse</p>
-                                </div>
-                              </div>
-
-                              <button
-                                onClick={() => setTextContextPopupOpen(true)}
-                                className="bg-blue-100 text-blue-600 hover:bg-blue-200 font-bold py-2 px-4 rounded-lg flex items-center cursor-pointer"
-                                title="Add text context"
-                              >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                </svg>
-                              </button>
-                            </div>
-
-                            {additionalContextFiles.length > 0 && (
-                              <div className="mt-2 space-y-2 max-h-40 overflow-y-auto p-1 bg-slate-50 dark:bg-slate-700 rounded-lg">
-                                {additionalContextFiles.map((file, index) => (
-                                  <div key={index} className="flex items-center justify-between p-2 bg-white dark:bg-slate-600 rounded shadow-sm">
-                                    <div className="flex items-center">
-                                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                                      </svg>
-                                      <span className="text-xs truncate max-w-[150px]" title={file?.name || ""}>
-                                        {file?.name || "Unknown file"}
-                                      </span>
-                                    </div>
-                                    <button
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setAdditionalContextFiles(prev => prev.filter((_, i) => i !== index));
-                                      }}
-                                      className="text-gray-500 hover:text-red-600 dark:text-gray-300 dark:hover:text-red-400"
-                                    >
-                                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                      </svg>
-                                    </button>
-                                  </div>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-
-                          <div className="relative w-full group">
-                          <button
-                            onClick={handleSubmit}
-                            disabled={loading || !transcriptFile || !recordingFile || !caseNumber || !intervieweeName}
-                            className="w-full py-2 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-bold disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-blue-600 cursor-pointer"
+                      <div className="flex-1 min-w-[220px]">
+                        <label className="block text-md font-semibold text-slate-800 dark:text-slate-100 mb-1">
+                          Transcript (.docx) <span className="text-red-500">*</span>
+                        </label>
+                        <div className="flex items-center gap-3">
+                          <input
+                            type="file"
+                            accept=".docx"
+                            id="transcriptUpload"
+                            className="hidden"
+                            onChange={(e) =>
+                              setTranscriptFile(e.target.files?.[0] || null)
+                            }
+                          />
+                          <label
+                            htmlFor="transcriptUpload"
+                            className="cursor-pointer bg-blue-100 text-blue-600 hover:bg-blue-200 font-bold py-2 px-4 rounded-lg"
                           >
-                            {loading
-                              ? "Generating summary..."
-                              : "Generate Summary"}
-                          </button>
-                            
-                            {/* Simple tooltip that appears when button is disabled and hovered */}
-                            {(!transcriptFile || !recordingFile || !caseNumber || !intervieweeName) && (
-                              <div className="absolute opacity-0 group-hover:opacity-100 transition-opacity duration-200 bottom-full mb-2 left-0 right-0 mx-auto text-center pointer-events-none">
-                                <div className="bg-slate-700 dark:bg-blue-100 text-white dark:text-slate-800 text-xs rounded-md p-3 shadow-md max-w-xs mx-auto relative">
-                                  <p className="mb-2 font-medium">Please complete the following fields:</p>
-                                  <ul className="text-left space-y-1 text-slate-200 dark:text-slate-700">
-                                    {!caseNumber && <li>• Case number</li>}
-                                    {!intervieweeName && <li>• Interviewee name</li>}
-                                    {!transcriptFile && <li>• Transcript file</li>}
-                                    {!recordingFile && <li>• Recording file</li>}
-                                  </ul>
-                                  
-                                  {/* Simple tooltip arrow with dark mode support */}
-                                  <div className="absolute left-1/2 -bottom-2 transform -translate-x-1/2 w-0 h-0 border-l-8 border-r-8 border-t-8 border-transparent border-t-slate-700 dark:border-t-blue-100"></div>
-                                </div>
-                              </div>
-                            )}
-                          </div>
+                            Choose File
+                          </label>
+                          <span className="text-slate-800 dark:text-slate-100 text-sm font-light">
+                            {transcriptFile
+                              ? transcriptFile.name
+                              : "No file chosen"}
+                          </span>
                         </div>
-                      ) : (
-                        <div className="flex flex-col gap-5 mt-5 py-1 h-full w-full">
-                          <div className="relative" ref={dropdownRef} style={{ position: 'static' }}>
-                            <div
-                              onClick={() => setDropdownOpen(!dropdownOpen)}
-                              className="px-2 py-1 rounded-lg border border-slate-300 dark:border-slate-600 text-sm bg-white dark:bg-slate-700 text-slate-800 dark:text-white cursor-pointer flex justify-between items-center relative"
-                            >
-                              <input
-                                type="text"
-                                placeholder="Search or select a session"
-                                value={searchSessionInput}
-                                onChange={(e) => {
-                                  setSearchSessionInput(e.target.value);
-                                  if (!dropdownOpen) setDropdownOpen(true);
-                                }}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setDropdownOpen(true);
-                                }}
-                                className="bg-transparent border-none outline-none w-full text-slate-800 dark:text-white"
-                              />
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                                className="h-4 w-4"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d={dropdownOpen ? "M5 15l7-7 7 7" : "M19 9l-7 7-7-7"}
-                                />
-                              </svg>
-                            </div>
+                      </div>
 
-                            {dropdownOpen && (
-                              <div
-                                className="fixed mt-1 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg shadow-lg max-h-48 overflow-y-auto"
-                                style={{
-                                  scrollbarWidth: "thin",
-                                  msOverflowStyle: "auto",
-                                  overscrollBehavior: "contain",
-                                  zIndex: 9999,
-                                  top: `${dropdownPosition.top}px`,
-                                  left: `${dropdownPosition.left}px`,
-                                  width: dropdownRef.current ? dropdownRef.current.offsetWidth + 'px' : '100%'
-                                }}
-                              >
-                                {allSessions
-                                  .filter(
-                                    (session) =>
-                                      !sessions.some(
-                                        (userSession) => userSession.id === session.id
-                                      ) &&
-                                      session.name.toLowerCase().includes(searchSessionInput.toLowerCase())
-                                  )
-                                  .map((session) => (
-                                    <div
-                                      key={session.id}
-                                      className="px-2 py-1 hover:bg-slate-100 dark:hover:bg-slate-600 cursor-pointer text-slate-800 dark:text-white"
-                                      onClick={() => {
-                                        setSubscribeSessionId(session.id.toString());
-                                        setSearchSessionInput(session.name);
-                                        setDropdownOpen(false);
-                                      }}
-                                    >
-                                      {session.name}
-                                    </div>
-                                  ))}
-                                {allSessions.filter(
-                                  (session) =>
-                                    !sessions.some(
-                                      (userSession) => userSession.id === session.id
-                                    ) &&
-                                    session.name.toLowerCase().includes(searchSessionInput.toLowerCase())
-                                ).length === 0 && (
-                                    <div className="px-2 py-1 text-slate-500 dark:text-slate-400">
-                                      No matching sessions
-                                    </div>
-                                  )}
-                              </div>
-                            )}
-                          </div>
+                      <div className="flex-1 min-w-[220px]">
+                        <label className="block text-md font-semibold text-slate-800 dark:text-slate-100 mb-1">
+                          Recording (.mp4) <span className="text-red-500">*</span>
+                        </label>
+                        <div className="flex items-center gap-3">
+                          <input
+                            type="file"
+                            accept=".mp4"
+                            id="recordingUpload"
+                            className="hidden"
+                            onChange={(e) =>
+                              setRecordingFile(e.target.files?.[0] || null)
+                            }
+                          />
+                          <label
+                            htmlFor="recordingUpload"
+                            className="cursor-pointer bg-blue-100 text-blue-600 hover:bg-blue-200 font-bold py-2 px-4 rounded-lg"
+                          >
+                            Choose File
+                          </label>
+                          <span className="text-slate-800 dark:text-slate-100 text-sm font-light">
+                            {recordingFile
+                              ? recordingFile.name
+                              : "No file chosen"}
+                          </span>
+                        </div>
+                      </div>
 
-                          <button
-                            onClick={async () => {
-                              if (!subscribeSessionId || !currentUserId) return;
-                              if (Number(subscribeSessionId) <= 0) {
-                                alert("Invalid session ID.");
-                                return;
-                              }
-
-                              if (sessions.some((s) => s.id === Number(subscribeSessionId))) {
-                                alert("You are already subscribed to this session.");
-                                return;
-                              }
-                              try {
-                                const response = await fetch(
-                                  `${process.env.NEXT_PUBLIC_API_URL}/subscribe/${currentUserId}/${Number(subscribeSessionId)}`,
-                                  {
-                                    method: "POST",
-                                  }
-                                );
-                                if (response.ok) {
-                                  fetchSessions();
-                                } else {
-                                  console.error("Failed to subscribe to session");
+                      <div className="flex-1 min-w-[220px]">
+                        <label className="block text-md font-semibold text-slate-800 dark:text-slate-100 mb-1">
+                          Additional Context (.pdf) - Optional
+                        </label>
+                        <div className="flex gap-2 mb-2">
+                          <div
+                            className="border-2 border-dashed border-blue-300 dark:border-blue-600 rounded-lg p-2 text-center cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 transition flex-1"
+                            onClick={() => document.getElementById("contextUpload")?.click()}
+                            onDragOver={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                            }}
+                            onDrop={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              const files = e.dataTransfer.files;
+                              if (files && files.length > 0) {
+                                const pdfFiles = Array.from(files).filter(file => file.name.toLowerCase().endsWith('.pdf'));
+                                if (pdfFiles.length > 0) {
+                                  setAdditionalContextFiles(prev => [...prev, ...pdfFiles]);
                                 }
-                              } catch (error) {
-                                console.error("Error subscribing to session:", error);
-                              } finally {
-                                setSubscribeSessionId("");
-                                setSearchSessionInput("");
-                                setSubscribed(true);
-                                setTimeout(() => {
-                                  setSubscribed(false);
-                                }, 3000);
                               }
                             }}
-                            className="w-full px-3 py-2 bg-blue-600 text-white text-base font-bold rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-blue-600 cursor-pointer"
-                            disabled={!subscribeSessionId}
                           >
-                            Subscribe
+                            <input
+                              type="file"
+                              accept=".pdf"
+                              id="contextUpload"
+                              className="hidden"
+                              onChange={(e) => {
+                                const files = e.target.files;
+                                if (files && files.length > 0) {
+                                  const newFile = files[0];
+                                  setAdditionalContextFiles(prev => [...prev, newFile]);
+                                  // Reset the input so the same file can be selected again
+                                  e.target.value = '';
+                                }
+                              }}
+                            />
+                            <div className="flex flex-col items-center justify-center text-blue-600 dark:text-blue-400">
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                              </svg>
+                              <p className="text-sm">Drag & drop PDF files here or click to browse</p>
+                            </div>
+                          </div>
+
+                          <button
+                            onClick={() => setTextContextPopupOpen(true)}
+                            className="bg-blue-100 text-blue-600 hover:bg-blue-200 font-bold py-2 px-4 rounded-lg flex items-center cursor-pointer"
+                            title="Add text context"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
                           </button>
                         </div>
-                      )}
+
+                        {additionalContextFiles.length > 0 && (
+                          <div className="mt-2 space-y-2 max-h-40 overflow-y-auto p-1 bg-slate-50 dark:bg-slate-700 rounded-lg">
+                            {additionalContextFiles.map((file, index) => (
+                              <div key={index} className="flex items-center justify-between p-2 bg-white dark:bg-slate-600 rounded shadow-sm">
+                                <div className="flex items-center">
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                  </svg>
+                                  <span className="text-xs truncate max-w-[150px]" title={file?.name || ""}>
+                                    {file?.name || "Unknown file"}
+                                  </span>
+                                </div>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setAdditionalContextFiles(prev => prev.filter((_, i) => i !== index));
+                                  }}
+                                  className="text-gray-500 hover:text-red-600 dark:text-gray-300 dark:hover:text-red-400"
+                                >
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                  </svg>
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="relative w-full group">
+                        <button
+                          onClick={handleSubmit}
+                          disabled={loading || !transcriptFile || !recordingFile || !caseNumber || !intervieweeName}
+                          className="w-full py-2 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-bold disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-blue-600 cursor-pointer"
+                        >
+                          {loading
+                            ? "Generating summary..."
+                            : "Generate Summary"}
+                        </button>
+
+                        {/* Simple tooltip that appears when button is disabled and hovered */}
+                        {(!transcriptFile || !recordingFile || !caseNumber || !intervieweeName) && (
+                          <div className="absolute opacity-0 group-hover:opacity-100 transition-opacity duration-200 bottom-full mb-2 left-0 right-0 mx-auto text-center pointer-events-none">
+                            <div className="bg-slate-700 dark:bg-blue-100 text-white dark:text-slate-800 text-xs rounded-md p-3 shadow-md max-w-xs mx-auto relative">
+                              <p className="mb-2 font-medium">Please complete the following fields:</p>
+                              <ul className="text-left space-y-1 text-slate-200 dark:text-slate-700">
+                                {!caseNumber && <li>• Case number</li>}
+                                {!intervieweeName && <li>• Interviewee name</li>}
+                                {!transcriptFile && <li>• Transcript file</li>}
+                                {!recordingFile && <li>• Recording file</li>}
+                              </ul>
+
+                              {/* Simple tooltip arrow with dark mode support */}
+                              <div className="absolute left-1/2 -bottom-2 transform -translate-x-1/2 w-0 h-0 border-l-8 border-r-8 border-t-8 border-transparent border-t-slate-700 dark:border-t-blue-100"></div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                </>
+                  ) : (
+                    <div className="flex flex-col gap-5 mt-5 py-1 h-full w-full">
+                      <div className="relative" ref={dropdownRef} style={{ position: 'static' }}>
+                        <div
+                          onClick={() => setDropdownOpen(!dropdownOpen)}
+                          className="px-2 py-1 rounded-lg border border-slate-300 dark:border-slate-600 text-sm bg-white dark:bg-slate-700 text-slate-800 dark:text-white cursor-pointer flex justify-between items-center relative"
+                        >
+                          <input
+                            type="text"
+                            placeholder="Search or select a session"
+                            value={searchSessionInput}
+                            onChange={(e) => {
+                              setSearchSessionInput(e.target.value);
+                              if (!dropdownOpen) setDropdownOpen(true);
+                            }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setDropdownOpen(true);
+                            }}
+                            className="bg-transparent border-none outline-none w-full text-slate-800 dark:text-white"
+                          />
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            className="h-4 w-4"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d={dropdownOpen ? "M5 15l7-7 7 7" : "M19 9l-7 7-7-7"}
+                            />
+                          </svg>
+                        </div>
+
+                        {dropdownOpen && (
+                          <div
+                            className="fixed mt-1 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg shadow-lg max-h-48 overflow-y-auto"
+                            style={{
+                              scrollbarWidth: "thin",
+                              msOverflowStyle: "auto",
+                              overscrollBehavior: "contain",
+                              zIndex: 9999,
+                              top: `${dropdownPosition.top}px`,
+                              left: `${dropdownPosition.left}px`,
+                              width: dropdownRef.current ? dropdownRef.current.offsetWidth + 'px' : '100%'
+                            }}
+                          >
+                            {allSessions
+                              .filter(
+                                (session) =>
+                                  !sessions.some(
+                                    (userSession) => userSession.id === session.id
+                                  ) &&
+                                  session.name.toLowerCase().includes(searchSessionInput.toLowerCase())
+                              )
+                              .map((session) => (
+                                <div
+                                  key={session.id}
+                                  className="px-2 py-1 hover:bg-slate-100 dark:hover:bg-slate-600 cursor-pointer text-slate-800 dark:text-white"
+                                  onClick={() => {
+                                    setSubscribeSessionId(session.id.toString());
+                                    setSearchSessionInput(session.name);
+                                    setDropdownOpen(false);
+                                  }}
+                                >
+                                  {session.name}
+                                </div>
+                              ))}
+                            {allSessions.filter(
+                              (session) =>
+                                !sessions.some(
+                                  (userSession) => userSession.id === session.id
+                                ) &&
+                                session.name.toLowerCase().includes(searchSessionInput.toLowerCase())
+                            ).length === 0 && (
+                                <div className="px-2 py-1 text-slate-500 dark:text-slate-400">
+                                  No matching sessions
+                                </div>
+                              )}
+                          </div>
+                        )}
+                      </div>
+
+                      <button
+                        onClick={async () => {
+                          if (!subscribeSessionId || !currentUserId) return;
+                          if (Number(subscribeSessionId) <= 0) {
+                            alert("Invalid session ID.");
+                            return;
+                          }
+
+                          if (sessions.some((s) => s.id === Number(subscribeSessionId))) {
+                            alert("You are already subscribed to this session.");
+                            return;
+                          }
+                          try {
+                            const response = await fetch(
+                              `${process.env.NEXT_PUBLIC_API_URL}/subscribe/${currentUserId}/${Number(subscribeSessionId)}`,
+                              {
+                                method: "POST",
+                              }
+                            );
+                            if (response.ok) {
+                              fetchSessions();
+                            } else {
+                              console.error("Failed to subscribe to session");
+                            }
+                          } catch (error) {
+                            console.error("Error subscribing to session:", error);
+                          } finally {
+                            setSubscribeSessionId("");
+                            setSearchSessionInput("");
+                            setSubscribed(true);
+                            setTimeout(() => {
+                              setSubscribed(false);
+                            }, 3000);
+                          }
+                        }}
+                        className="w-full px-3 py-2 bg-blue-600 text-white text-base font-bold rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-blue-600 cursor-pointer"
+                        disabled={!subscribeSessionId}
+                      >
+                        Subscribe
+                      </button>
+                    </div>
+                  )}
+                </div>
               )}
               {summary && (
                 <div
