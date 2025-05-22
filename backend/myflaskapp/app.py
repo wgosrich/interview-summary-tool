@@ -159,7 +159,9 @@ def subscribe(user_id, session_id):
     if not session:
         return jsonify({"error": "Session not found"}), 404
 
-    user.sessions.append(session)
+    if session not in user.sessions:
+        user.sessions.append(session)
+    
     db.session.commit()
 
     return jsonify({"message": "Subscribed to session"}), 200
@@ -230,7 +232,7 @@ def summarize(user_id):
 
             # Associate the session with the user who created it
             user = db.session.get(UserModel, user_id)
-            if user:
+            if user and new_session not in user.sessions:
                 user.sessions.append(new_session)
 
             db.session.commit()

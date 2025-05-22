@@ -146,6 +146,7 @@ export default function Home() {
   const searchResultsRef = useRef<HTMLDivElement | null>(null);
   const [loginLoading, setLoginLoading] = useState(false);
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
+  const [revisionLoading, setRevisionLoading] = useState(false);
 
   // Create a debounced version of the search function with updated implementation
   const debouncedSearch = useRef(
@@ -480,7 +481,7 @@ export default function Home() {
       return;
     }
 
-    setLoading(true);
+    setRevisionLoading(true);
 
     const response = await fetch(
       `${process.env.NEXT_PUBLIC_API_URL}/revise/${currentSessionId}`,
@@ -511,7 +512,7 @@ export default function Home() {
       setSummary((prev) => prev + chunk);
     }
 
-    setLoading(false);
+    setRevisionLoading(false);
   };
 
   const handleSubmit = async () => {
@@ -562,6 +563,7 @@ export default function Home() {
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let done = false;
+      let isFirstChunk = true;
 
       let metaBuffer = "";
       let metaTagSeen = false;
@@ -570,6 +572,12 @@ export default function Home() {
         const { value, done: readerDone } = await reader.read();
         done = readerDone;
         const chunk = decoder.decode(value, { stream: true });
+        
+        // Set loading to false as soon as the first chunk arrives
+        if (isFirstChunk && chunk) {
+          setLoading(false);
+          isFirstChunk = false;
+        }
 
         if (!metaTagSeen) {
           const metaStart = chunk.indexOf("SESSION_META::");
@@ -625,8 +633,8 @@ export default function Home() {
     } catch (error) {
       console.error("Streaming error:", error);
       alert("Error while streaming summary.");
+      setLoading(false); // Make sure to set loading to false on error
     } finally {
-      setLoading(false);
       setCaseNumber("");
       setIntervieweeName("");
     }
@@ -1093,7 +1101,7 @@ export default function Home() {
       {/* Loading Overlay - Improved UX */}
       {loading && (
         <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-md z-[100] flex items-center justify-center">
-          <div className={`bg-white dark:bg-slate-800 p-10 rounded-2xl shadow-2xl flex flex-col items-center max-w-md w-full pointer-events-auto border border-slate-200 dark:border-slate-700 ${loading ? "animate-[pulse-border_3s_ease-in-out_infinite]" : ""}`}>
+          <div className={`bg-white dark:bg-slate-800 p-10 rounded-2xl shadow-2xl flex flex-col items-center max-w-md w-full pointer-events-auto border border-slate-200 dark:border-slate-700 animate-[pulse-border_3s_ease-in-out_infinite]`}>
             {/* Document icon with glow effect */}
             <div className="mb-8 relative">
               <div className="absolute inset-0 bg-blue-400/20 dark:bg-blue-500/20 rounded-full blur-xl"></div>
@@ -1716,7 +1724,7 @@ export default function Home() {
 
         <div className="lg:w-1/2 h-full">
           <div
-            className={`relative bg-white dark:bg-slate-800 p-8 shadow rounded-lg transition-all duration-500 flex flex-col h-full ${loading ? "animate-[pulse-border_2s_infinite]" : ""
+            className={`relative bg-white dark:bg-slate-800 p-8 shadow rounded-lg transition-all duration-500 flex flex-col h-full ${revisionLoading ? "animate-[pulse-border_2s_infinite]" : ""
               }`}
           >
             <div
