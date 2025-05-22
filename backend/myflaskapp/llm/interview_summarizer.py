@@ -162,8 +162,6 @@ def generate_summary(aligned_transcript: str, additional_context: str = ""):
 
     Your task is to generate a comprehensive, detailed, and structured third-person narrative summary of the transcript below, following these guidelines:
 
-    - The priority is to capture the most important information from the interview, but use the additional context to help with this.
-    - It is important to note that you are not summarizing the additional context, only the transcript and how it relates to the additional context if needed.
     - The summary should begin with a **title** that includes the interviewee's name (e.g., "Interview with [Interviewee's Name]"). This should be in heading level 1 format.
     - Use a **standard format** for each summary, starting with the title, followed by a brief introductory sentence, and then the detailed narrative.
     - The narrative should be organized into **sections** that capture different themes or topics discussed during the interview.
@@ -177,7 +175,9 @@ def generate_summary(aligned_transcript: str, additional_context: str = ""):
     - Avoid all first-person and third-person attribution. The summary must read as an objective report of discovered facts.
     - Avoid editorializing or drawing conclusions not supported directly by the transcript.
     - Include **timestamps** in brackets like [hh:mm:ss] to cite when important details were mentioned.
-    - If using the additional context, make sure to cite the page number and filename of the context that is relevant to the transcript like [Page 1: Context from [filename].pdf].
+    - The priority is to capture the most important information from the interview transcript, but use the additional context to help with this.
+    - It is important to note that you are not summarizing the additional context, only the transcript and how it relates to the additional context if needed.
+    - Accordingly, you should not need to cite the additional context in your summary, rather just use it to help with the summary if needed.
     - Organize the summary into **short, informative paragraphs** or clear sections to improve readability.
     - Ensure the summary is comprehensive, leaving no significant detail or event unmentioned.
     - Only generate the summary; avoid any unnecessary leading or trailing sentences.
