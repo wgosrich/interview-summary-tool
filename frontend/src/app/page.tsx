@@ -1754,9 +1754,8 @@ export default function Home() {
                   </h1>
                   <div className="text-left max-w-2xl mx-auto text-slate-600 dark:text-white text-lg space-y-2">
                     <p>
-                      <strong>FAIR</strong> simplifies the process of reviewing
-                      and summarizing interviews, making it easier than ever to
-                      get the most out of your interviews.
+                      <strong>FAIR</strong> simplifies the interview review process, making it easier than ever to
+                      get the most out of your investigations.
                     </p>
                     <ul className="list-disc list-inside space-y-1">
                       <li>
@@ -1889,7 +1888,7 @@ export default function Home() {
               {!summary && (
                 <div className="mt-2 bg-slate-100 dark:bg-slate-700 p-4 rounded-lg text-slate-800 dark:text-slate-100 flex-1 overflow-y-auto">
                   {tab === "newSummary" ? (
-                    <div className="flex justify-center gap-6 flex-wrap">
+                    <div className="flex justify-center gap-4 flex-wrap">
                       <div className="flex-1 min-w-[220px]">
                         <label className="block text-md font-semibold text-slate-800 dark:text-slate-100 mb-1">
                           Case Number <span className="text-red-500">*</span>
@@ -2090,15 +2089,18 @@ export default function Home() {
                       </div>
                     </div>
                   ) : (
-                    <div className="flex flex-col gap-5 mt-5 py-1 h-full w-full">
+                    <div className="flex flex-col gap-5 py-1 h-full w-full">
                       <div className="relative" ref={dropdownRef} style={{ position: 'static' }}>
+                        <label className="block text-md font-semibold text-slate-800 dark:text-slate-100 mb-1">
+                          Select Session <span className="text-red-500">*</span>
+                        </label>
                         <div
                           onClick={() => setDropdownOpen(!dropdownOpen)}
                           className="px-2 py-1 rounded-lg border border-slate-300 dark:border-slate-600 text-sm bg-white dark:bg-slate-700 text-slate-800 dark:text-white cursor-pointer flex justify-between items-center relative"
                         >
                           <input
                             type="text"
-                            placeholder="Search or select a session"
+                            placeholder="Search by case number or interviewee name"
                             value={searchSessionInput}
                             onChange={(e) => {
                               setSearchSessionInput(e.target.value);
@@ -2175,46 +2177,60 @@ export default function Home() {
                         )}
                       </div>
 
-                      <button
-                        onClick={async () => {
-                          if (!subscribeSessionId || !currentUserId) return;
-                          if (Number(subscribeSessionId) <= 0) {
-                            alert("Invalid session ID.");
-                            return;
-                          }
-
-                          if (sessions.some((s) => s.id === Number(subscribeSessionId))) {
-                            alert("You are already subscribed to this session.");
-                            return;
-                          }
-                          try {
-                            const response = await fetch(
-                              `${process.env.NEXT_PUBLIC_API_URL}/subscribe/${currentUserId}/${Number(subscribeSessionId)}`,
-                              {
-                                method: "POST",
-                              }
-                            );
-                            if (response.ok) {
-                              fetchSessions();
-                            } else {
-                              console.error("Failed to subscribe to session");
+                      <div className="relative group w-full">
+                        <button
+                          onClick={async () => {
+                            if (!subscribeSessionId || !currentUserId) return;
+                            if (Number(subscribeSessionId) <= 0) {
+                              alert("Invalid session ID.");
+                              return;
                             }
-                          } catch (error) {
-                            console.error("Error subscribing to session:", error);
-                          } finally {
-                            setSubscribeSessionId("");
-                            setSearchSessionInput("");
-                            setSubscribed(true);
-                            setTimeout(() => {
-                              setSubscribed(false);
-                            }, 3000);
-                          }
-                        }}
-                        className="w-full px-3 py-2 bg-blue-600 text-white text-base font-bold rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-blue-600 cursor-pointer"
-                        disabled={!subscribeSessionId}
-                      >
-                        Subscribe
-                      </button>
+
+                            if (sessions.some((s) => s.id === Number(subscribeSessionId))) {
+                              alert("You are already subscribed to this session.");
+                              return;
+                            }
+                            try {
+                              const response = await fetch(
+                                `${process.env.NEXT_PUBLIC_API_URL}/subscribe/${currentUserId}/${Number(subscribeSessionId)}`,
+                                {
+                                  method: "POST",
+                                }
+                              );
+                              if (response.ok) {
+                                fetchSessions();
+                              } else {
+                                console.error("Failed to subscribe to session");
+                              }
+                            } catch (error) {
+                              console.error("Error subscribing to session:", error);
+                            } finally {
+                              setSubscribeSessionId("");
+                              setSearchSessionInput("");
+                              setSubscribed(true);
+                              setTimeout(() => {
+                                setSubscribed(false);
+                              }, 3000);
+                            }
+                          }}
+                          className="w-full px-3 py-2 bg-blue-600 text-white text-base font-bold rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-blue-600 cursor-pointer"
+                          disabled={!subscribeSessionId}
+                        >
+                          Subscribe
+                        </button>
+                        
+                        {/* Tooltip that appears when button is disabled and hovered */}
+                        {!subscribeSessionId && (
+                          <div className="absolute opacity-0 group-hover:opacity-100 transition-opacity duration-200 bottom-full mb-2 left-0 right-0 mx-auto text-center pointer-events-none">
+                            <div className="bg-slate-700 dark:bg-blue-100 text-white dark:text-slate-800 text-xs rounded-md p-3 shadow-md max-w-xs mx-auto relative">
+                              <p className="font-medium">Please select the session you would like to subscribe to.</p>
+                              
+                              {/* Simple tooltip arrow with dark mode support */}
+                              <div className="absolute left-1/2 -bottom-2 transform -translate-x-1/2 w-0 h-0 border-l-8 border-r-8 border-t-8 border-transparent border-t-slate-700 dark:border-t-blue-100"></div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>
