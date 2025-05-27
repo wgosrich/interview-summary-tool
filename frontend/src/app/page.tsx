@@ -147,6 +147,7 @@ export default function Home() {
   const [loginLoading, setLoginLoading] = useState(false);
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
   const [revisionLoading, setRevisionLoading] = useState(false);
+  const revisionModalRef = useRef<HTMLDivElement | null>(null);
 
   // Create a debounced version of the search function with updated implementation
   const debouncedSearch = useRef(
@@ -287,11 +288,12 @@ export default function Home() {
         setDropdownOpen(false);
       }
 
-      // Check if click is outside info popup
+      // Check if click is outside info popup - only check if it's not a click on the backdrop
       if (
         infoPopupOpen &&
         infoPopupRef.current &&
-        !infoPopupRef.current.contains(e.target as Node)
+        !infoPopupRef.current.contains(e.target as Node) &&
+        !(e.target as Element).classList.contains("backdrop-blur-xl")
       ) {
         setInfoPopupOpen(false);
       }
@@ -354,13 +356,22 @@ export default function Home() {
       ) {
         setShowTranscript(false);
       }
+
+      // Check if click is outside revision modal
+      if (
+        revisionWindow &&
+        revisionModalRef.current &&
+        !revisionModalRef.current.contains(e.target as Node)
+      ) {
+        setRevisionWindow(false);
+      }
     };
 
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [showPanel, profileMenuOpen, dropdownOpen, infoPopupOpen, deleteConfirmOpen, renamePopupOpen, chatDropdownOpen, createChatOpen, renameChatPopupOpen, showTranscript]);
+  }, [showPanel, profileMenuOpen, dropdownOpen, infoPopupOpen, deleteConfirmOpen, renamePopupOpen, chatDropdownOpen, createChatOpen, renameChatPopupOpen, showTranscript, revisionWindow]);
 
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
@@ -1499,9 +1510,56 @@ export default function Home() {
             />
           </svg>
         </button>
-        <div className="flex items-start justify-start mb-4 w-full">
+        {/* <div className="flex items-start justify-start mb-4 w-full">
           <BurnesLogo />
+        </div> */}
+        <div className="flex items-center justify-between mb-2">
+          <div className="text-left ml-1">
+            <span className="text-lg font-semibold text-slate-800 dark:text-white truncate max-w-[160px] block">
+              {username}
+            </span>
+          </div>
+          <button
+            onClick={() => {
+              setLoggedIn(false);
+              setCurrentUserId(null);
+              setUsername("");
+              setTranscriptFile(null);
+              setRecordingFile(null);
+              setAdditionalContextFiles([]);
+              setSummary("");
+              setTranscript("");
+              setShowChat(false);
+              setChatInput("");
+              setChatMessages([]);
+              setCurrentSessionId(null);
+              setRevisionWindow(false);
+              setRevisionRequest("");
+              setTab("newSummary");
+              setProfileMenuOpen(false);
+              localStorage.clear();
+            }}
+            className="flex items-center justify-center p-1.5 text-red-600 dark:text-red-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-md cursor-pointer"
+            title="Logout"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              className="h-5 w-5"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+              />
+            </svg>
+          </button>
         </div>
+        <div className="border-t border-slate-200 dark:border-slate-600 my-1"></div>
+
         <button
           onClick={async () => {
             setShowPanel(false);
@@ -1519,7 +1577,7 @@ export default function Home() {
             setRevisionRequest("");
             localStorage.clear();
           }}
-          className="w-full bg-blue-600 text-white py-2 px-3 rounded-lg hover:bg-blue-700 mb-4 font-semibold cursor-pointer"
+          className="w-full bg-blue-600 text-white py-2 px-3 rounded-lg hover:bg-blue-700 my-3 font-semibold cursor-pointer"
         >
           <span className="flex items-center justify-center">
             <svg
@@ -1642,137 +1700,35 @@ export default function Home() {
           : "flex-col items-center justify-center"
           }`}
       >
-        {loggedIn && (
-          <div className="absolute top-4 right-6 z-50">
-            <button
-              onClick={() => setProfileMenuOpen(!profileMenuOpen)}
-              className="profile-button w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center hover:bg-blue-700 shadow-md cursor-pointer"
-              title="Account Settings"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                className="h-6 w-6"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                />
-              </svg>
-            </button>
-
-            {profileMenuOpen && (
-              <div className="profile-menu absolute right-0 mt-2 w-48 bg-white dark:bg-slate-800 rounded-lg shadow-lg p-2 z-50">
-                <div className="text-center px-4 py-1 text-sm font-semibold text-slate-800 dark:text-white">
-                  {username}
-                </div>
-                <div className="border-t border-slate-200 dark:border-slate-600 my-1"></div>
+        <div className="lg:w-1/2 flex flex-col h-full">
+          {summary && (<div className="relative bg-white dark:bg-slate-700 p-3 shadow rounded-lg transition-all duration-500 flex flex-col h-fit mb-3">
+            {/* Top navigation bar with buttons */}
+            <div className="flex justify-between items-center mb-1">
+              {/* Left side buttons */}
+              {summary && (<div className="flex items-center z-10">
+                <button
+                  onClick={() => setShowTranscript(true)}
+                  className="flex items-center gap-1 p-1 text-blue-600 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-500 hover:bg-slate-200 hover:dark:bg-slate-800 px-2 py-1 rounded-lg text-sm cursor-pointer"
+                  title="Show Interview Transcript"
+                >
+                  <span className="font-semibold">Transcript</span>
+                </button>
+                {/* Vertical separator */}
+                <div className="h-5 border-l border-slate-300 dark:border-slate-800 mx-1"></div>
                 <button
                   onClick={() => {
-                    setLoggedIn(false);
-                    setCurrentUserId(null);
-                    setUsername("");
-                    setTranscriptFile(null);
-                    setRecordingFile(null);
-                    setAdditionalContextFiles([]);
-                    setSummary("");
-                    setTranscript("");
-                    setShowChat(false);
-                    setChatInput("");
-                    setChatMessages([]);
-                    setCurrentSessionId(null);
-                    setRevisionWindow(false);
-                    setRevisionRequest("");
-                    setTab("newSummary");
-                    setProfileMenuOpen(false);
-                    localStorage.clear();
+                    setRevisionWindow(!revisionWindow);
                   }}
-                  className="w-full text-left px-4 py-2 text-sm font-semibold text-slate-800 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-700 rounded-md cursor-pointer"
+                  className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-500 hover:bg-slate-200 hover:dark:bg-slate-800 px-2 py-1 text-sm font-semibold cursor-pointer rounded-lg"
                 >
-                  <div className="flex items-center">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      className="h-4 w-4 mr-2"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-                      />
-                    </svg>
-                    Logout
-                  </div>
+                  Revise
                 </button>
-              </div>
-            )}
-          </div>
-        )}
-
-        <div className="lg:w-1/2 h-full">
-          <div
-            className={`relative bg-white dark:bg-slate-800 p-8 shadow rounded-lg transition-all duration-500 flex flex-col h-full ${revisionLoading ? "animate-[pulse-border_2s_infinite]" : ""
-              }`}
-          >
-            <div
-              className={`relative flex justify-between items-center w-full mb-6`}
-            >
+                <h1 className="font-semibold text-slate-800 dark:text-slate-100 text-2xl absolute left-1/2 transform -translate-x-1/2 m-0">
+                  Summary
+                </h1>
+              </div>)}
               {summary && (
-                <div>
-                  <button
-                    onClick={() => {
-                      setRevisionWindow(!revisionWindow);
-                    }}
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-sm font-semibold cursor-pointer"
-                  >
-                    Revise
-                  </button>
-                </div>
-              )}
-              {summary && (
-                <div className="absolute left-1/2 transform -translate-x-1/2">
-                  <h1
-                    className={`font-semibold text-slate-800 dark:text-slate-100 text-2xl`}
-                  >
-                    Interview Summary
-                  </h1>
-                </div>
-              )}
-              {!summary && (
-                <div className="text-center px-6 py-4 bg-slate-100 dark:bg-slate-700 rounded-lg">
-                  <h1 className="text-3xl font-extrabold text-slate-800 dark:text-white mb-4">
-                    Fast AI-Assisted
-                    <br />
-                    Investigation & Review
-                  </h1>
-                  <div className="text-left max-w-2xl mx-auto text-slate-600 dark:text-white text-lg space-y-2">
-                    <p>
-                      <strong>FAIR</strong> simplifies the interview review process, making it easier than ever to
-                      get the most out of your investigations.
-                    </p>
-                    <ul className="list-disc list-inside space-y-1">
-                      <li>
-                        <strong>Generate a New Summary</strong>: Upload the
-                        interview transcript, audio or video recording, and any
-                        relevant documentation.
-                      </li>
-                      <li>
-                        <strong>Add an Existing Summary</strong>: Subscribe to a
-                        session by selecting the interviewee&apos;s name.
-                      </li>
-                    </ul>
-                  </div>
-                </div>
-              )}
-              {summary && (
-                <div className="ml-auto flex gap-2">
+                <div className="flex items-center z-10">
                   <button
                     onClick={() => {
                       navigator.clipboard.writeText(
@@ -1785,7 +1741,7 @@ export default function Home() {
                         setSummaryCopied(false);
                       }, 3000);
                     }}
-                    className="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded cursor-pointer"
+                    className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-500 hover:bg-slate-200 hover:dark:bg-slate-800 px-2 py-1 rounded-lg text-sm cursor-pointer"
                     title="Copy"
                   >
                     <svg
@@ -1794,7 +1750,7 @@ export default function Home() {
                       viewBox="0 0 24 24"
                       strokeWidth={1.5}
                       stroke="currentColor"
-                      className="h-3 w-3"
+                      className="h-5 w-5"
                     >
                       <path d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 0 1-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 0 1 1.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 0 0-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 0 1-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 0 0-3.375-3.375h-1.5a1.125 1.125 0 0 1-1.125-1.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H9.75" />
                     </svg>
@@ -1836,7 +1792,7 @@ export default function Home() {
                         setSummaryDownloaded(false);
                       }, 3000);
                     }}
-                    className="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded cursor-pointer"
+                    className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-500 hover:bg-slate-200 hover:dark:bg-slate-800 px-2 py-1 rounded-lg text-sm cursor-pointer ml-1"
                     title="Download"
                   >
                     <svg
@@ -1845,7 +1801,7 @@ export default function Home() {
                       viewBox="0 0 24 24"
                       strokeWidth={1.5}
                       stroke="currentColor"
-                      className="h-3 w-3"
+                      className="h-5 w-5"
                     >
                       <path
                         strokeLinecap="round"
@@ -1857,6 +1813,38 @@ export default function Home() {
                 </div>
               )}
             </div>
+          </div>)}
+          <div
+            className={`relative bg-white dark:bg-slate-700 p-3 shadow rounded-lg transition-all duration-500 flex flex-col flex-1 ${revisionLoading ? "animate-[pulse-border_2s_infinite]" : ""
+              }`}
+          >
+            {!summary && (
+              <div className="text-center px-6 py-4 bg-white dark:bg-slate-700 rounded-lg">
+                <h1 className="text-3xl font-extrabold text-slate-800 dark:text-white mb-4">
+                  Fast AI-Assisted
+                  <br />
+                  Investigation & Review
+                </h1>
+                <div className="text-left max-w-2xl mx-auto text-slate-600 dark:text-white text-lg space-y-2">
+                  <p>
+                    <strong>FAIR</strong> simplifies the interview review process, making it easier than ever to
+                    get the most out of your investigations.
+                  </p>
+                  <ul className="list-disc list-inside space-y-1">
+                    <li>
+                      <strong>Generate a New Summary</strong>: Upload the
+                      interview transcript, audio or video recording, and any
+                      relevant documentation.
+                    </li>
+                    <li>
+                      <strong>Add an Existing Summary</strong>: Subscribe to a
+                      session by selecting the interviewee&apos;s name.
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            )}
+
             {!summary && (
               <div className="flex border-b border-slate-300 dark:border-slate-600">
                 <button
@@ -1880,13 +1868,14 @@ export default function Home() {
                 >
                   Add Existing Summary
                 </button>
-              </div>)}
+              </div>
+            )}
             <div
               className="overflow-y-auto flex-1"
               style={{ scrollbarWidth: "thin", msOverflowStyle: "auto" }}
             >
               {!summary && (
-                <div className="mt-2 bg-slate-100 dark:bg-slate-700 p-4 rounded-lg text-slate-800 dark:text-slate-100 flex-1 overflow-y-auto">
+                <div className="mt-2 bg-white dark:bg-slate-700 p-4 rounded-lg text-slate-800 dark:text-slate-100 flex-1 overflow-y-auto">
                   {tab === "newSummary" ? (
                     <div className="flex justify-center gap-4 flex-wrap">
                       <div className="flex-1 min-w-[220px]">
@@ -2218,13 +2207,13 @@ export default function Home() {
                         >
                           Subscribe
                         </button>
-                        
+
                         {/* Tooltip that appears when button is disabled and hovered */}
                         {!subscribeSessionId && (
                           <div className="absolute opacity-0 group-hover:opacity-100 transition-opacity duration-200 bottom-full mb-2 left-0 right-0 mx-auto text-center pointer-events-none">
                             <div className="bg-slate-700 dark:bg-blue-100 text-white dark:text-slate-800 text-xs rounded-md p-3 shadow-md max-w-xs mx-auto relative">
                               <p className="font-medium">Please select the session you would like to subscribe to.</p>
-                              
+
                               {/* Simple tooltip arrow with dark mode support */}
                               <div className="absolute left-1/2 -bottom-2 transform -translate-x-1/2 w-0 h-0 border-l-8 border-r-8 border-t-8 border-transparent border-t-slate-700 dark:border-t-blue-100"></div>
                             </div>
@@ -2238,11 +2227,11 @@ export default function Home() {
               {summary && (
                 <div
                   className={`transition-all duration-700 ease-in-out ${summary
-                    ? "opacity-100 max-h-[1000px]"
+                    ? "opacity-100"
                     : "opacity-0 max-h-0 overflow-hidden"
                     }`}
                 >
-                  <div className="bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100 rounded-lg px-6 py-3">
+                  <div className="bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 rounded-lg px-6 py-3 overflow-y-auto max-h-[calc(100vh-9rem)]">
                     <MarkdownPreview
                       source={summary}
                       style={{
@@ -2258,276 +2247,184 @@ export default function Home() {
         </div>
 
         {showChat && (
-          <div className="lg:w-1/2 h-full overflow-hidden bg-white dark:bg-slate-800 p-8 rounded-lg shadow flex flex-col relative">
-            <div className="relative flex mb-5">
-              {/* Absolute positioned chat dropdown */}
-              <div className="absolute left-0 top-1/2 -translate-y-1/2 z-10" ref={chatDropdownRef}>
-                <button
-                  onClick={() => setChatDropdownOpen(!chatDropdownOpen)}
-                  className="flex items-center gap-1 px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm cursor-pointer"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-4 w-4 font-semibold"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
+          <div className="flex flex-col lg:w-1/2 h-full">
+            <div className="h-fit mb-3 bg-white dark:bg-slate-700 p-3 rounded-lg shadow flex flex-col relative">
+              <div className="relative flex mb-1">
+                {/* Absolute positioned chat dropdown */}
+                <div className="flex items-left" ref={chatDropdownRef}>
+                  <button
+                    onClick={() => setChatDropdownOpen(!chatDropdownOpen)}
+                    className="flex items-center gap-1 p-1 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-500 hover:bg-slate-200 hover:dark:bg-slate-800 px-2 py-1 rounded-lg text-sm cursor-pointer"
                   >
-                    <path
-                      strokeWidth={1.5}
-                      d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.862 9.862 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                    />
-                  </svg>
-                  <span className="max-w-[120px] truncate font-semibold">
-                    {chats.find(chat => chat.id === currentChatId)?.name || "Chat"}
-                  </span>
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-3 w-3"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-4 w-4 font-semibold"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
                       strokeLinecap="round"
                       strokeLinejoin="round"
-                      strokeWidth={2}
-                      d={chatDropdownOpen ? "M5 15l7-7 7 7" : "M19 9l-7 7-7-7"}
-                    />
-                  </svg>
-                </button>
-
-                {chatDropdownOpen && (
-                  <div className="absolute z-50 left-0 mt-1 w-48 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                    {chats.map(chat => (
-                      <button
-                        key={chat.id}
-                        className={`w-full text-left px-3 py-2 hover:bg-blue-50 dark:hover:bg-slate-600 ${chat.id === currentChatId ? "bg-blue-50 dark:bg-slate-600" : ""
-                          }`}
-                        onClick={() => {
-                          loadChat(chat.id);
-                          setChatDropdownOpen(false);
-                        }}
-                        onContextMenu={(e) => {
-                          e.preventDefault();
-                          setSelectedChatInfo({
-                            id: chat.id,
-                            name: chat.name
-                          });
-                          setChatContextMenu({
-                            mouseX: e.clientX,
-                            mouseY: e.clientY,
-                          });
-                        }}
-                      >
-                        <span className="truncate font-medium text-slate-800 dark:text-white">
-                          {chat.name}
-                        </span>
-                      </button>
-                    ))}
-                    <div className="border-t border-slate-200 dark:border-slate-600 my-1"></div>
-                    <button
-                      className="w-full text-left px-3 py-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-slate-600 flex items-center font-semibold cursor-pointer"
-                      onClick={() => {
-                        setChatDropdownOpen(false);
-                        setCreateChatOpen(true);
-                      }}
                     >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-4 w-4 mr-1"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M12 4v16m8-8H4"
-                        />
-                      </svg>
-                      New Chat
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              {/* Centered title */}
-              <h2 className="text-2xl font-semibold text-slate-800 dark:text-slate-100 w-full text-center">
-                Chat with Assistant
-              </h2>
-
-              {/* Transcript button */}
-              <div className="absolute right-0 top-1/2 -translate-y-1/2 z-10">
-                <button
-                  onClick={() => setShowTranscript(true)}
-                  className="flex items-center gap-1 px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm cursor-pointer"
-                  title="Show Interview Transcript"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-4 w-4"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                    />
-                  </svg>
-                  <span className="font-semibold">Transcript</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Rest of the chat UI remains the same */}
-            <div
-              ref={chatContainerRef}
-              className="flex-1 overflow-y-auto scrollbar-none mb-4 bg-slate-100 dark:bg-slate-700 p-4 rounded-lg flex flex-col-reverse gap-2"
-              style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-            >
-              {[...chatMessages].reverse().map((msg, idx) => {
-                const isUser = msg.role === 'user';
-                const messageText = msg.content || '';
-
-                return (
-                  <div
-                    key={idx}
-                    className={`flex ${isUser ? "justify-end" : "justify-start"}`}
-                  >
-                    <div
-                      className={`inline-block px-4 py-2 rounded-lg text-sm max-w-[90%] ${isUser
-                        ? "bg-blue-600 text-white"
-                        : "bg-gray-200 dark:bg-slate-600 text-gray-900 dark:text-white"
-                        }`}
+                      <path
+                        strokeWidth={1.5}
+                        d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.862 9.862 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                      />
+                    </svg>
+                    <span className="max-w-[120px] truncate font-semibold">
+                      {chats.find(chat => chat.id === currentChatId)?.name || "Chat"}
+                    </span>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-3 w-3"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
                     >
-                      {isUser ? (
-                        messageText
-                      ) : (
-                        <MarkdownPreview
-                          source={messageText}
-                          style={{
-                            backgroundColor: "transparent",
-                            margin: 0,
-                            color: isDarkMode ? "white" : "black",
-                            fontSize: "0.875rem", // Tailwind's text-sm equivalent
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d={chatDropdownOpen ? "M5 15l7-7 7 7" : "M19 9l-7 7-7-7"}
+                      />
+                    </svg>
+                  </button>
+
+                  {chatDropdownOpen && (
+                    <div className="absolute z-50 left-0 top-full mt-1 w-48 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                      {chats.map(chat => (
+                        <button
+                          key={chat.id}
+                          className={`w-full text-left px-3 py-2 hover:bg-blue-50 dark:hover:bg-slate-600 ${chat.id === currentChatId ? "bg-blue-50 dark:bg-slate-600" : ""
+                            }`}
+                          onClick={() => {
+                            loadChat(chat.id);
+                            setChatDropdownOpen(false);
                           }}
-                        />
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={chatInput}
-                onChange={(e) => setChatInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    handleChatSubmit();
-                  }
-                }}
-                className="flex-1 rounded-lg px-3 py-2 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-600 text-slate-800 dark:text-slate-100"
-                placeholder="Message FAIR"
-              />
-              <button
-                onClick={handleChatSubmit}
-                className="bg-blue-600 text-white py-2 px-3 rounded-lg hover:bg-blue-700 font-bold flex items-center justify-center antialiased cursor-pointer"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={3}
-                  className="h-5 w-5"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M5 10l7-7m0 0l7 7m-7-7v18"
-                  />
-                </svg>
-              </button>
-            </div>
-            {revisionWindow && (
-              <div className="absolute inset-0 bg-white dark:bg-slate-800 bg-opacity-40 z-10 flex items-center justify-center rounded-lg">
-                <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-lg w-full h-full relative z-20">
-                  <div className="relative mb-3">
-                    <button
-                      onClick={() => {
-                        handleRevise("revert to original summary");
-                        setRevisionWindow(false);
-                        setRevisionRequest("");
-                      }}
-                      className="absolute left-0 top-1/2 -translate-y-1/2 bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-sm font-semibold cursor-pointer"
-                      title="Revert to Original"
-                    >
-                      Revert
-                    </button>
-                    <button
-                      onClick={() => setInfoPopupOpen(true)}
-                      className="absolute right-0 top-1/2 -translate-y-1/2 text-blue-600 hover:text-blue-700 cursor-pointer"
-                      title="Prompt Writing Tips"
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        className="h-6 w-6"
+                          onContextMenu={(e) => {
+                            e.preventDefault();
+                            setSelectedChatInfo({
+                              id: chat.id,
+                              name: chat.name
+                            });
+                            setChatContextMenu({
+                              mouseX: e.clientX,
+                              mouseY: e.clientY,
+                            });
+                          }}
+                        >
+                          <span className="truncate font-medium text-slate-800 dark:text-white">
+                            {chat.name}
+                          </span>
+                        </button>
+                      ))}
+                      <div className="border-t border-slate-200 dark:border-slate-600 my-1"></div>
+                      <button
+                        className="w-full text-left px-3 py-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-slate-600 flex items-center font-semibold cursor-pointer"
+                        onClick={() => {
+                          setChatDropdownOpen(false);
+                          setCreateChatOpen(true);
+                        }}
                       >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                        />
-                      </svg>
-                    </button>
-                    <h1 className="font-semibold text-slate-800 dark:text-slate-100 text-2xl text-center py-2">
-                      Request a Revision
-                    </h1>
-                  </div>
-                  <textarea
-                    placeholder="Enter your revision request here..."
-                    className="w-full h-32 p-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-800 dark:text-white mb-4"
-                    onChange={(e) => setRevisionRequest(e.target.value)}
-                    value={revisionRequest}
-                  />
-                  <div className="flex justify-end gap-2">
-                    <button
-                      className="font-semibold px-4 py-2 bg-gray-300 dark:bg-gray-600 text-slate-800 dark:text-white rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500 cursor-pointer"
-                      onClick={() => {
-                        setRevisionWindow(false);
-                        setRevisionRequest("");
-                      }}
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold cursor-pointer"
-                      onClick={() => {
-                        handleRevise(revisionRequest);
-                        setRevisionWindow(false);
-                        setRevisionRequest("");
-                      }}
-                    >
-                      Submit
-                    </button>
-                  </div>
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-4 w-4 mr-1"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 4v16m8-8H4"
+                          />
+                        </svg>
+                        New Chat
+                      </button>
+                    </div>
+                  )}
                 </div>
+                {/* Centered title */}
+                <h2 className="absolute left-1/2 transform -translate-x-1/2 text-2xl font-semibold text-slate-800 dark:text-slate-100 m-0">
+                  Chat
+                </h2>
               </div>
-            )}
+            </div>
+            <div className="flex-1 overflow-hidden bg-white dark:bg-slate-700 p-3 rounded-lg shadow flex flex-col relative">
+              {/* Chat UI */}
+              <div
+                ref={chatContainerRef}
+                className="flex-1 overflow-y-auto scrollbar-none mb-4 bg-white dark:bg-slate-700 p-4 rounded-lg flex flex-col-reverse gap-2"
+                style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+              >
+                {[...chatMessages].reverse().map((msg, idx) => {
+                  const isUser = msg.role === 'user';
+                  const messageText = msg.content || '';
+
+                  return (
+                    <div
+                      key={idx}
+                      className={`flex ${isUser ? "justify-end" : "justify-start"}`}
+                    >
+                      <div
+                        className={`inline-block px-4 py-2 rounded-lg text-sm max-w-[90%] ${isUser
+                          ? "bg-blue-600 text-white"
+                          : "bg-gray-200 dark:bg-slate-600 text-gray-900 dark:text-white"
+                          }`}
+                      >
+                        {isUser ? (
+                          messageText
+                        ) : (
+                          <MarkdownPreview
+                            source={messageText}
+                            style={{
+                              backgroundColor: "transparent",
+                              margin: 0,
+                              color: isDarkMode ? "white" : "black",
+                              fontSize: "0.875rem", // Tailwind's text-sm equivalent
+                            }}
+                          />
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={chatInput}
+                  onChange={(e) => setChatInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleChatSubmit();
+                    }
+                  }}
+                  className="flex-1 rounded-lg px-3 py-2 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-600 text-slate-800 dark:text-slate-100"
+                  placeholder="Message FAIR"
+                />
+                <button
+                  onClick={handleChatSubmit}
+                  className="bg-blue-600 text-white py-2 px-3 rounded-lg hover:bg-blue-700 font-bold flex items-center justify-center antialiased cursor-pointer"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={3}
+                    className="h-5 w-5"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M5 10l7-7m0 0l7 7m-7-7v18"
+                    />
+                  </svg>
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </div>
@@ -2673,8 +2570,18 @@ export default function Home() {
       )}
 
       {infoPopupOpen && (
-        <div className="fixed inset-0 backdrop-blur-xl bg-white/30 dark:bg-slate-900/30 flex items-center justify-center z-50">
-          <div ref={infoPopupRef} className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-lg max-w-2xl w-full">
+        <div
+          className="fixed inset-0 backdrop-blur-xl bg-white/30 dark:bg-slate-900/30 flex items-center justify-center z-60"
+          onClick={(e) => {
+            e.stopPropagation(); // Prevent click from affecting revision modal
+            setInfoPopupOpen(false);
+          }}
+        >
+          <div
+            ref={infoPopupRef}
+            className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-lg max-w-2xl w-full"
+            onClick={(e) => e.stopPropagation()} // Prevent clicks inside from closing
+          >
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-bold text-slate-800 dark:text-white">How to Write Effective Revision Prompts</h2>
               <button
@@ -2752,7 +2659,10 @@ export default function Home() {
             <div className="mt-6 flex justify-end">
               <button
                 className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold cursor-pointer"
-                onClick={() => setInfoPopupOpen(false)}
+                onClick={(e) => {
+                  e.stopPropagation(); // Prevent click from affecting revision modal
+                  setInfoPopupOpen(false);
+                }}
               >
                 Got it!
               </button>
@@ -3291,6 +3201,77 @@ export default function Home() {
                 className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded cursor-pointer"
               >
                 Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Revision Window Modal */}
+      {revisionWindow && (
+        <div className="fixed inset-0 backdrop-blur-xl bg-white/30 dark:bg-slate-900/30 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-lg max-w-2xl w-full">
+            <div className="relative mb-3">
+              <button
+                onClick={() => {
+                  handleRevise("revert to original summary");
+                  setRevisionWindow(false);
+                  setRevisionRequest("");
+                }}
+                className="absolute left-0 top-1/2 -translate-y-1/2 bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-sm font-semibold cursor-pointer"
+                title="Revert to Original"
+              >
+                Revert
+              </button>
+              <button
+                onClick={() => setInfoPopupOpen(true)}
+                className="absolute right-0 top-1/2 -translate-y-1/2 text-blue-600 hover:text-blue-700 cursor-pointer"
+                title="Prompt Writing Tips"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  className="h-6 w-6"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+              </button>
+              <h1 className="font-semibold text-slate-800 dark:text-slate-100 text-2xl text-center py-2">
+                Request a Revision
+              </h1>
+            </div>
+            <textarea
+              placeholder="Enter your revision request here..."
+              className="w-full h-32 p-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-800 dark:text-white mb-4"
+              onChange={(e) => setRevisionRequest(e.target.value)}
+              value={revisionRequest}
+            />
+            <div className="flex justify-end gap-2">
+              <button
+                className="font-semibold px-4 py-2 bg-gray-300 dark:bg-gray-600 text-slate-800 dark:text-white rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500 cursor-pointer"
+                onClick={() => {
+                  setRevisionWindow(false);
+                  setRevisionRequest("");
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold cursor-pointer"
+                onClick={() => {
+                  handleRevise(revisionRequest);
+                  setRevisionWindow(false);
+                  setRevisionRequest("");
+                }}
+              >
+                Submit
               </button>
             </div>
           </div>
