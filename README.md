@@ -61,5 +61,5 @@ If you are contributing please follow these steps:
 MIT License – see `LICENSE.md` for details.
 
 ## Authors & Acknowledgements
-- Built by Arinjay Singh & Dhruv Reddy Tekulapalli
-- In partnership with the New Jersey Attorney Generals Office Divison on Civil Rights
+Built by Arinjay Singh & Dhruv Reddy Tekulapalli  \
+In partnership with the New Jersey Attorney Generals Office Divison on Civil Rights
