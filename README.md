@@ -29,4 +29,4 @@ NJ FAIR provides an AI-assisted investigation and review system with three key c
 
 ## Architecture
 
-![Architecture Flow]()
+![Architecture Flow](https://github.com/arinjay-singh/interview-summary-tool/blob/0e30114ee274d0705e4bb1d8e8d8a7cf8b94a325/Technical%20Arc%20Diagram.png)
