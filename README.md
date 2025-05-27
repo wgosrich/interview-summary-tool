@@ -23,10 +23,19 @@ NJ FAIR provides an AI-assisted investigation and review system with three key c
 - Enables efficient information retrieval without technical search expertise  
 
 ## Implementation Playbook
-
 [FAIR Implementation Playbook](https://docs.google.com/document/d/1mKihLHuzYI1ngoRYq0nefKdJrAXjNyx4xdUSyEvoxuc/edit?usp=sharing)
+
+## Deployment
 
 
 ## Architecture
-
 ![Architecture Flow](https://github.com/arinjay-singh/interview-summary-tool/blob/0e30114ee274d0705e4bb1d8e8d8a7cf8b94a325/Technical%20Arc%20Diagram.png)
+
+## Contributing
+If you are contributing please follow these steps:
+
+1. Fork the repository.
+2. Create a new branch (`git checkout -b feature/YourFeature`).
+3. Make your changes and commit them (`git commit -m 'Add some feature'`).
+4. Push to the branch (`git push origin feature/YourFeature`).
+5. Open a pull request.
