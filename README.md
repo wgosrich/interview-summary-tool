@@ -58,7 +58,7 @@ If you are contributing please follow these steps:
 5. Open a pull request.
 
 ## License
-MIT License – see `LICENSE.md` for details.
+MIT License – see `LICENSE` for details.
 
 ## Authors & Acknowledgements
 Built by Arinjay Singh & Dhruv Reddy Tekulapalli  \
