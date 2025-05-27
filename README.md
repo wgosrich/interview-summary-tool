@@ -39,7 +39,7 @@ NJ FAIR provides an AI-assisted investigation and review system with three key c
 
 ## Setup
 #### Clone the repo
-git clone https://github.com/arinjay-singh/interview-summary-tool/tree/main
+git clone https://github.com/arinjay-singh/interview-summary-tool/tree/main  \
 cd project-name
 
 #### Install dependencies
