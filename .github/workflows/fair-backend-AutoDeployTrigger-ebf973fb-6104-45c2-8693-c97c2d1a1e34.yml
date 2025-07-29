@@ -40,7 +40,7 @@ jobs:
           registryUrl: fairacr.azurecr.io
           registryUsername: ${{ secrets.FAIRBACKEND_REGISTRY_USERNAME }}
           registryPassword: ${{ secrets.FAIRBACKEND_REGISTRY_PASSWORD }}
-          containerAppName: fair-backend
+          containerAppName: backend2
           resourceGroup: SH-DCR-FAIR-Dev-RG
           imageToBuild: fairacr.azurecr.io/fair-backend:${{ github.sha }}
           _buildArgumentsKey_: |
