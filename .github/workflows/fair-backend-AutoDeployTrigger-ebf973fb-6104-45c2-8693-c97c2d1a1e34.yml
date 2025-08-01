@@ -27,6 +27,7 @@ jobs:
       - name: Azure Login
         uses: azure/login@v2
         with:
+          auth-type: IDENTITY
           client-id: ${{ secrets.FAIRBACKEND_AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.FAIRBACKEND_AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.FAIRBACKEND_AZURE_SUBSCRIPTION_ID }}
@@ -45,5 +46,6 @@ jobs:
           imageToBuild: fairacr.azurecr.io/fair-backend:${{ github.sha }}
           _buildArgumentsKey_: |
             _buildArgumentsValues_
+
 
 
