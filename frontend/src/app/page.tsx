@@ -1060,7 +1060,7 @@ export default function Home() {
       <div className="h-screen flex items-center justify-center bg-slate-100 dark:bg-slate-600">
         <div className="bg-white dark:bg-slate-700 p-8 rounded-lg shadow-lg w-80 flex flex-col gap-4">
           <h2 className="text-xl font-bold text-center text-slate-800 dark:text-white">
-            Login to FAIR
+            [test] Login to FAIR
           </h2>
           <input
             type="text"
