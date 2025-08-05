@@ -1060,7 +1060,7 @@ export default function Home() {
       <div className="h-screen flex items-center justify-center bg-slate-100 dark:bg-slate-600">
         <div className="bg-white dark:bg-slate-700 p-8 rounded-lg shadow-lg w-80 flex flex-col gap-4">
           <h2 className="text-xl font-bold text-center text-slate-800 dark:text-white">
-            [test] Login to FAIR
+            Login to FAIR
           </h2>
           <input
             type="text"
@@ -1071,6 +1071,7 @@ export default function Home() {
           />
           <button
             onClick={async () => {
+               console.log("API URL:", process.env.NEXT_PUBLIC_API_URL); // Log the API URL to the console
               if (!username.trim()) return;
               setLoginLoading(true);
               try {
@@ -1087,6 +1088,7 @@ export default function Home() {
                   setShowPanel(false); // force it to be closed on login
                   setLoggedIn(true);
                 } else {
+                  console.log("Response object:", response); // Log the entire response object
                   alert("Login failed.");
                 }
               } catch (error) {
