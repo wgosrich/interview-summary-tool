@@ -1088,7 +1088,7 @@ export default function Home() {
                   setShowPanel(false); // force it to be closed on login
                   setLoggedIn(true);
                 } else {
-                  console.log("Response object:", response); // Log the entire response object
+                  console.log("Response object:  ", response); // Log the entire response object
                   alert("Login failed.");
                 }
               } catch (error) {
