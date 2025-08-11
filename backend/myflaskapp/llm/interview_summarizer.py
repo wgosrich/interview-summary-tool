@@ -2,9 +2,13 @@ import os
 from dotenv import load_dotenv
 from docx import Document
 from pydub import AudioSegment
-from myflaskapp.llm.llm_clients import gpt4o_client
+#from myflaskapp.llm.llm_clients import gpt4o_client
+from myflaskapp.llm.llm_clients import az_client
 import PyPDF2
 import re
+
+transcribe_deployment_id = "YOUR-DEPLOYMENT-NAME-HERE" #This will correspond to the custom name you chose for your deployment when you deployed a model."
+chat_deployment_id = ""
 
 load_dotenv()
 
@@ -73,23 +77,33 @@ def parse_recording(recording_path: str) -> str:
             chunk_path = f"chunk_{i}.mp3"
             chunk.export(chunk_path, format="mp3")
             try:
-                with open(chunk_path, "rb") as audio_file:
-                    response = gpt4o_client.audio.transcriptions.create(
-                        model="gpt-4o-transcribe",
-                        file=audio_file,
-                        response_format="text",
-                    )
+                # with open(chunk_path, "rb") as audio_file:
+                #     response = gpt4o_client.audio.transcriptions.create(
+                #         model="gpt-4o-transcribe",
+                #         file=audio_file,
+                #         response_format="text",
+                #     )
+
+                response = az_client.audio.transcriptions.create(
+                    file=open(chunk_path, "rb"),            
+                    model=transcribe_deployment_id
+                )
                 os.remove(chunk_path)
                 transcription += response
             except Exception as e:
                 print(f"Error transcribing chunk {i}: {e}")
                 continue
     else:
-        with open(recording_path, "rb") as audio_file:
-            response = gpt4o_client.audio.transcriptions.create(
-                model="gpt-4o-transcribe",
-                file=audio_file,
-                response_format="text",
+        # with open(recording_path, "rb") as audio_file:
+            # response = gpt4o_client.audio.transcriptions.create(
+            #     model="gpt-4o-transcribe",
+            #     file=audio_file,
+            #     response_format="text",
+            # )
+
+        response = az_client.audio.transcriptions.create(
+                file=open(recording_path, "rb"),            
+                model=transcribe_deployment_id
             )
         transcription = response
 
@@ -98,8 +112,7 @@ def parse_recording(recording_path: str) -> str:
 
 def align_transcripts(teams_transcript: str, llm_transcript: str) -> str:
     """Use GPT-4o to align and merge transcripts while keeping timestamps."""
-    prompt = f"""
-    You are a helpful assistant tasked with refining an interview transcript by using two versions of the same interview:
+    prompt = f"""You are a helpful assistant tasked with refining an interview transcript by using two versions of the same interview:
 
     1. The Teams Transcript, which contains accurate timestamps and should serve as the primary source for both structure and content.
     2. The LLM-generated Transcript, which has higher transcription quality, does not have timestamps.
@@ -144,10 +157,17 @@ def align_transcripts(teams_transcript: str, llm_transcript: str) -> str:
     """
 
     # Call the GPT-4 model to align and merge the transcripts
-    response = gpt4o_client.chat.completions.create(
-        model="gpt-4o",
-        max_tokens=16384,
-        messages=[{"role": "user", "content": prompt}],
+    # response = gpt4o_client.chat.completions.create(
+    #     model="gpt-4o",
+    #     max_tokens=16384,
+    #     messages=[{"role": "user", "content": prompt}],
+    # )
+
+    response = az_client.chat.completions.create(
+        model=chat_deployment_id,
+        messages=[
+            {"role": "user", "content": prompt}
+        ]
     )
 
     content = response.choices[0].message.content
@@ -188,11 +208,18 @@ def generate_summary(aligned_transcript: str, additional_context: str = ""):
     {additional_context if additional_context != "" else "None provided."}
     """
 
-    # Call the GPT-4 model to generate the summary in a streaming manner
-    response = gpt4o_client.chat.completions.create(
-        model="gpt-4o",
-        messages=[{"role": "system", "content": prompt}],
-        stream=True,  # Enable streaming
+    # # Call the GPT-4 model to generate the summary in a streaming manner
+    # response = gpt4o_client.chat.completions.create(
+    #     model="gpt-4o",
+    #     messages=[{"role": "system", "content": prompt}],
+    #     stream=True,  # Enable streaming
+    # )
+
+    response = az_client.chat.completions.create(
+        model=chat_deployment_id,
+        messages=[
+            {"role": "user", "content": prompt}
+        ]
     )
 
     for chunk in response:
@@ -213,9 +240,16 @@ def initial_greeting():
     """
 
     # Call the GPT-4 model to generate the greeting
-    response = gpt4o_client.chat.completions.create(
-        model="gpt-4o",
-        messages=[{"role": "user", "content": prompt}],
+    # response = gpt4o_client.chat.completions.create(
+    #     model="gpt-4o",
+    #     messages=[{"role": "user", "content": prompt}],
+    # )
+
+    response = az_client.chat.completions.create(
+        model=chat_deployment_id,
+        messages=[
+            {"role": "user", "content": prompt}
+        ]
     )
 
     content = response.choices[0].message.content
@@ -225,10 +259,14 @@ def initial_greeting():
 
 def generate_revision(messages: list):
     # Call the GPT-4 model to generate the revised summary
-    response = gpt4o_client.chat.completions.create(
-        model="gpt-4o",
-        messages=messages,
-        stream=True,  # Enable streaming
+    # response = gpt4o_client.chat.completions.create(
+    #     model="gpt-4o",
+    #     messages=messages,
+    #     stream=True,  # Enable streaming
+    # )
+    response = az_client.chat.completions.create(
+        model=chat_deployment_id,
+        messages=messages
     )
 
     for chunk in response:

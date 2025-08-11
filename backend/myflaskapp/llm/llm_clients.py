@@ -6,15 +6,21 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # ------------ API CLIENTS ------------ #
-openai_gpt4o_api_key = os.getenv("OPENAI_GPT4O_API_KEY")
+openai_direct=False
+if openai_direct:
+     = os.getenv("OPENAI_GPT4O_API_KEY")
 
-if not openai_gpt4o_api_key:
-    raise EnvironmentError(
-        "Missing required environment variables: OPENAI_GPT4O_API_KEY"
+    if not openai_gpt4o_api_key:
+        raise EnvironmentError(
+            "Missing required environment variables: OPENAI_GPT4O_API_KEY"
+        )
+
+    gpt4o_client = OpenAI(
+        api_key=openai_gpt4o_api_key
     )
 
-gpt4o_client = OpenAI(
-    api_key=openai_gpt4o_api_key
-)
+    __all__ = ["gpt4o_client"]
 
-__all__ = ["gpt4o_client"]
+azure = True
+if azure:
+    azure_api_key = os.getenv("")
