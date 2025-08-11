@@ -47,7 +47,9 @@ jobs:
             --name fair-ai-backend \
             --resource-group fair-rg \
             --set-env-vars \
-              OPENAI_GPT4O_API_KEY=${{ secrets.OPENAI_GPT4O_API_KEY }} \
+              =${{ secrets. }} \
+              AZURE_OPENAI_ENDPOINT=${{secrets.AZURE_OPENAI_ENDPOINT}} \ 
+              AZURE_OPENAI_API_KEY=${{secrets.AZURE_OPENAI_API_KEY}} \
               DATABASE_URL=${{ secrets.DATABASE_URL }} \
               FRONTEND_URL=${{ secrets.FRONTEND_URL }}
               
