@@ -1,5 +1,6 @@
-from myflaskapp.llm.llm_clients import gpt4o_client
-
+# from myflaskapp.llm.llm_clients import gpt4o_client
+from myflaskapp.llm.llm_clients import az_client
+chat_deployment_id = ""
 def get_chat_prompt():
     """Return the system prompt for the chat."""
     return """
@@ -12,11 +13,17 @@ def get_chat_prompt():
 
 def stream_response(messages):
     """Stream the response from the chat model."""
-    response = gpt4o_client.chat.completions.create(
-        model="gpt-4o",
-        messages=messages,
-        stream=True,
+    # response = gpt4o_client.chat.completions.create(
+    #     model="gpt-4o",
+    #     messages=messages,
+    #     stream=True,
+    # )
+
+    response = az_client.chat.completions.create(
+        model=chat_deployment_id,
+        messages=messages
     )
+
     for chunk in response:
         if not chunk or not hasattr(chunk, "choices") or len(chunk.choices) == 0:
             continue  # skip invalid or empty chunk
