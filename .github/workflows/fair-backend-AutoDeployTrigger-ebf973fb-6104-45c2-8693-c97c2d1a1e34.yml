@@ -5,7 +5,7 @@ on:
   # Automatically trigger it when detected changes in repo
   push:
     branches: 
-      [ main-upstream ]
+      - main-upstream
     paths:
     - '**'
     - '.github/workflows/fair-backend-AutoDeployTrigger-ebf973fb-6104-45c2-8693-c97c2d1a1e34.yml'
@@ -46,6 +46,7 @@ jobs:
           imageToBuild: fairacr.azurecr.io/fair-backend:${{ github.sha }}
           _buildArgumentsKey_: |
             _buildArgumentsValues_
+
 
 
 
