@@ -526,6 +526,7 @@ export default function Home() {
   };
 
   const handleSubmit = async () => {
+    console.log("handling submit")
     if (!transcriptFile || !recordingFile || !caseNumber || !intervieweeName) {
       alert("Please fill out all required fields and upload both transcript and recording files.");
       return;
@@ -569,7 +570,7 @@ export default function Home() {
       if (!response.ok || !response.body) {
         throw new Error("Failed to connect to backend.");
       }
-
+      console.log(response)
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let done = false;
@@ -582,14 +583,16 @@ export default function Home() {
         const { value, done: readerDone } = await reader.read();
         done = readerDone;
         const chunk = decoder.decode(value, { stream: true });
-
+        console.log(chunk);
         // Set loading to false as soon as the first chunk arrives
         if (isFirstChunk && chunk) {
           setLoading(false);
           isFirstChunk = false;
+          console.log("first chunk arrived")
         }
 
         if (!metaTagSeen) {
+          console.log("not metatagseen")
           const metaStart = chunk.indexOf("SESSION_META::");
           if (metaStart !== -1) {
             metaTagSeen = true;
@@ -608,6 +611,7 @@ export default function Home() {
       }
 
       if (metaTagSeen) {
+        console.log("metatagseen")
         const metaStart = metaBuffer.indexOf("SESSION_META::");
         if (metaStart !== -1) {
           const jsonString = metaBuffer
