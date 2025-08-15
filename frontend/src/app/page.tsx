@@ -583,12 +583,12 @@ export default function Home() {
         const { value, done: readerDone } = await reader.read();
         done = readerDone;
         const chunk = decoder.decode(value, { stream: true });
-        console.log(chunk);
         // Set loading to false as soon as the first chunk arrives
         if (isFirstChunk && chunk) {
           setLoading(false);
           isFirstChunk = false;
           console.log("first chunk arrived")
+          console.log(chunk);
         }
 
         if (!metaTagSeen) {
@@ -608,6 +608,7 @@ export default function Home() {
           // After tag seen, just buffer for metadata
           metaBuffer += chunk;
         }
+        console.log(summary)
       }
 
       if (metaTagSeen) {
@@ -631,7 +632,8 @@ export default function Home() {
             if (meta.messages?.[1]?.content) {
               setTranscript(meta.messages[1].content);
             }
-
+            console.log("Formatted messages:")
+            console.log(formattedMessages)
             setChatMessages(formattedMessages);
           } catch (err) {
             console.error("Failed to parse SESSION_META block:", err);
