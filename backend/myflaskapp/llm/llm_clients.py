@@ -26,6 +26,12 @@ if azure:
     azure_api_key = os.getenv("AZURE_OPENAI_API_KEY")
     azure_api_endpoint = os.getenv("AZURE_OPENAI_ENDPOINT")
 
+    #DEBUGGING
+    print(f"azure api key: {azure_api_key}")
+    print(type(azure_api_key))
+    print(f"azure api endpoint: {azure_api_endpoint}")
+    
+
     if not azure_api_key or not azure_api_endpoint:
         raise EnvironmentError(
             "Missing required environment variables: AZURE_OPENAI_API_KEY or AZURE_OPENAI_ENDPOINT"
@@ -36,5 +42,7 @@ if azure:
         api_version="2024-02-01",
         azure_endpoint=azure_api_endpoint
     )
+    
+    print(az_client)
 
     __all__ = ["az_client"]

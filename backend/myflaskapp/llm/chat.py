@@ -1,6 +1,6 @@
 # from myflaskapp.llm.llm_clients import gpt4o_client
 from myflaskapp.llm.llm_clients import az_client
-chat_deployment_id = ""
+chat_deployment_id = "gpt-4o-dcr"
 def get_chat_prompt():
     """Return the system prompt for the chat."""
     return """
@@ -18,10 +18,11 @@ def stream_response(messages):
     #     messages=messages,
     #     stream=True,
     # )
-
+    # THIS IS THE QUESTIONABLE BIT 
     response = az_client.chat.completions.create(
         model=chat_deployment_id,
-        messages=messages
+        messages=messages,
+        stream=True
     )
 
     for chunk in response:

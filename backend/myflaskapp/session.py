@@ -4,6 +4,7 @@ from myflaskapp.llm.interview_summarizer import (
     generate_revision, parse_additional_context
 )
 from myflaskapp.llm.chat import get_chat_prompt, stream_response
+chat_deployment_id = "gpt-4o-dcr"
 
 
 class Session:
@@ -79,6 +80,14 @@ class Session:
             # add assistant message to conversation
             response += chunk
             yield chunk
+        
+        # response = az_client.chat.completions.create(
+        #     model=chat_deployment_id,
+        #     messages=[
+        #         {"role": "user", "content": prompt}
+        #     ]
+        # )
+        
         # add final response to conversation
         self.messages.append({"role": "assistant", "content": response})
 

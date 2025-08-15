@@ -312,6 +312,8 @@ def chat(session_id):
 
     def generate():
         try:
+            print("prompting chat...")
+            print(prompt)
             for chunk in session.prompt_chat(prompt):
                 yield chunk
         finally:

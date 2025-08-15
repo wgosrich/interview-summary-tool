@@ -7,8 +7,8 @@ from myflaskapp.llm.llm_clients import az_client
 import PyPDF2
 import re
 
-transcribe_deployment_id = "YOUR-DEPLOYMENT-NAME-HERE" #This will correspond to the custom name you chose for your deployment when you deployed a model."
-chat_deployment_id = ""
+transcribe_deployment_id = "whisper" #This will correspond to the custom name you chose for your deployment when you deployed a model."
+chat_deployment_id = "gpt-4o-dcr"
 
 load_dotenv()
 
@@ -83,11 +83,12 @@ def parse_recording(recording_path: str) -> str:
                 #         file=audio_file,
                 #         response_format="text",
                 #     )
-
+                print(f"Transcribing chunk {i}")
                 response = az_client.audio.transcriptions.create(
                     file=open(chunk_path, "rb"),            
                     model=transcribe_deployment_id
                 )
+                print(response)
                 os.remove(chunk_path)
                 transcription += response
             except Exception as e:
@@ -100,12 +101,13 @@ def parse_recording(recording_path: str) -> str:
             #     file=audio_file,
             #     response_format="text",
             # )
-
+        print("Transcribing all at once...")
         response = az_client.audio.transcriptions.create(
                 file=open(recording_path, "rb"),            
                 model=transcribe_deployment_id
             )
         transcription = response
+        print(response)
 
     return transcription
 
