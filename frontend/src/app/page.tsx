@@ -597,6 +597,8 @@ export default function Home() {
           if (metaStart !== -1) {
             metaTagSeen = true;
             // Append everything before the tag to the summary
+            console.log("appending the following to summary:")
+            console.log(chunk)
             setSummary((prev) => prev + chunk.slice(0, metaStart));
             // Start collecting the rest for metadata
             metaBuffer += chunk.slice(metaStart);
@@ -607,6 +609,8 @@ export default function Home() {
         } else {
           // After tag seen, just buffer for metadata
           metaBuffer += chunk;
+          console.log("new chunk post metatag:")
+          console.log(chunk)
         }
         console.log(summary)
       }
